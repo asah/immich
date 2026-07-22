@@ -37,7 +37,6 @@ services:
     extends:
       service: immich-app-base
     profiles: !reset []
-    container_name: immich_init
     image: immich-server-dev:latest
     build:
       context: ../
@@ -62,7 +61,6 @@ services:
     extends:
       service: immich-app-base
     profiles: !reset []
-    container_name: immich_server
     command: ['immich-dev']
     image: immich-server-dev:latest
     build:
@@ -94,7 +92,7 @@ services:
     ports:
       - 9230:9230
       - 9231:9231
-      - 2283:2283
+      - 32283:2283
     depends_on:
       immich-init:
         condition: service_healthy
@@ -109,7 +107,6 @@ services:
     extends:
       service: immich-app-base
     profiles: !reset []
-    container_name: immich_web
     image: immich-web-dev:latest
     build:
       context: ../
@@ -129,7 +126,6 @@ services:
         condition: service_started
 
   immich-machine-learning:
-    container_name: immich_machine_learning
     image: immich-machine-learning-dev:latest
     # extends:
     #   file: hwaccel.ml.yml
@@ -153,13 +149,11 @@ services:
       disable: false
 
   redis:
-    container_name: immich_redis
     image: docker.io/valkey/valkey:9@sha256:8e8d64b405ce18f41b8e5ee20aa4687a8ed0022d1298f2ce31cdcf3a76e09411
     healthcheck:
       test: redis-cli ping || exit 1
 
   database:
-    container_name: immich_postgres
     image: ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0@sha256:bcf63357191b76a916ae5eb93464d65c07511da41e3bf7a8416db519b40b1c23
     env_file:
       - .env
@@ -177,7 +171,6 @@ services:
       disable: false
   # set IMMICH_TELEMETRY_INCLUDE=all in .env to enable metrics
   # immich-prometheus:
-  #   container_name: immich_prometheus
   #   ports:
   #     - 9090:9090
   #   image: prom/prometheus
@@ -188,7 +181,6 @@ services:
   # first login uses admin/admin
   # add data source for http://immich-prometheus:9090 to get started
   # immich-grafana:
-  #   container_name: immich_grafana
   #   command: ['./run.sh', '-disable-reporting']
   #   ports:
   #     - 3000:3000

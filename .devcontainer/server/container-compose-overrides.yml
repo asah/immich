@@ -1,6 +1,7 @@
 services:
   immich-app-base:
     image: busybox
+
   immich-server:
     extends:
       service: immich-app-base
@@ -17,12 +18,16 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - build_cache:/buildcache
       - ../packages/plugin-core:/build/plugins/immich-plugin-core
+
   immich-web:
     env_file: !reset []
+
   immich-machine-learning:
     env_file: !reset []
+
   database:
     env_file: !reset []
+    ports: !reset []
     environment: !override
       POSTGRES_PASSWORD: ${DB_PASSWORD-postgres}
       POSTGRES_USER: ${DB_USERNAME-postgres}
@@ -31,8 +36,11 @@ services:
       POSTGRES_HOST_AUTH_METHOD: md5
     volumes:
       - ${UPLOAD_LOCATION:-postgres-devcontainer-volume}${UPLOAD_LOCATION:+/postgres}:/var/lib/postgresql/data
+
   redis:
     env_file: !reset []
+    container_name: !reset null
+
 volumes:
   upload-devcontainer-volume:
   postgres-devcontainer-volume:
