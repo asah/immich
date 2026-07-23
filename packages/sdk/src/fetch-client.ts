@@ -553,6 +553,14 @@ export type AlbumsAddAssetsResponseDto = {
     /** Operation success */
     success: boolean;
 };
+export type AlbumAssetPriorityDto = {
+    assetId: string;
+    priority: number | null;
+};
+export type UpdateAlbumAssetPriorityDto = {
+    assetIds: string[];
+    priority: number | null;
+};
 export type AlbumStatisticsResponseDto = {
     /** Number of non-shared albums */
     notShared: number;
@@ -1658,6 +1666,13 @@ export type MetadataSearchDto = {
     ocr?: string;
     /** Sort order */
     order?: AssetOrder;
+    /** Property to use when sorting search results */
+    orderBy?: "fileCreatedAt" | "originalFileName" | "fileSizeInByte" | "albumPriority";
+    /** Ordered sort criteria, from major to minor */
+    sort?: {
+        field: "fileCreatedAt" | "originalFileName" | "fileSizeInByte" | "albumPriority";
+        order: AssetOrder;
+    }[];
     /** Filter by original file name */
     originalFileName?: string;
     /** Filter by original file path */
@@ -3951,6 +3966,22 @@ export function addAssetsToAlbum({ id, bulkIdsDto }: {
         ...opts,
         method: "PUT",
         body: bulkIdsDto
+    })));
+}
+export function getAlbumAssetPriorities({ id }: { id: string }, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 200;
+        data: AlbumAssetPriorityDto[];
+    }>(`/albums/${encodeURIComponent(id)}/assets/priorities`, { ...opts }));
+}
+export function updateAlbumAssetPriority({ id, updateAlbumAssetPriorityDto }: {
+    id: string;
+    updateAlbumAssetPriorityDto: UpdateAlbumAssetPriorityDto;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchText(`/albums/${encodeURIComponent(id)}/assets/priority`, oazapfts.json({
+        ...opts,
+        method: "PATCH",
+        body: updateAlbumAssetPriorityDto
     })));
 }
 /**

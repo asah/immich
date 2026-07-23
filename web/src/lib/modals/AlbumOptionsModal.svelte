@@ -10,6 +10,14 @@
     handleUpdateUserAlbumRole,
   } from '$lib/services/album.service';
   import {
+    AlbumAssetSortBy,
+    albumAssetViewSettings,
+    defaultAlbumAssetDisplayInfo,
+    SortOrder,
+    type AlbumAssetDisplayInfo,
+    type AlbumAssetSortCriterion,
+  } from '$lib/stores/preferences.store';
+  import {
     AlbumUserRole,
     AssetOrder,
     getAlbumInfo,
@@ -18,7 +26,19 @@
     type SharedLinkResponseDto,
     type UserResponseDto,
   } from '@immich/sdk';
-  import { Field, HStack, Modal, ModalBody, Select, Stack, Switch, Text, type SelectOption } from '@immich/ui';
+  import {
+    Checkbox,
+    Field,
+    HStack,
+    Label,
+    Modal,
+    ModalBody,
+    Select,
+    Stack,
+    Switch,
+    Text,
+    type SelectOption,
+  } from '@immich/ui';
   import { onMount } from 'svelte';
   import { t } from 'svelte-i18n';
 
@@ -60,6 +80,59 @@
 
   let sharedLinks: SharedLinkResponseDto[] = $state([]);
 
+  const sortCriteria = $derived.by(() => {
+    const criteria = $albumAssetViewSettings.sortCriteria?.length
+      ? $albumAssetViewSettings.sortCriteria
+      : [{ sortBy: $albumAssetViewSettings.sortBy, sortOrder: $albumAssetViewSettings.sortOrder }];
+    return criteria.length === 1 && criteria[0].sortBy === AlbumAssetSortBy.DateTaken
+      ? [{ ...criteria[0], sortOrder: album.order === AssetOrder.Asc ? SortOrder.Asc : SortOrder.Desc }]
+      : criteria;
+  });
+  const sortByOptions = $derived([
+    { label: $t('date_taken'), value: AlbumAssetSortBy.DateTaken },
+    { label: $t('file_name_text'), value: AlbumAssetSortBy.FileName },
+    { label: $t('file_size'), value: AlbumAssetSortBy.FileSize },
+    { label: $t('album_priority'), value: AlbumAssetSortBy.Priority },
+  ]);
+
+  const saveSortCriteria = async (criteria: AlbumAssetSortCriterion[]) => {
+    const [primary] = criteria;
+    $albumAssetViewSettings = {
+      ...$albumAssetViewSettings,
+      sortBy: primary.sortBy,
+      sortOrder: primary.sortOrder,
+      sortCriteria: criteria,
+    };
+    if (criteria.length === 1 && primary.sortBy === AlbumAssetSortBy.DateTaken) {
+      const assetOrder = primary.sortOrder === SortOrder.Asc ? AssetOrder.Asc : AssetOrder.Desc;
+      if (album.order !== assetOrder) await handleUpdateAlbum(album, { order: assetOrder });
+    }
+  };
+
+  const updateSortCriterion = (index: number, update: Partial<AlbumAssetSortCriterion>) => {
+    void saveSortCriteria(
+      sortCriteria.map((criterion, at) => (at === index ? { ...criterion, ...update } : criterion)),
+    );
+  };
+
+  const displayInfoOptions: Array<{ key: keyof AlbumAssetDisplayInfo; label: string }> = $derived([
+    { key: 'location', label: $t('location') },
+    { key: 'date', label: $t('date_taken') },
+    { key: 'time', label: $t('time') },
+    { key: 'filename', label: $t('file_name_text') },
+    { key: 'fileSize', label: $t('file_size') },
+    { key: 'camera', label: $t('camera_make_model') },
+    { key: 'cameraSettings', label: $t('camera_settings') },
+    { key: 'lens', label: $t('lens_name') },
+    { key: 'lensSettings', label: $t('lens_settings') },
+    { key: 'priority', label: $t('album_priority') },
+  ]);
+
+  const setDisplayInfo = (key: keyof AlbumAssetDisplayInfo, checked: boolean) => {
+    const displayInfo = { ...defaultAlbumAssetDisplayInfo, ...$albumAssetViewSettings.displayInfo, [key]: checked };
+    $albumAssetViewSettings = { ...$albumAssetViewSettings, displayInfo };
+  };
+
   onMount(async () => {
     sharedLinks = await getAllSharedLinks({ albumId: album.id });
   });
@@ -79,18 +152,72 @@
       <div>
         <Text size="medium" fontWeight="semi-bold">{$t('settings')}</Text>
         <div class="mt-2 grid gap-y-3 ps-2">
-          {#if album.order}
-            <Field label={$t('display_order')} disabled={readOnly}>
-              <Select
-                value={album.order}
-                options={[
-                  { label: $t('newest_first'), value: AssetOrder.Desc },
-                  { label: $t('oldest_first'), value: AssetOrder.Asc },
-                ]}
-                onChange={(value) => handleUpdateAlbum(album, { order: value })}
-              />
-            </Field>
-          {/if}
+          <Field label={$t('display_order')} disabled={readOnly}>
+            <div class="flex flex-col gap-2">
+              {#each sortCriteria as criterion, index (`${index}-${criterion.sortBy}`)}
+                <div class="flex items-center gap-2">
+                  <span class="w-4 text-sm text-gray-500">{index + 1}.</span>
+                  <div class="min-w-0 flex-1">
+                    <Select
+                      value={criterion.sortBy}
+                      options={sortByOptions.filter(
+                        ({ value }) =>
+                          value === criterion.sortBy || !sortCriteria.some(({ sortBy }) => sortBy === value),
+                      )}
+                      onChange={(sortBy) => updateSortCriterion(index, { sortBy: sortBy as AlbumAssetSortBy })}
+                    />
+                  </div>
+                  <div class="w-32">
+                    <Select
+                      value={criterion.sortOrder}
+                      options={[
+                        { label: $t('ascending'), value: SortOrder.Asc },
+                        { label: $t('descending'), value: SortOrder.Desc },
+                      ]}
+                      onChange={(sortOrder) => updateSortCriterion(index, { sortOrder: sortOrder as SortOrder })}
+                    />
+                  </div>
+                  {#if sortCriteria.length > 1}
+                    <button
+                      type="button"
+                      class="px-1 text-lg text-gray-500 hover:text-red-500"
+                      aria-label={$t('remove')}
+                      onclick={() => saveSortCriteria(sortCriteria.filter((_, at) => at !== index))}>×</button
+                    >
+                  {/if}
+                </div>
+              {/each}
+              {#if sortCriteria.length < 4 && sortCriteria.length < sortByOptions.length}
+                <button
+                  type="button"
+                  class="self-start text-sm font-medium text-primary hover:underline"
+                  onclick={() => {
+                    const next = sortByOptions.find(
+                      ({ value }) => !sortCriteria.some(({ sortBy }) => sortBy === value),
+                    );
+                    if (next)
+                      void saveSortCriteria([...sortCriteria, { sortBy: next.value, sortOrder: SortOrder.Asc }]);
+                  }}>+ {$t('add_sort_criterion')}</button
+                >
+              {/if}
+            </div>
+          </Field>
+          <div>
+            <Text size="small" fontWeight="medium">{$t('display_file_info')}:</Text>
+            <div class="grid grid-cols-2 gap-x-4 gap-y-2 pt-1">
+              {#each displayInfoOptions as option (option.key)}
+                <div class="flex items-center gap-2 text-sm">
+                  <Checkbox
+                    id={`album-display-info-${option.key}`}
+                    size="tiny"
+                    checked={$albumAssetViewSettings.displayInfo?.[option.key] ?? false}
+                    onCheckedChange={(checked) => setDisplayInfo(option.key, checked)}
+                  />
+                  <Label label={option.label} for={`album-display-info-${option.key}`} />
+                </div>
+              {/each}
+            </div>
+          </div>
           <Field label={$t('comments_and_likes')} description={$t('let_others_respond')} disabled={readOnly}>
             <Switch
               checked={album.isActivityEnabled}

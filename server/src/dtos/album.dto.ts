@@ -54,6 +54,20 @@ const AlbumsAddAssetsResponseSchema = z
   })
   .meta({ id: 'AlbumsAddAssetsResponseDto' });
 
+const AlbumAssetPrioritySchema = z
+  .object({
+    assetId: z.uuidv4().describe('Asset ID'),
+    priority: z.int().min(1).max(9).nullable().describe('Album-specific priority'),
+  })
+  .meta({ id: 'AlbumAssetPriorityDto' });
+
+const UpdateAlbumAssetPrioritySchema = z
+  .object({
+    assetIds: z.array(z.uuidv4()).min(1).describe('Asset IDs'),
+    priority: z.int().min(1).max(9).nullable().describe('Album-specific priority, or null to clear'),
+  })
+  .meta({ id: 'UpdateAlbumAssetPriorityDto' });
+
 const UpdateAlbumSchema = z
   .object({
     albumName: z.string().optional().describe('Album name'),
@@ -159,6 +173,8 @@ export class AlbumUserCreateDto extends createZodDto(AlbumUserCreateSchema) {}
 export class CreateAlbumDto extends createZodDto(CreateAlbumSchema) {}
 export class AlbumsAddAssetsDto extends createZodDto(AlbumsAddAssetsSchema) {}
 export class AlbumsAddAssetsResponseDto extends createZodDto(AlbumsAddAssetsResponseSchema) {}
+export class AlbumAssetPriorityDto extends createZodDto(AlbumAssetPrioritySchema) {}
+export class UpdateAlbumAssetPriorityDto extends createZodDto(UpdateAlbumAssetPrioritySchema) {}
 export class UpdateAlbumDto extends createZodDto(UpdateAlbumSchema) {}
 export class GetAlbumsDto extends createZodDto(GetAlbumsSchema) {}
 export class AlbumStatisticsResponseDto extends createZodDto(AlbumStatisticsResponseSchema) {}

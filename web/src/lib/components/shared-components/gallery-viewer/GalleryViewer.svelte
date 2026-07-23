@@ -4,6 +4,7 @@
   import type { Action } from '$lib/components/asset-viewer/actions/action';
   import type { AssetCursor } from '$lib/components/asset-viewer/AssetViewer.svelte';
   import Thumbnail from '$lib/components/assets/thumbnail/Thumbnail.svelte';
+  import GalleryAssetInfo from '$lib/components/shared-components/gallery-viewer/GalleryAssetInfo.svelte';
   import { AssetAction } from '$lib/constants';
   import Portal from '$lib/elements/Portal.svelte';
   import type { AssetMultiSelectManager } from '$lib/managers/asset-multi-select-manager.svelte';
@@ -15,6 +16,7 @@
   import { Route } from '$lib/route';
   import { keyboardManager } from '$lib/stores/keyboard-manager.svelte';
   import { showDeleteModal } from '$lib/stores/preferences.store';
+  import type { AlbumAssetDisplayInfo } from '$lib/stores/preferences.store';
   import { handlePromiseError } from '$lib/utils';
   import { deleteAssets } from '$lib/utils/actions';
   import { archiveAssets, getNextAsset, getPreviousAsset, navigateToAsset } from '$lib/utils/asset-utils';
@@ -24,7 +26,7 @@
   import { navigate } from '$lib/utils/navigation';
   import { isTimelineAsset, toTimelineAsset } from '$lib/utils/timeline-util';
   import { TUNABLES } from '$lib/utils/tunables';
-  import { AssetVisibility, type AssetResponseDto } from '@immich/sdk';
+  import { AssetVisibility, type AlbumResponseDto, type AssetResponseDto } from '@immich/sdk';
   import { modalManager } from '@immich/ui';
   import { debounce } from 'lodash-es';
   import { t } from 'svelte-i18n';
@@ -42,11 +44,15 @@
     viewport: Viewport;
     onEndReached?: (() => void) | undefined;
     showAssetName?: boolean;
+    displayAssetInfo?: AlbumAssetDisplayInfo;
     onReload?: (() => void) | undefined;
     pageHeaderOffset?: number;
     slidingWindowOffset?: number;
     arrowNavigation?: boolean;
     allowDeletion?: boolean;
+    album?: AlbumResponseDto;
+    albumPriorities?: Record<string, number>;
+    onAlbumPriorityChange?: (assetId: string, priority: number | null) => void;
   };
 
   let {
@@ -58,11 +64,15 @@
     viewport,
     onEndReached = undefined,
     showAssetName = false,
+    displayAssetInfo,
     onReload = undefined,
     slidingWindowOffset = 0,
     pageHeaderOffset = 0,
     arrowNavigation = true,
     allowDeletion = true,
+    album,
+    albumPriorities = {},
+    onAlbumPriorityChange,
   }: Props = $props();
 
   const navigationAssets = $derived(viewerAssets ?? assets);
@@ -369,7 +379,14 @@
             thumbnailWidth={geometry.getWidth(index)}
             thumbnailHeight={geometry.getHeight(index)}
           />
-          {#if showAssetName && !isTimelineAsset(asset)}
+          {#if displayAssetInfo?.priority && albumPriorities[asset.id]}
+            <div class="absolute top-2 left-2 rounded-full bg-black/75 px-2 py-0.5 text-sm font-bold text-white">
+              {albumPriorities[asset.id]}
+            </div>
+          {/if}
+          {#if displayAssetInfo && !isTimelineAsset(asset)}
+            <GalleryAssetInfo {asset} settings={displayAssetInfo} />
+          {:else if showAssetName && !isTimelineAsset(asset)}
             <div
               class="absolute bottom-0 w-full overflow-clip bg-slate-50/75 bg-linear-to-t p-1 text-center font-mono text-xs font-semibold text-ellipsis whitespace-pre-wrap dark:bg-slate-800/75"
             >
@@ -388,6 +405,9 @@
     {#await import('$lib/components/asset-viewer/AssetViewer.svelte') then { default: AssetViewer }}
       <AssetViewer
         cursor={assetCursor}
+        {album}
+        albumPriority={albumPriorities[assetCursor.current.id] ?? null}
+        {onAlbumPriorityChange}
         onAction={handleAction}
         onRandom={handleRandom}
         onAssetChange={updateCurrentAsset}
