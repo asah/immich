@@ -17069,6 +17069,12 @@
             "minimum": -90,
             "type": "number"
           },
+          "lensModel": {
+            "description": "Lens model",
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
+          },
           "longitude": {
             "description": "Longitude coordinate",
             "maximum": 180,
@@ -27337,6 +27343,12 @@
             "maximum": 90,
             "minimum": -90,
             "type": "number"
+          },
+          "lensModel": {
+            "description": "Lens model",
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
           },
           "livePhotoVideoId": {
             "description": "Live photo video ID",

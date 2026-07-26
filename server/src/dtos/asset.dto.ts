@@ -30,6 +30,7 @@ const UpdateAssetBaseSchema = z
           .getExtensions(),
       }),
     description: z.string().optional().describe('Asset description'),
+    lensModel: z.string().trim().min(1).nullable().optional().describe('Lens model'),
   })
   .refine(
     (data) =>

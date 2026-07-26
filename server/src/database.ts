@@ -529,6 +529,7 @@ export const lockableProperties = [
   'description',
   'dateTimeOriginal',
   'latitude',
+  'lensModel',
   'longitude',
   'rating',
   'timeZone',
