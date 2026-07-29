@@ -5,9 +5,21 @@
   import SearchFilterModal from '$lib/modals/SearchFilterModal.svelte';
   import { Route } from '$lib/route';
   import { searchStore } from '$lib/stores/search.svelte';
-  import { handlePromiseError } from '$lib/utils';
+  import { getAssetMediaUrl, handlePromiseError } from '$lib/utils';
   import { generateId } from '$lib/utils/generate-id';
-  import type { MetadataSearchDto, SmartSearchDto } from '@immich/sdk';
+  import { featureFlagsManager } from '$lib/managers/feature-flags-manager.svelte';
+  import { lang } from '$lib/stores/preferences.store';
+  import {
+    AssetMediaSize,
+    AssetVisibility,
+    getAllAlbums,
+    searchAssets,
+    searchSmart,
+    type AlbumResponseDto,
+    type AssetResponseDto,
+    type MetadataSearchDto,
+    type SmartSearchDto,
+  } from '@immich/sdk';
   import { Button, IconButton, modalManager } from '@immich/ui';
   import { mdiClose, mdiMagnify, mdiTune } from '@mdi/js';
   import { onDestroy, onMount, tick } from 'svelte';
@@ -32,6 +44,12 @@
   let close: (() => Promise<void>) | undefined;
   let showSearchTypeDropdown = $state(false);
   let currentSearchType = $state('smart');
+  let autocompleteResults: AutocompleteResult[] = $state([]);
+  let autocompleteRequest = 0;
+
+  export type AutocompleteResult =
+    | { type: 'album'; id: string; label: string; thumbnailUrl?: string }
+    | { type: 'photo'; id: string; label: string; thumbnailUrl?: string };
 
   const listboxId = generateId();
   const searchTypeId = generateId();
@@ -167,6 +185,79 @@
   const onInput = () => {
     openDropdown();
     searchHistoryBox?.clearSelection();
+  };
+
+  $effect(() => {
+    const query = value.trim();
+    const searchType = currentSearchType;
+    const request = ++autocompleteRequest;
+
+    if (query.length < 2) {
+      autocompleteResults = [];
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      handlePromiseError(loadAutocompleteResults(query, searchType, request));
+    }, 250);
+
+    return () => clearTimeout(timeout);
+  });
+
+  const loadAutocompleteResults = async (query: string, searchType: string, request: number) => {
+    const albumPromise = getAllAlbums({ name: query });
+    const photoPromise =
+      searchType === 'smart' && featureFlagsManager.value.smartSearch
+        ? searchSmart({
+            smartSearchDto: {
+              query,
+              language: $lang,
+              size: 10,
+              visibility: AssetVisibility.Timeline,
+            },
+          }).then(({ assets }) => assets.items)
+        : searchAssets({
+            metadataSearchDto: {
+              ...(searchType === 'smart' ? { originalFileName: query } : buildSearchPayload(query)),
+              size: 10,
+              visibility: AssetVisibility.Timeline,
+            },
+          }).then(({ assets }) => assets.items);
+
+    const [albums, photos] = await Promise.all([albumPromise, photoPromise]);
+    if (request !== autocompleteRequest || query !== value.trim()) {
+      return;
+    }
+
+    autocompleteResults = [
+      ...albums.map((album) => toAlbumAutocompleteResult(album)),
+      ...photos.map((photo) => toPhotoAutocompleteResult(photo)),
+    ].slice(0, 10);
+  };
+
+  const toAlbumAutocompleteResult = (album: AlbumResponseDto): AutocompleteResult => ({
+    type: 'album',
+    id: album.id,
+    label: album.albumName,
+    thumbnailUrl: album.albumThumbnailAssetId
+      ? getAssetMediaUrl({ id: album.albumThumbnailAssetId, size: AssetMediaSize.Thumbnail })
+      : undefined,
+  });
+
+  const toPhotoAutocompleteResult = (asset: AssetResponseDto): AutocompleteResult => ({
+    type: 'photo',
+    id: asset.id,
+    label: asset.originalFileName,
+    thumbnailUrl: getAssetMediaUrl({
+      id: asset.id,
+      size: AssetMediaSize.Thumbnail,
+      cacheKey: asset.thumbhash,
+    }),
+  });
+
+  const onAutocompleteResultClick = async (result: AutocompleteResult) => {
+    closeDropdown();
+    await goto(result.type === 'album' ? Route.viewAlbum({ id: result.id }) : Route.viewAsset({ id: result.id }));
   };
 
   const openDropdown = () => {
@@ -310,10 +401,12 @@
         bind:isSearchSuggestions
         id={listboxId}
         searchQuery={value}
+        results={autocompleteResults}
         isOpen={showSuggestions}
         onClearAllSearchTerms={clearAllSearchTerms}
         onClearSearchTerm={(searchTerm) => clearSearchTerm(searchTerm)}
         onSelectSearchTerm={(searchTerm) => handlePromiseError(onHistoryTermClick(searchTerm))}
+        onSelectResult={(result) => handlePromiseError(onAutocompleteResultClick(result))}
         onActiveSelectionChange={(id) => (selectedId = id)}
       />
     </div>

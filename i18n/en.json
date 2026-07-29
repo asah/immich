@@ -552,6 +552,7 @@
   "allow_public_user_to_download": "Allow public user to download",
   "allow_public_user_to_upload": "Allow public user to upload",
   "allowed": "Allowed",
+  "also_matches_albums": "Also matches albums",
   "alt_text_qr_code": "QR code image",
   "always_keep": "Always keep",
   "always_keep_photos_hint": "Free Up Space will keep all photos on this device.",
