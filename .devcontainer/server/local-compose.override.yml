@@ -1,0 +1,18 @@
+services:
+  database:
+    container_name: immich_dev_postgres
+
+  redis:
+    container_name: immich_dev_redis
+
+  immich-server:
+    container_name: immich_dev_server
+
+  immich-machine-learning:
+    container_name: immich_dev_machine_learning
+
+  immich-init:
+    container_name: immich_dev_init
+
+  immich-web:
+    container_name: immich_dev_web
