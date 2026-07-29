@@ -35,6 +35,7 @@
     type AlbumResponseDto,
     type AssetResponseDto,
     AssetVisibility,
+    getAllAlbums,
     getPerson,
     getTagById,
     type MetadataSearchDto,
@@ -62,7 +63,7 @@
   let scrollY = $state(0);
   let scrollYHistory = 0;
 
-  type SearchTerms = MetadataSearchDto & Pick<SmartSearchDto, 'query' | 'queryAssetId'>;
+  type SearchTerms = Omit<MetadataSearchDto, 'sort'> & Pick<SmartSearchDto, 'query' | 'queryAssetId'>;
   let searchQuery = $derived(page.url.searchParams.get(QueryParameter.QUERY));
   let smartSearchEnabled = $derived(featureFlagsManager.value.smartSearch);
   let terms = $derived<SearchTerms>(searchQuery ? JSON.parse(searchQuery) : {});
@@ -123,6 +124,9 @@
     nextPage = 1;
     searchResultAssets = [];
     searchResultAlbums = [];
+    if (terms.query?.trim()) {
+      searchResultAlbums = await getAllAlbums({ name: terms.query.trim() });
+    }
     await loadNextPage(true);
   }
 
@@ -253,7 +257,7 @@
 
 {#if searchTermKeys.length > 0}
   <section id="search-chips" class="mx-auto mt-24 w-full max-w-7xl px-4 sm:px-8 lg:px-12">
-    <div class="flex w-full flex-wrap place-content-center place-items-center gap-2.5 sm:gap-3">
+    <div class="flex w-full flex-wrap items-center justify-start gap-2.5 sm:gap-3">
       {#each searchTermKeys as searchKey (searchKey)}
         {@const value = terms[searchKey]}
         <div
@@ -298,6 +302,19 @@
           </button>
         </div>
       {/each}
+      {#if searchResultAlbums.length > 0}
+        <span class="ms-1 text-sm text-immich-fg/70 dark:text-immich-dark-fg/70">
+          {$t('also_matches_albums')}:
+          {#each searchResultAlbums as album, index (album.id)}
+            <a
+              class="font-medium text-primary hover:underline dark:text-immich-dark-primary"
+              href={Route.viewAlbum({ id: album.id })}
+            >
+              {album.albumName}</a
+            >{index < searchResultAlbums.length - 1 ? ', ' : ''}
+          {/each}
+        </span>
+      {/if}
     </div>
   </section>
 {/if}
@@ -391,7 +408,7 @@
     {:else}
       <div class="fixed inset-s-0 top-0 z-2 w-full">
         <ControlAppBar onClose={() => goto(previousRoute)} backIcon={mdiArrowLeft}>
-          <div class="mx-auto w-full max-w-2xl pe-2">
+          <div class="w-full max-w-2xl pe-2">
             <SearchBar grayTheme={false} value={terms?.query ?? ''} searchQuery={terms} />
           </div>
         </ControlAppBar>

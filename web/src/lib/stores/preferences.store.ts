@@ -85,6 +85,58 @@ export enum AlbumViewMode {
   List = 'List',
 }
 
+export enum AlbumAssetSortBy {
+  DateTaken = 'dateTaken',
+  FileName = 'fileName',
+  FileSize = 'fileSize',
+  Priority = 'priority',
+}
+
+export interface AlbumAssetViewSettings {
+  sortBy: AlbumAssetSortBy;
+  sortOrder: SortOrder;
+  sortCriteria?: AlbumAssetSortCriterion[];
+  displayInfo: AlbumAssetDisplayInfo;
+}
+
+export interface AlbumAssetSortCriterion {
+  sortBy: AlbumAssetSortBy;
+  sortOrder: SortOrder;
+}
+
+export interface AlbumAssetDisplayInfo {
+  location: boolean;
+  date: boolean;
+  time: boolean;
+  filename: boolean;
+  fileSize: boolean;
+  camera: boolean;
+  cameraSettings: boolean;
+  lens: boolean;
+  lensSettings: boolean;
+  priority: boolean;
+}
+
+export const defaultAlbumAssetDisplayInfo: AlbumAssetDisplayInfo = {
+  location: false,
+  date: false,
+  time: false,
+  filename: false,
+  fileSize: false,
+  camera: false,
+  cameraSettings: false,
+  lens: false,
+  lensSettings: false,
+  priority: true,
+};
+
+export const albumAssetViewSettings = persistedObject<AlbumAssetViewSettings>('album-asset-view-settings', {
+  sortBy: AlbumAssetSortBy.DateTaken,
+  sortOrder: SortOrder.Desc,
+  sortCriteria: [{ sortBy: AlbumAssetSortBy.DateTaken, sortOrder: SortOrder.Desc }],
+  displayInfo: defaultAlbumAssetDisplayInfo,
+});
+
 export enum AlbumFilter {
   All = 'All',
   Owned = 'Owned',

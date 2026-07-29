@@ -78,6 +78,21 @@ const MetadataSearchSchema = RandomSearchSchema.extend({
   description: z.string().trim().optional().describe('Filter by description text'),
   checksum: z.string().optional().describe('Filter by file checksum'),
   originalFileName: z.string().trim().optional().describe('Filter by original file name'),
+  orderBy: z
+    .enum(['fileCreatedAt', 'originalFileName', 'fileSizeInByte', 'albumPriority'])
+    .optional()
+    .describe('Property to use when sorting search results'),
+  sort: z
+    .array(
+      z.object({
+        field: z.enum(['fileCreatedAt', 'originalFileName', 'fileSizeInByte', 'albumPriority']),
+        order: AssetOrderSchema,
+      }),
+    )
+    .min(1)
+    .max(4)
+    .optional()
+    .describe('Ordered sort criteria, from major to minor'),
   originalPath: z.string().optional().describe('Filter by original file path'),
   previewPath: z.string().optional().describe('Filter by preview file path'),
   thumbnailPath: z.string().optional().describe('Filter by thumbnail file path'),

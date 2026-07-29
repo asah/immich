@@ -2623,6 +2623,102 @@
         "x-immich-state": "Stable"
       }
     },
+    "/albums/{id}/assets/priorities": {
+      "get": {
+        "operationId": "getAlbumAssetPriorities",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AlbumAssetPriorityDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "summary": "Get album asset priorities",
+        "tags": [
+          "Albums"
+        ],
+        "x-immich-permission": "album.read"
+      }
+    },
+    "/albums/{id}/assets/priority": {
+      "patch": {
+        "operationId": "updateAlbumAssetPriority",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAlbumAssetPriorityDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "summary": "Set album asset priority",
+        "tags": [
+          "Albums"
+        ],
+        "x-immich-permission": "albumAsset.create"
+      }
+    },
     "/albums/{id}/map-markers": {
       "get": {
         "description": "Retrieve map marker information for a specific album by its ID.",
@@ -16545,6 +16641,28 @@
         ],
         "type": "object"
       },
+      "AlbumAssetPriorityDto": {
+        "properties": {
+          "assetId": {
+            "description": "Asset ID",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+            "type": "string"
+          },
+          "priority": {
+            "description": "Album-specific priority",
+            "maximum": 9,
+            "minimum": 1,
+            "nullable": true,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "assetId",
+          "priority"
+        ],
+        "type": "object"
+      },
       "AlbumResponseDto": {
         "properties": {
           "albumName": {
@@ -16951,6 +17069,12 @@
             "maximum": 90,
             "minimum": -90,
             "type": "number"
+          },
+          "lensModel": {
+            "description": "Lens model",
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
           },
           "longitude": {
             "description": "Longitude coordinate",
@@ -20167,6 +20291,16 @@
             "default": "desc",
             "description": "Sort order"
           },
+          "orderBy": {
+            "description": "Property to use when sorting search results",
+            "enum": [
+              "fileCreatedAt",
+              "originalFileName",
+              "fileSizeInByte",
+              "albumPriority"
+            ],
+            "type": "string"
+          },
           "originalFileName": {
             "description": "Filter by original file name",
             "type": "string"
@@ -20227,6 +20361,33 @@
             "maximum": 1000,
             "minimum": 1,
             "type": "integer"
+          },
+          "sort": {
+            "description": "Ordered sort criteria, from major to minor",
+            "items": {
+              "properties": {
+                "field": {
+                  "enum": [
+                    "fileCreatedAt",
+                    "originalFileName",
+                    "fileSizeInByte",
+                    "albumPriority"
+                  ],
+                  "type": "string"
+                },
+                "order": {
+                  "$ref": "#/components/schemas/AssetOrder"
+                }
+              },
+              "required": [
+                "field",
+                "order"
+              ],
+              "type": "object"
+            },
+            "maxItems": 4,
+            "minItems": 1,
+            "type": "array"
           },
           "state": {
             "description": "Filter by state/province name",
@@ -27101,6 +27262,32 @@
         ],
         "type": "object"
       },
+      "UpdateAlbumAssetPriorityDto": {
+        "properties": {
+          "assetIds": {
+            "description": "Asset IDs",
+            "items": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "priority": {
+            "description": "Album-specific priority, or null to clear",
+            "maximum": 9,
+            "minimum": 1,
+            "nullable": true,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "assetIds",
+          "priority"
+        ],
+        "type": "object"
+      },
       "UpdateAlbumDto": {
         "properties": {
           "albumName": {
@@ -27157,6 +27344,12 @@
             "maximum": 90,
             "minimum": -90,
             "type": "number"
+          },
+          "lensModel": {
+            "description": "Lens model",
+            "minLength": 1,
+            "nullable": true,
+            "type": "string"
           },
           "livePhotoVideoId": {
             "description": "Live photo video ID",

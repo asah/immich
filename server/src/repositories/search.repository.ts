@@ -109,6 +109,11 @@ export interface SearchAlbumOptions {
 
 export interface SearchOrderOptions {
   orderDirection?: 'asc' | 'desc';
+  orderBy?: 'fileCreatedAt' | 'originalFileName' | 'fileSizeInByte' | 'albumPriority';
+  sort?: Array<{
+    field: 'fileCreatedAt' | 'originalFileName' | 'fileSizeInByte' | 'albumPriority';
+    order: 'asc' | 'desc';
+  }>;
 }
 
 export interface SearchPaginationOptions {
@@ -222,10 +227,39 @@ export class SearchRepository {
   })
   async searchMetadata(pagination: SearchPaginationOptions, options: AssetSearchOptions) {
     const orderDirection = (options.orderDirection?.toLowerCase() || 'desc') as OrderByDirection;
-    const items = await searchAssetBuilderLegacy(this.db, options)
+    const criteria = options.sort?.length
+      ? options.sort
+      : [{ field: options.orderBy ?? 'fileCreatedAt', order: orderDirection }];
+    const hasFileSize = criteria.some(({ field }) => field === 'fileSizeInByte');
+    const hasAlbumPriority = criteria.some(({ field }) => field === 'albumPriority') && options.albumIds?.length === 1;
+    const searchOptions = hasFileSize ? { ...options, withExif: true } : options;
+    const orderExpressions = criteria.flatMap(({ field, order }) => {
+      const direction = order.toLowerCase() as OrderByDirection;
+      if (field === 'albumPriority') {
+        return hasAlbumPriority ? [sql`"priorityAlbumAsset"."priority" ${sql.raw(direction)} nulls last`] : [];
+      }
+      const column =
+        field === 'originalFileName'
+          ? 'asset.originalFileName'
+          : field === 'fileSizeInByte'
+            ? 'asset_exif.fileSizeInByte'
+            : 'asset.fileCreatedAt';
+      return [sql`${sql.ref(column)} ${sql.raw(direction)}`];
+    });
+    if (orderExpressions.length === 0) {
+      orderExpressions.push(sql`"asset"."fileCreatedAt" desc`);
+    }
+    const items = await searchAssetBuilderLegacy(this.db, searchOptions)
       .select(columns.searchAsset)
-      .orderBy('asset.fileCreatedAt', orderDirection)
-      .orderBy('asset.id', orderDirection)
+      .$if(hasAlbumPriority, (query) =>
+        query.innerJoin('album_asset as priorityAlbumAsset', (join) =>
+          join
+            .onRef('priorityAlbumAsset.assetId', '=', 'asset.id')
+            .on('priorityAlbumAsset.albumId', '=', options.albumIds![0]),
+        ),
+      )
+      .orderBy(orderExpressions)
+      .orderBy('asset.id', 'asc')
       .limit(pagination.size + 1)
       .offset((pagination.page - 1) * pagination.size)
       .execute();

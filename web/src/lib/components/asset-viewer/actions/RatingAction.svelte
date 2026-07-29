@@ -11,9 +11,10 @@
   type Props = {
     asset: AssetResponseDto;
     onAction: OnAction;
+    shortcutsEnabled?: boolean;
   };
 
-  let { asset, onAction }: Props = $props();
+  let { asset, onAction, shortcutsEnabled = true }: Props = $props();
 
   const rateAsset = async (rating: number | null) => {
     try {
@@ -42,7 +43,7 @@
 </script>
 
 <svelte:document
-  use:shortcuts={authManager.authenticated && authManager.preferences.ratings.enabled
+  use:shortcuts={shortcutsEnabled && authManager.authenticated && authManager.preferences.ratings.enabled
     ? [
         { shortcut: { key: '0' }, onShortcut: () => rateAsset(null) },
         ...[1, 2, 3, 4, 5].map((rating) => ({

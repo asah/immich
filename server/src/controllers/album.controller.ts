@@ -3,6 +3,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { Endpoint, HistoryBuilder } from 'src/decorators';
 import {
   AddUsersDto,
+  AlbumAssetPriorityDto,
   AlbumResponseDto,
   AlbumsAddAssetsDto,
   AlbumsAddAssetsResponseDto,
@@ -10,6 +11,7 @@ import {
   AlbumUserParamDto,
   CreateAlbumDto,
   GetAlbumsDto,
+  UpdateAlbumAssetPriorityDto,
   UpdateAlbumDto,
   UpdateAlbumUserDto,
 } from 'src/dtos/album.dto';
@@ -108,6 +110,25 @@ export class AlbumController {
   })
   getAlbumMapMarkers(@Auth() auth: AuthDto, @Param() { id }: UUIDParamDto): Promise<MapMarkerResponseDto[]> {
     return this.service.getMapMarkers(auth, id);
+  }
+
+  @Get(':id/assets/priorities')
+  @Authenticated({ permission: Permission.AlbumRead })
+  @Endpoint({ summary: 'Get album asset priorities' })
+  getAlbumAssetPriorities(@Auth() auth: AuthDto, @Param() { id }: UUIDParamDto): Promise<AlbumAssetPriorityDto[]> {
+    return this.service.getAssetPriorities(auth, id);
+  }
+
+  @Patch(':id/assets/priority')
+  @Authenticated({ permission: Permission.AlbumAssetCreate })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Endpoint({ summary: 'Set album asset priority' })
+  updateAlbumAssetPriority(
+    @Auth() auth: AuthDto,
+    @Param() { id }: UUIDParamDto,
+    @Body() dto: UpdateAlbumAssetPriorityDto,
+  ): Promise<void> {
+    return this.service.updateAssetPriorities(auth, id, dto);
   }
 
   @Put(':id/assets')

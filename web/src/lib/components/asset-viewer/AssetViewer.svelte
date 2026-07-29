@@ -30,6 +30,7 @@
   import { toTimelineAsset } from '$lib/utils/timeline-util';
   import {
     AssetTypeEnum,
+    AlbumUserRole,
     getAssetInfo,
     getStack,
     type AlbumResponseDto,
@@ -44,6 +45,7 @@
   import { fly } from 'svelte/transition';
   import Thumbnail from '../assets/thumbnail/Thumbnail.svelte';
   import ActivityStatus from './ActivityStatus.svelte';
+  import AlbumPriorityControl from './AlbumPriorityControl.svelte';
   import ActivityViewer from './ActivityViewer.svelte';
   import DetailPanel from './DetailPanel.svelte';
   import EditorPanel from './editor/EditorPanel.svelte';
@@ -75,6 +77,8 @@
     onClose?: (assetId: string) => void;
     onRemoveFromAlbum?: (assetIds: string[]) => void;
     onRandom?: () => Promise<{ id: string } | undefined>;
+    albumPriority?: number | null;
+    onAlbumPriorityChange?: (assetId: string, priority: number | null) => void;
   }
 
   let {
@@ -91,6 +95,8 @@
     onClose,
     onRemoveFromAlbum,
     onRandom,
+    albumPriority,
+    onAlbumPriorityChange,
   }: Props = $props();
 
   const {
@@ -605,6 +611,19 @@
       <div class="absolute inset-e-0 bottom-0 me-6 mb-6 drop-shadow-[0_0_1px_rgba(0,0,0,0.4)]">
         <OcrButton />
       </div>
+    {/if}
+
+    {#if album}
+      <AlbumPriorityControl
+        albumId={album.id}
+        assetId={asset.id}
+        priority={albumPriority}
+        onChange={(priority) => onAlbumPriorityChange?.(asset.id, priority)}
+        canEdit={album.albumUsers.some(
+          ({ user, role }) =>
+            user.id === authManager.user?.id && (role === AlbumUserRole.Owner || role === AlbumUserRole.Editor),
+        )}
+      />
     {/if}
 
     {#if $slideshowState !== SlideshowState.None}

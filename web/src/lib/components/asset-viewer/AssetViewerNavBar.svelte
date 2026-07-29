@@ -125,7 +125,7 @@
     <ActionButton action={Actions.Unfavorite} />
 
     {#if isOwner}
-      <RatingAction {asset} {onAction} />
+      <RatingAction {asset} {onAction} shortcutsEnabled={!album} />
     {/if}
 
     <ActionButton action={Actions.Edit} />

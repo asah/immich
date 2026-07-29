@@ -214,6 +214,26 @@ describe(AssetService.name, () => {
       );
     });
 
+    it('should update the exif lens model', async () => {
+      const asset = AssetFactory.create();
+      mocks.access.asset.checkOwnerAccess.mockResolvedValue(new Set([asset.id]));
+      mocks.asset.getById.mockResolvedValue(getForAsset(asset));
+      mocks.asset.update.mockResolvedValue(getForAsset(asset));
+
+      await sut.update(authStub.admin, asset.id, { lensModel: 'GF 50mm F3.5 R LM WR' });
+
+      expect(mocks.asset.upsertExif).toHaveBeenCalledWith(
+        expect.objectContaining({
+          exif: {
+            assetId: asset.id,
+            lensModel: 'GF 50mm F3.5 R LM WR',
+            lockedProperties: ['lensModel'],
+          },
+          lockedPropertiesBehavior: 'append',
+        }),
+      );
+    });
+
     it('should fail linking a live video if the motion part could not be found', async () => {
       const auth = AuthFactory.create();
       const asset = AssetFactory.create();
@@ -440,6 +460,19 @@ describe(AssetService.name, () => {
         rating: undefined,
       });
       expect(mocks.asset.updateAll).toHaveBeenCalled();
+    });
+
+    it('should bulk update the exif lens model', async () => {
+      mocks.access.asset.checkOwnerAccess.mockResolvedValue(new Set(['asset-1', 'asset-2']));
+
+      await sut.updateAll(authStub.admin, {
+        ids: ['asset-1', 'asset-2'],
+        lensModel: 'GF 110mm F2 R LM WR',
+      });
+
+      expect(mocks.asset.updateAllExif).toHaveBeenCalledWith(['asset-1', 'asset-2'], {
+        lensModel: 'GF 110mm F2 R LM WR',
+      });
     });
 
     it('should update exif table if dateTimeRelative and timeZone field is provided', async () => {
