@@ -202,6 +202,13 @@
               {/if}
             </div>
           </Field>
+          <Field label={$t('album_sort_dividers')} description={$t('album_sort_dividers_description')}>
+            <Switch
+              checked={$albumAssetViewSettings.showSortDividers}
+              onCheckedChange={(showSortDividers) =>
+                ($albumAssetViewSettings = { ...$albumAssetViewSettings, showSortDividers })}
+            />
+          </Field>
           <div>
             <Text size="small" fontWeight="medium">{$t('display_file_info')}:</Text>
             <div class="grid grid-cols-2 gap-x-4 gap-y-2 pt-1">

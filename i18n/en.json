@@ -530,6 +530,8 @@
   "album_remove_user_confirmation": "Are you sure you want to remove {user}?",
   "album_search_not_found": "No albums found matching your search",
   "album_share_no_users": "Looks like you have shared this album with all users or you don't have any user to share with.",
+  "album_sort_dividers": "Separate primary sort groups",
+  "album_sort_dividers_description": "Show a divider when the primary sort value changes",
   "album_summary": "Album summary",
   "album_updated": "Album updated",
   "album_updated_setting_description": "Receive an email notification when a shared album has new assets",

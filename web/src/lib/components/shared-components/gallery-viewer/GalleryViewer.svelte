@@ -22,7 +22,7 @@
   import { archiveAssets, getNextAsset, getPreviousAsset, navigateToAsset } from '$lib/utils/asset-utils';
   import { moveFocus } from '$lib/utils/focus-util';
   import { handleError } from '$lib/utils/handle-error';
-  import { getJustifiedLayoutFromAssets } from '$lib/utils/layout-utils';
+  import { getGroupedJustifiedLayoutFromAssets, getJustifiedLayoutFromAssets } from '$lib/utils/layout-utils';
   import { navigate } from '$lib/utils/navigation';
   import { isTimelineAsset, toTimelineAsset } from '$lib/utils/timeline-util';
   import { TUNABLES } from '$lib/utils/tunables';
@@ -53,6 +53,7 @@
     album?: AlbumResponseDto;
     albumPriorities?: Record<string, number>;
     onAlbumPriorityChange?: (assetId: string, priority: number | null) => void;
+    primarySortGroupKeys?: string[];
   };
 
   let {
@@ -73,18 +74,23 @@
     album,
     albumPriorities = {},
     onAlbumPriorityChange,
+    primarySortGroupKeys,
   }: Props = $props();
 
   const navigationAssets = $derived(viewerAssets ?? assets);
 
+  const layoutOptions = $derived({
+    spacing: 2,
+    heightTolerance: 0.5,
+    rowHeight: Math.floor(viewport.width) < 850 ? 100 : 235,
+    rowWidth: Math.floor(viewport.width),
+  });
   const geometry = $derived(
-    getJustifiedLayoutFromAssets(assets, {
-      spacing: 2,
-      heightTolerance: 0.5,
-      rowHeight: Math.floor(viewport.width) < 850 ? 100 : 235,
-      rowWidth: Math.floor(viewport.width),
-    }),
+    primarySortGroupKeys?.length === assets.length
+      ? getGroupedJustifiedLayoutFromAssets(assets, primarySortGroupKeys, layoutOptions)
+      : getJustifiedLayoutFromAssets(assets, layoutOptions),
   );
+  const dividerTops = $derived('dividerTops' in geometry ? (geometry.dividerTops as number[]) : []);
 
   const getStyle = (index: number) => {
     return `top: ${geometry.getTop(index)}px; left: ${geometry.getLeft(index)}px; width: ${geometry.getWidth(index)}px; height: ${geometry.getHeight(index)}px;`;
@@ -356,6 +362,9 @@
     style:height={geometry.containerHeight + 'px'}
     style:width={geometry.containerWidth + 'px'}
   >
+    {#each dividerTops as top}
+      <hr class="absolute m-0 w-full border-0 border-t border-gray-300 dark:border-gray-600" style:top={top + 'px'} />
+    {/each}
     {#each assets as asset, index (asset.id + '-' + index)}
       {#if isInOrNearViewport(index)}
         {@const currentAsset = toTimelineAsset(asset)}

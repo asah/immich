@@ -96,6 +96,7 @@ export interface AlbumAssetViewSettings {
   sortBy: AlbumAssetSortBy;
   sortOrder: SortOrder;
   sortCriteria?: AlbumAssetSortCriterion[];
+  showSortDividers: boolean;
   displayInfo: AlbumAssetDisplayInfo;
 }
 
@@ -134,6 +135,7 @@ export const albumAssetViewSettings = persistedObject<AlbumAssetViewSettings>('a
   sortBy: AlbumAssetSortBy.DateTaken,
   sortOrder: SortOrder.Desc,
   sortCriteria: [{ sortBy: AlbumAssetSortBy.DateTaken, sortOrder: SortOrder.Desc }],
+  showSortDividers: true,
   displayInfo: defaultAlbumAssetDisplayInfo,
 });
 

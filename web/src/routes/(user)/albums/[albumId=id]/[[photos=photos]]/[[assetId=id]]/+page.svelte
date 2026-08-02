@@ -248,8 +248,30 @@
     viewMode === AlbumPageViewMode.VIEW &&
       (sortCriteria.length > 1 ||
         sortCriteria[0].sortBy !== AlbumAssetSortBy.DateTaken ||
+        $albumAssetViewSettings.showSortDividers ||
         Object.values({ ...defaultAlbumAssetDisplayInfo, ...$albumAssetViewSettings.displayInfo }).some(Boolean)),
   );
+
+  const primarySortGroupKeys = $derived.by(() => {
+    if (!$albumAssetViewSettings.showSortDividers) {
+      return undefined;
+    }
+
+    switch (sortCriteria[0].sortBy) {
+      case AlbumAssetSortBy.DateTaken: {
+        return filenameAssets.map(({ fileCreatedAt }) => fileCreatedAt.slice(0, 10));
+      }
+      case AlbumAssetSortBy.FileName: {
+        return filenameAssets.map(({ originalFileName }) => originalFileName);
+      }
+      case AlbumAssetSortBy.FileSize: {
+        return filenameAssets.map(({ exifInfo }) => String(exifInfo?.fileSizeInByte ?? ''));
+      }
+      case AlbumAssetSortBy.Priority: {
+        return filenameAssets.map(({ id }) => String(albumPriorities[id] ?? ''));
+      }
+    }
+  });
 
   const containsEditors = $derived(album?.shared && album.albumUsers.some(({ role }) => role === AlbumUserRole.Editor));
   const albumUsers = $derived(showAlbumUsers && containsEditors ? album.albumUsers.map(({ user }) => user) : []);
@@ -506,6 +528,7 @@
               {album}
               {albumPriorities}
               onAlbumPriorityChange={setAlbumPriority}
+              {primarySortGroupKeys}
               viewport={filenameViewport}
             />
           </div>

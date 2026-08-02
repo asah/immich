@@ -128,3 +128,62 @@ export type CommonPosition = {
   width: number;
   height: number;
 };
+
+export type GroupedJustifiedLayout = CommonJustifiedLayout & {
+  dividerTops: number[];
+};
+
+export function getGroupedJustifiedLayoutFromAssets(
+  assets: AssetResponseDto[],
+  groupKeys: string[],
+  options: CommonLayoutOptions,
+  dividerHeight = 32,
+): GroupedJustifiedLayout {
+  if (assets.length === 0) {
+    return {
+      containerWidth: 0,
+      containerHeight: 0,
+      dividerTops: [],
+      getTop: () => 0,
+      getLeft: () => 0,
+      getWidth: () => 0,
+      getHeight: () => 0,
+      getPosition: () => ({ top: 0, left: 0, width: 0, height: 0 }),
+    };
+  }
+
+  const positions: CommonPosition[] = [];
+  const dividerTops: number[] = [];
+  let groupStart = 0;
+  let topOffset = 0;
+
+  for (let index = 1; index <= assets.length; index++) {
+    if (index < assets.length && groupKeys[index] === groupKeys[groupStart]) {
+      continue;
+    }
+
+    if (groupStart > 0) {
+      dividerTops.push(topOffset + dividerHeight / 2);
+      topOffset += dividerHeight;
+    }
+
+    const groupLayout = getJustifiedLayoutFromAssets(assets.slice(groupStart, index), options);
+    for (let groupIndex = 0; groupIndex < index - groupStart; groupIndex++) {
+      const position = groupLayout.getPosition(groupIndex);
+      positions.push({ ...position, top: position.top + topOffset });
+    }
+    topOffset += groupLayout.containerHeight;
+    groupStart = index;
+  }
+
+  return {
+    containerWidth: options.rowWidth,
+    containerHeight: topOffset,
+    dividerTops,
+    getTop: (index) => positions[index]?.top,
+    getLeft: (index) => positions[index]?.left,
+    getWidth: (index) => positions[index]?.width,
+    getHeight: (index) => positions[index]?.height,
+    getPosition: (index) => positions[index],
+  };
+}
