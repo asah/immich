@@ -284,7 +284,10 @@
   };
 </script>
 
-<section class="grid min-h-0 min-w-0 gap-3 md:grid-cols-[minmax(0,1fr)_14rem]" aria-label="Story editor">
+<section
+  class="grid h-full min-h-0 min-w-0 gap-3 md:grid-cols-[minmax(0,1fr)_14rem]"
+  aria-label="Story editor"
+>
   <div class="flex min-h-0 min-w-0 flex-col gap-2">
     <div class="flex flex-wrap gap-2" aria-label="Story editor controls">
       <button class="min-h-11" type="button" onclick={() => addElement('text')}>Add text</button>
@@ -394,7 +397,7 @@
     </div>
   </div>
 
-  <aside class="min-w-0 max-h-full overflow-auto">
+  <aside class="min-h-0 min-w-0 overflow-y-auto">
     <StoryObjectList
       {scene}
       {selectedId}

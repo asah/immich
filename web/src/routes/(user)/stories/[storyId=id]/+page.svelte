@@ -403,7 +403,10 @@
           </div>{/if}{/each}
       {#if canEdit}<Button size="small" variant="ghost" onclick={addPage}>{$t('story_add_page')}</Button>{/if}
     </aside>
-    <main class:hidden={mobileSurface !== 'canvas'} class="order-1 min-h-0 min-w-0 bg-black/5 p-3 md:order-2 md:block">
+    <main
+      class:hidden={mobileSurface !== 'canvas'}
+      class="order-1 min-h-0 min-w-0 overflow-hidden bg-black/5 p-3 md:order-2 md:block"
+    >
       {#if canEdit}<StoryEditorCanvas
           scene={viewScene}
           aspectRatio={viewAspectRatio}
