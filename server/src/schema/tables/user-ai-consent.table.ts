@@ -4,15 +4,19 @@ import {
   CreateDateColumn,
   ForeignKeyColumn,
   Generated,
+  Index,
   PrimaryColumn,
   Table,
   Timestamp,
   UpdateDateColumn,
 } from '@immich/sql-tools';
+import { UpdatedAtTrigger } from 'src/decorators';
 import { AiProviderTable } from 'src/schema/tables/ai-provider.table';
 import { UserTable } from 'src/schema/tables/user.table';
 
 @Table('user_ai_consent')
+@UpdatedAtTrigger('user_ai_consent_updatedAt')
+@Index({ name: 'user_ai_consent_userId_providerId_uq', columns: ['userId', 'providerId'], unique: true })
 @Check({ name: 'user_ai_consent_disclosureHash_check', expression: `octet_length("providerDisclosureHash") = 32` })
 export class UserAiConsentTable {
   @PrimaryColumn()

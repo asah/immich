@@ -34,8 +34,8 @@ export class StoryTable {
   @PrimaryGeneratedColumn()
   id!: Generated<string>;
 
-  @Column({ type: 'character varying', length: 200, default: 'Untitled Story' })
-  title!: Generated<string>;
+  @Column({ type: 'character varying', length: 200 })
+  title!: string;
 
   @Column({ type: 'text', default: '' })
   description!: Generated<string>;

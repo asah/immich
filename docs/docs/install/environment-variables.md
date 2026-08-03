@@ -46,6 +46,7 @@ These environment variables are used by the `docker-compose.yml` file and do **N
 | `IMMICH_TRUSTED_PROXIES`            | List of comma-separated IPs set as trusted proxies                                                                                                                   |                              | server                   | api                |
 | `IMMICH_IGNORE_MOUNT_CHECK_ERRORS`  | See [System Integrity](/administration/system-integrity)                                                                                                             |                              | server                   | api, microservices |
 | `IMMICH_ALLOW_SETUP`                | When `false` disables the `/auth/admin-sign-up` endpoint                                                                                                             |            `true`            | server                   | api                |
+| `IMMICH_AI_CREDENTIAL_KEY`          | Base64-encoded 32-byte master key used to encrypt Story AI provider credentials<sup>\*4</sup>                                                                        |                              | server                   | api                |
 
 \*1: `TZ` should be set to a `TZ identifier` from [this list][tz-list]. For example, `TZ="Etc/UTC"`.
 `TZ` is used by `exiftool` as a fallback in case the timezone cannot be determined from the image metadata. It is also used for logfile timestamps and cron job execution.
@@ -53,6 +54,8 @@ These environment variables are used by the `docker-compose.yml` file and do **N
 \*2: This path is where the Immich code looks for the files, which is internal to the docker container. Setting it to a path on your host will certainly break things, you should use the `UPLOAD_LOCATION` variable instead.
 
 \*3: The [default configuration](https://helmetjs.github.io/#content-security-policy) sets `upgrade-insecure-requests`, which tells the browser to upgrade all requests to HTTPS. This breaks on HTTP-only deployments. If you cannot use HTTPS, you should use a custom helmet config file with `"upgrade-insecure-requests": null`.
+
+\*4: Story AI provider setup is disabled when this key is missing. Generate it with `openssl rand -base64 32`, store it with the same protections as database credentials, and include it in encrypted backups. Keep the value stable across restarts. Rotating it requires replacing all server-wide and per-user provider credentials; losing it makes existing encrypted credentials unrecoverable. Revoking a provider key in Immich does not revoke it at the provider, so revoke compromised keys with the provider as well.
 
 ## Workers
 

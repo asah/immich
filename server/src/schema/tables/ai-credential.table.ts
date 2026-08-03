@@ -9,11 +9,13 @@ import {
   Timestamp,
   UpdateDateColumn,
 } from '@immich/sql-tools';
+import { UpdatedAtTrigger } from 'src/decorators';
 import { AiCredentialTestStatus } from 'src/enum';
 import { ai_credential_test_status_enum } from 'src/schema/enums';
 import { UserTable } from 'src/schema/tables/user.table';
 
 @Table('ai_credential')
+@UpdatedAtTrigger('ai_credential_updatedAt')
 @Check({ name: 'ai_credential_ciphertext_check', expression: `octet_length("encryptedBytes") > 0` })
 @Check({ name: 'ai_credential_nonce_check', expression: `octet_length("nonce") >= 12` })
 @Check({ name: 'ai_credential_authenticationTag_check', expression: `octet_length("authenticationTag") >= 16` })

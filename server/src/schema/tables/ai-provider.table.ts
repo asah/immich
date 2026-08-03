@@ -10,12 +10,14 @@ import {
   Timestamp,
   UpdateDateColumn,
 } from '@immich/sql-tools';
+import { UpdatedAtTrigger } from 'src/decorators';
 import { AiProviderAdapter } from 'src/enum';
 import { ai_provider_adapter_enum } from 'src/schema/enums';
 import { AiCredentialTable } from 'src/schema/tables/ai-credential.table';
 import { UserTable } from 'src/schema/tables/user.table';
 
 @Table('ai_provider')
+@UpdatedAtTrigger('ai_provider_updatedAt')
 @Index({
   name: 'ai_provider_enabled_server_uq',
   columns: ['enabled'],

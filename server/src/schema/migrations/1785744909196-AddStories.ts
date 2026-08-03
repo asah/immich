@@ -11,7 +11,7 @@ export async function up(db: Kysely<any>): Promise<void> {
   await sql`CREATE INDEX "shared_link_storyId_idx" ON "shared_link" ("storyId");`.execute(db);
   await sql`CREATE TABLE "story" (
   "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
-  "title" character varying(200) NOT NULL DEFAULT 'Untitled Story',
+  "title" character varying(200) NOT NULL,
   "description" text NOT NULL DEFAULT '',
   "aspectRatio" story_aspect_ratio_enum NOT NULL,
   "draftRevisionId" uuid NOT NULL,
@@ -40,15 +40,16 @@ export async function up(db: Kysely<any>): Promise<void> {
 );`.execute(db);
   await sql`CREATE INDEX "ai_provider_userId_idx" ON "ai_provider" ("userId");`.execute(db);
   await sql`CREATE INDEX "ai_provider_credentialId_idx" ON "ai_provider" ("credentialId");`.execute(db);
-  await sql`CREATE UNIQUE INDEX "ai_provider_enabled_server_uq" ON "ai_provider" ("enabled") WHERE "userId" IS NULL AND enabled;`.execute(db);
-  await sql`CREATE UNIQUE INDEX "ai_provider_enabled_user_uq" ON "ai_provider" ("userId") WHERE "userId" IS NOT NULL AND enabled;`.execute(db);
+  await sql`CREATE UNIQUE INDEX "ai_provider_enabled_server_uq" ON "ai_provider" ("enabled") WHERE ("userId" IS NULL AND enabled);`.execute(db);
+  await sql`CREATE UNIQUE INDEX "ai_provider_enabled_user_uq" ON "ai_provider" ("userId") WHERE ("userId" IS NOT NULL AND enabled);`.execute(db);
   await sql`CREATE OR REPLACE TRIGGER "ai_provider_updatedAt" BEFORE UPDATE ON "ai_provider" FOR EACH ROW EXECUTE FUNCTION updated_at();`.execute(db);
   await sql`CREATE TABLE "user_ai_consent" (
   "userId" uuid NOT NULL, "providerId" uuid NOT NULL, "textAllowed" boolean NOT NULL DEFAULT false, "thumbnailAllowed" boolean NOT NULL DEFAULT false, "providerDisclosureHash" bytea NOT NULL, "createdAt" timestamp with time zone NOT NULL DEFAULT now(), "updatedAt" timestamp with time zone NOT NULL DEFAULT now(),
-  CONSTRAINT "user_ai_consent_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user" ("id") ON UPDATE CASCADE ON DELETE CASCADE, CONSTRAINT "user_ai_consent_providerId_fkey" FOREIGN KEY ("providerId") REFERENCES "ai_provider" ("id") ON UPDATE CASCADE ON DELETE CASCADE, CONSTRAINT "user_ai_consent_disclosureHash_check" CHECK (octet_length("providerDisclosureHash") = 32), CONSTRAINT "user_ai_consent_pkey" PRIMARY KEY ("userId", "providerId")
+  CONSTRAINT "user_ai_consent_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user" ("id") ON UPDATE CASCADE ON DELETE CASCADE, CONSTRAINT "user_ai_consent_providerId_fkey" FOREIGN KEY ("providerId") REFERENCES "ai_provider" ("id") ON UPDATE CASCADE ON DELETE CASCADE, CONSTRAINT "user_ai_consent_disclosureHash_check" CHECK (octet_length("providerDisclosureHash") = 32)
 );`.execute(db);
   await sql`CREATE INDEX "user_ai_consent_userId_idx" ON "user_ai_consent" ("userId");`.execute(db);
   await sql`CREATE INDEX "user_ai_consent_providerId_idx" ON "user_ai_consent" ("providerId");`.execute(db);
+  await sql`CREATE UNIQUE INDEX "user_ai_consent_userId_providerId_uq" ON "user_ai_consent" ("userId", "providerId");`.execute(db);
   await sql`CREATE OR REPLACE TRIGGER "user_ai_consent_updatedAt" BEFORE UPDATE ON "user_ai_consent" FOR EACH ROW EXECUTE FUNCTION updated_at();`.execute(db);
   await sql`CREATE TABLE "story_asset" (
   "storyId" uuid NOT NULL,
@@ -152,6 +153,11 @@ export async function up(db: Kysely<any>): Promise<void> {
   await sql`INSERT INTO "migration_overrides" ("name", "value") VALUES ('trigger_story_updatedAt', '{"type":"trigger","name":"story_updatedAt","sql":"CREATE OR REPLACE TRIGGER \\"story_updatedAt\\"\\n  BEFORE UPDATE ON \\"story\\"\\n  FOR EACH ROW\\n  EXECUTE FUNCTION updated_at();"}'::jsonb);`.execute(db);
   await sql`INSERT INTO "migration_overrides" ("name", "value") VALUES ('trigger_story_user_updatedAt', '{"type":"trigger","name":"story_user_updatedAt","sql":"CREATE OR REPLACE TRIGGER \\"story_user_updatedAt\\"\\n  BEFORE UPDATE ON \\"story_user\\"\\n  FOR EACH ROW\\n  EXECUTE FUNCTION updated_at();"}'::jsonb);`.execute(db);
   await sql`INSERT INTO "migration_overrides" ("name", "value") VALUES ('index_story_user_unique_owner', '{"type":"index","name":"story_user_unique_owner","sql":"CREATE UNIQUE INDEX \\"story_user_unique_owner\\" ON \\"story_user\\" (\\"storyId\\") WHERE (role = ''owner'');"}'::jsonb);`.execute(db);
+  await sql`INSERT INTO "migration_overrides" ("name", "value") VALUES ('index_ai_provider_enabled_user_uq', '{"type":"index","name":"ai_provider_enabled_user_uq","sql":"CREATE UNIQUE INDEX \\"ai_provider_enabled_user_uq\\" ON \\"ai_provider\\" (\\"userId\\") WHERE (\\"userId\\" IS NOT NULL AND enabled);"}'::jsonb);`.execute(db);
+  await sql`INSERT INTO "migration_overrides" ("name", "value") VALUES ('index_ai_provider_enabled_server_uq', '{"type":"index","name":"ai_provider_enabled_server_uq","sql":"CREATE UNIQUE INDEX \\"ai_provider_enabled_server_uq\\" ON \\"ai_provider\\" (\\"enabled\\") WHERE (\\"userId\\" IS NULL AND enabled);"}'::jsonb);`.execute(db);
+  await sql`INSERT INTO "migration_overrides" ("name", "value") VALUES ('trigger_ai_credential_updatedAt', '{"type":"trigger","name":"ai_credential_updatedAt","sql":"CREATE OR REPLACE TRIGGER \\"ai_credential_updatedAt\\"\\n  BEFORE UPDATE ON \\"ai_credential\\"\\n  FOR EACH ROW\\n  EXECUTE FUNCTION updated_at();"}'::jsonb);`.execute(db);
+  await sql`INSERT INTO "migration_overrides" ("name", "value") VALUES ('trigger_ai_provider_updatedAt', '{"type":"trigger","name":"ai_provider_updatedAt","sql":"CREATE OR REPLACE TRIGGER \\"ai_provider_updatedAt\\"\\n  BEFORE UPDATE ON \\"ai_provider\\"\\n  FOR EACH ROW\\n  EXECUTE FUNCTION updated_at();"}'::jsonb);`.execute(db);
+  await sql`INSERT INTO "migration_overrides" ("name", "value") VALUES ('trigger_user_ai_consent_updatedAt', '{"type":"trigger","name":"user_ai_consent_updatedAt","sql":"CREATE OR REPLACE TRIGGER \\"user_ai_consent_updatedAt\\"\\n  BEFORE UPDATE ON \\"user_ai_consent\\"\\n  FOR EACH ROW\\n  EXECUTE FUNCTION updated_at();"}'::jsonb);`.execute(db);
 }
 
 export async function down(db: Kysely<any>): Promise<void> {
@@ -181,4 +187,5 @@ export async function down(db: Kysely<any>): Promise<void> {
   await sql`DELETE FROM "migration_overrides" WHERE "name" = 'trigger_story_updatedAt';`.execute(db);
   await sql`DELETE FROM "migration_overrides" WHERE "name" = 'trigger_story_user_updatedAt';`.execute(db);
   await sql`DELETE FROM "migration_overrides" WHERE "name" = 'index_story_user_unique_owner';`.execute(db);
+  await sql`DELETE FROM "migration_overrides" WHERE "name" IN ('index_ai_provider_enabled_user_uq', 'index_ai_provider_enabled_server_uq', 'trigger_ai_credential_updatedAt', 'trigger_ai_provider_updatedAt', 'trigger_user_ai_consent_updatedAt');`.execute(db);
 }
