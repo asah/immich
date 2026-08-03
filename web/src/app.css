@@ -30,7 +30,8 @@
   --breakpoint-lg: 1023px;
   --breakpoint-md: 767px;
   --breakpoint-sm: 639px;
-  --breakpoint-sidebar: 850px;
+  /* Keep the full navigation off tablet-width story editors; the navbar menu remains available. */
+  --breakpoint-sidebar: 1100px;
 }
 
 @utility immich-form-input {

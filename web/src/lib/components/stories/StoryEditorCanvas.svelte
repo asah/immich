@@ -284,7 +284,7 @@
   };
 </script>
 
-<section class="grid min-h-0 min-w-0 gap-3 md:grid-cols-[minmax(0,1fr)_20rem]" aria-label="Story editor">
+<section class="grid min-h-0 min-w-0 gap-3 md:grid-cols-[minmax(0,1fr)_14rem]" aria-label="Story editor">
   <div class="flex min-h-0 min-w-0 flex-col gap-2">
     <div class="flex flex-wrap gap-2" aria-label="Story editor controls">
       <button class="min-h-11" type="button" onclick={() => addElement('text')}>Add text</button>

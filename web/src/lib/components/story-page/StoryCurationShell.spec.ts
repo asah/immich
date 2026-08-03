@@ -9,11 +9,9 @@ describe('StoryCurationShell', () => {
       { id: 'asset-unplaced', used: false, state: 'maybe' as const },
     ];
     render(StoryCurationShell, { items });
-    expect(screen.getByText('asset-used')).toBeInTheDocument();
-    expect(screen.getByText('asset-unplaced')).toBeInTheDocument();
+    expect(screen.getAllByText('Photo')).toHaveLength(2);
     await fireEvent.click(screen.getByRole('button', { name: 'story_curation_unplaced' }));
-    expect(screen.queryByText('asset-used')).not.toBeInTheDocument();
-    expect(screen.getByText('asset-unplaced')).toBeInTheDocument();
+    expect(screen.getAllByText('Photo')).toHaveLength(1);
   });
 
   it('keeps controls touch-sized in the responsive list', () => {

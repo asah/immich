@@ -61,13 +61,16 @@
           />{/if}
         <div class="min-w-0">
           <div class="flex min-w-0 items-start justify-between gap-2">
-            <span class="min-w-0 flex-1 break-all text-sm" title={item.name ?? item.id}>{item.name ?? item.id}</span><span
+            {#if item.name}<details class="min-w-0 flex-1">
+                <summary class="cursor-pointer text-sm" title={item.name}>Photo</summary>
+                <p class="break-all text-xs text-gray-500">{item.name}</p>
+              </details>{:else}<span class="min-w-0 flex-1 text-sm">Photo</span>{/if}<span
               class="shrink-0 text-xs text-gray-500">{item.used ? $t('story_curation_used') : $t('story_curation_unplaced')}</span
             >
           </div>
           <div class="mt-2 flex min-w-0 flex-wrap items-end gap-2">
             <div class="min-w-0 flex-1">
-              <Field label={$t('story_curation_state_for', { values: { id: item.id } })}
+              <Field label="State"
                 ><Select
                   value={item.state}
                   onChange={(state) => {

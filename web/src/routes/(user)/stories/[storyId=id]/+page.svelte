@@ -22,7 +22,7 @@
   import { Badge, Button, modalManager, toastManager } from '@immich/ui';
   import { getAssetInfo, getAssetThumbnailPath, getBaseUrl } from '@immich/sdk';
   import type { StoryAiConsentResponseDto, StoryAiProviderResponseDto } from '@immich/sdk';
-  import { mdiPlay, mdiPublish, mdiShareVariant } from '@mdi/js';
+  import { mdiArrowDown, mdiArrowUp, mdiDelete, mdiPlay, mdiPublish, mdiShareVariant } from '@mdi/js';
   import { t } from 'svelte-i18n';
   import { onMount } from 'svelte';
   import type { PageData } from './$types';
@@ -333,7 +333,7 @@
     </div>
   {/snippet}
   <div
-    class="grid h-full grid-rows-[auto_1fr] overflow-hidden md:grid-cols-[15rem_minmax(0,1fr)_20rem] md:grid-rows-1"
+    class="grid h-full grid-rows-[auto_1fr] overflow-hidden md:grid-cols-[12rem_minmax(0,1fr)_18rem] md:grid-rows-1"
   >
     <nav
       class="col-span-full flex flex-wrap justify-center gap-2 border-b p-2 md:hidden"
@@ -372,18 +372,33 @@
             class="mb-2 flex flex-wrap gap-1"
             aria-label={$t('story_page_actions', { values: { number: index + 1 } })}
           >
-            <Button size="small" variant="ghost" disabled={index === 0} onclick={() => movePage(index, -1)}
-              >{$t('move_up')}</Button
-            ><Button
+            <Button
               size="small"
               variant="ghost"
+              leadingIcon={mdiArrowUp}
+              aria-label={$t('move_up')}
+              title={$t('move_up')}
+              disabled={index === 0}
+              onclick={() => movePage(index, -1)}
+            />
+            <Button
+              size="small"
+              variant="ghost"
+              leadingIcon={mdiArrowDown}
+              aria-label={$t('move_down')}
+              title={$t('move_down')}
               disabled={index === data.document.document.pages.length - 1}
-              onclick={() => movePage(index, 1)}>{$t('move_down')}</Button
-            ><Button
+              onclick={() => movePage(index, 1)}
+            />
+            <Button
               size="small"
               variant="ghost"
+              leadingIcon={mdiDelete}
+              aria-label={$t('delete')}
+              title={$t('delete')}
               disabled={data.document.document.pages.length === 1}
-              onclick={() => removePage(index)}>{$t('delete')}</Button
+              onclick={() => removePage(index)}
+            />
             >
           </div>{/if}{/each}
       {#if canEdit}<Button size="small" variant="ghost" onclick={addPage}>{$t('story_add_page')}</Button>{/if}
