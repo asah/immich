@@ -54,6 +54,7 @@
     albumPriorities?: Record<string, number>;
     onAlbumPriorityChange?: (assetId: string, priority: number | null) => void;
     primarySortGroupKeys?: string[];
+    scrollContainer?: HTMLElement;
   };
 
   let {
@@ -75,6 +76,7 @@
     albumPriorities = {},
     onAlbumPriorityChange,
     primarySortGroupKeys,
+    scrollContainer,
   }: Props = $props();
 
   const navigationAssets = $derived(viewerAssets ?? assets);
@@ -119,7 +121,19 @@
     assets[index] = asset;
   };
 
-  const updateSlidingWindow = () => (scrollTop = document.scrollingElement?.scrollTop ?? 0);
+  const updateSlidingWindow = () =>
+    (scrollTop = scrollContainer?.scrollTop ?? document.scrollingElement?.scrollTop ?? 0);
+
+  $effect(() => {
+    if (!scrollContainer) {
+      return;
+    }
+
+    const container = scrollContainer;
+    updateSlidingWindow();
+    container.addEventListener('scroll', updateSlidingWindow, { passive: true });
+    return () => container.removeEventListener('scroll', updateSlidingWindow);
+  });
 
   const debouncedOnEndReached = debounce(() => onEndReached?.(), 750, { maxWait: 100, leading: true });
 
