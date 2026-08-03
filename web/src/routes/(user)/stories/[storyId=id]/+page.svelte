@@ -355,7 +355,7 @@
     </nav>
     <aside
       class:hidden={mobileSurface !== 'pages'}
-      class="order-2 overflow-auto border-t p-3 md:order-1 md:block md:border-t-0 md:border-e"
+      class="order-2 min-w-0 overflow-auto border-t p-3 md:order-1 md:block md:border-t-0 md:border-e"
       aria-label={$t('story_pages')}
     >
       <button
@@ -388,7 +388,7 @@
           </div>{/if}{/each}
       {#if canEdit}<Button size="small" variant="ghost" onclick={addPage}>{$t('story_add_page')}</Button>{/if}
     </aside>
-    <main class:hidden={mobileSurface !== 'canvas'} class="order-1 min-h-0 bg-black/5 p-3 md:order-2 md:block">
+    <main class:hidden={mobileSurface !== 'canvas'} class="order-1 min-h-0 min-w-0 bg-black/5 p-3 md:order-2 md:block">
       {#if canEdit}<StoryEditorCanvas
           scene={viewScene}
           aspectRatio={viewAspectRatio}
@@ -397,7 +397,7 @@
           {mediaResolver}
         />{:else}<StoryPageViewport scene={viewScene} aspectRatio={viewAspectRatio} />{/if}
     </main>
-    <aside class:hidden={mobileSurface !== 'details'} class="order-3 overflow-auto border-s p-4 md:block">
+    <aside class:hidden={mobileSurface !== 'details'} class="order-3 min-w-0 overflow-auto border-s p-4 md:block">
       <div class="flex gap-2">
         <Button size="small" variant={tab === 'pages' ? 'filled' : 'ghost'} onclick={() => (tab = 'pages')}
           >{$t('story_details')}</Button
