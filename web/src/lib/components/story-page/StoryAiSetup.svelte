@@ -7,6 +7,36 @@
   let model = $state('gpt-5.6-sol');
   let busy = $state(false);
   let error = $state('');
+  const describeError = (cause: unknown) => {
+    if (cause && typeof cause === 'object') {
+      const details = 'details' in cause ? cause.details : undefined;
+      if (typeof details === 'string' && details) {
+        try {
+          const payload = JSON.parse(details) as { message?: string | string[]; error?: string };
+          const message = payload.message ?? payload.error;
+          if (Array.isArray(message)) {
+            return message.join(', ');
+          }
+          if (typeof message === 'string' && message) {
+            return message;
+          }
+        } catch {
+          // Fall through to the standard error message for non-JSON responses.
+        }
+      }
+      if ('body' in cause && typeof cause.body === 'object' && cause.body) {
+        const body = cause.body as { message?: string | string[]; error?: string };
+        const message = body.message ?? body.error;
+        if (Array.isArray(message)) {
+          return message.join(', ');
+        }
+        if (typeof message === 'string' && message) {
+          return message;
+        }
+      }
+    }
+    return cause instanceof Error && cause.message ? cause.message : $t('story_ai_setup_error');
+  };
   const submit = async () => {
     busy = true;
     error = '';
@@ -14,8 +44,8 @@
       await storyService.setupAiProvider(key, model);
       key = '';
       onSaved();
-    } catch {
-      error = $t('story_ai_setup_error');
+    } catch (cause) {
+      error = describeError(cause);
     } finally {
       busy = false;
     }
