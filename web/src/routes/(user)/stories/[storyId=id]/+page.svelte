@@ -333,10 +333,10 @@
     </div>
   {/snippet}
   <div
-    class="@container grid h-full grid-rows-[auto_1fr] overflow-hidden @lg:grid-cols-[15rem_minmax(0,1fr)_20rem] @lg:grid-rows-1"
+    class="grid h-full grid-rows-[auto_1fr] overflow-hidden md:grid-cols-[15rem_minmax(0,1fr)_20rem] md:grid-rows-1"
   >
     <nav
-      class="col-span-full flex flex-wrap justify-center gap-2 border-b p-2 @lg:hidden"
+      class="col-span-full flex flex-wrap justify-center gap-2 border-b p-2 md:hidden"
       aria-label={$t('story_editor_surfaces')}
     >
       <Button
@@ -355,7 +355,7 @@
     </nav>
     <aside
       class:hidden={mobileSurface !== 'pages'}
-      class="order-2 overflow-auto border-t p-3 @lg:order-1 @lg:block @lg:border-t-0 @lg:border-e"
+      class="order-2 overflow-auto border-t p-3 md:order-1 md:block md:border-t-0 md:border-e"
       aria-label={$t('story_pages')}
     >
       <button
@@ -388,7 +388,7 @@
           </div>{/if}{/each}
       {#if canEdit}<Button size="small" variant="ghost" onclick={addPage}>{$t('story_add_page')}</Button>{/if}
     </aside>
-    <main class:hidden={mobileSurface !== 'canvas'} class="order-1 min-h-0 bg-black/5 p-3 @lg:order-2 @lg:block">
+    <main class:hidden={mobileSurface !== 'canvas'} class="order-1 min-h-0 bg-black/5 p-3 md:order-2 md:block">
       {#if canEdit}<StoryEditorCanvas
           scene={viewScene}
           aspectRatio={viewAspectRatio}
@@ -397,7 +397,7 @@
           {mediaResolver}
         />{:else}<StoryPageViewport scene={viewScene} aspectRatio={viewAspectRatio} />{/if}
     </main>
-    <aside class:hidden={mobileSurface !== 'details'} class="order-3 overflow-auto border-s p-4 @lg:block">
+    <aside class:hidden={mobileSurface !== 'details'} class="order-3 overflow-auto border-s p-4 md:block">
       <div class="flex gap-2">
         <Button size="small" variant={tab === 'pages' ? 'filled' : 'ghost'} onclick={() => (tab = 'pages')}
           >{$t('story_details')}</Button
