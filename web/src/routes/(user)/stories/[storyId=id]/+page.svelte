@@ -166,8 +166,9 @@
       });
       await transactionManager.acknowledge(batch.clientMutationId, result.revision, result.document);
       await invalidateAll();
-    } catch {
+    } catch (error) {
       toastManager.danger($t('story_save_error'));
+      throw error;
     }
   };
   const publish = async () => {
@@ -332,10 +333,10 @@
     </div>
   {/snippet}
   <div
-    class="@container grid h-full grid-rows-[auto_1fr] overflow-hidden @5xl:grid-cols-[15rem_1fr_20rem] @5xl:grid-rows-1"
+    class="@container grid h-full grid-rows-[auto_1fr] overflow-hidden @lg:grid-cols-[15rem_minmax(0,1fr)_20rem] @lg:grid-rows-1"
   >
     <nav
-      class="col-span-full flex flex-wrap justify-center gap-2 border-b p-2 @5xl:hidden"
+      class="col-span-full flex flex-wrap justify-center gap-2 border-b p-2 @lg:hidden"
       aria-label={$t('story_editor_surfaces')}
     >
       <Button
@@ -354,7 +355,7 @@
     </nav>
     <aside
       class:hidden={mobileSurface !== 'pages'}
-      class="order-2 overflow-auto border-t p-3 @5xl:order-1 @5xl:block @5xl:border-t-0 @5xl:border-e"
+      class="order-2 overflow-auto border-t p-3 @lg:order-1 @lg:block @lg:border-t-0 @lg:border-e"
       aria-label={$t('story_pages')}
     >
       <button
@@ -387,7 +388,7 @@
           </div>{/if}{/each}
       {#if canEdit}<Button size="small" variant="ghost" onclick={addPage}>{$t('story_add_page')}</Button>{/if}
     </aside>
-    <main class:hidden={mobileSurface !== 'canvas'} class="order-1 min-h-0 bg-black/5 p-3 @5xl:order-2 @5xl:block">
+    <main class:hidden={mobileSurface !== 'canvas'} class="order-1 min-h-0 bg-black/5 p-3 @lg:order-2 @lg:block">
       {#if canEdit}<StoryEditorCanvas
           scene={viewScene}
           aspectRatio={viewAspectRatio}
@@ -396,7 +397,7 @@
           {mediaResolver}
         />{:else}<StoryPageViewport scene={viewScene} aspectRatio={viewAspectRatio} />{/if}
     </main>
-    <aside class:hidden={mobileSurface !== 'details'} class="order-3 overflow-auto border-s p-4 @5xl:block">
+    <aside class:hidden={mobileSurface !== 'details'} class="order-3 overflow-auto border-s p-4 @lg:block">
       <div class="flex gap-2">
         <Button size="small" variant={tab === 'pages' ? 'filled' : 'ghost'} onclick={() => (tab = 'pages')}
           >{$t('story_details')}</Button

@@ -208,6 +208,7 @@ export class StoryService {
       if (dto.mode === 'tray') {
         existing.add(assetId);
       } else if (dto.mode === 'one_per_page') {
+        existing.delete(assetId);
         const elementId = randomUUID();
         document.pages.push({
           id: randomUUID(),

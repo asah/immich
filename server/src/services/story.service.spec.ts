@@ -178,6 +178,25 @@ describe(StoryService.name, () => {
     expect((result.document as StoryDocument).curation).toEqual({ [assetId]: 'must_include' });
   });
 
+  it('removes a placed asset from the unplaced tray', async () => {
+    const value = document();
+    const assetId = randomUUID();
+    value.unplacedAssetIds = [assetId];
+    value.curation = { [assetId]: 'include' };
+    stories.get.mockResolvedValue({ role: AlbumUserRole.Editor, aspectRatio: StoryAspectRatio.Portrait });
+    stories.getDocument.mockResolvedValue({ revisionId, revision: 0, document: value });
+    stories.commit.mockImplementation((input: any) => input);
+
+    const result = await service.importAssets(auth, storyId, {
+      albumIds: [],
+      assetIds: [assetId],
+      mode: 'one_per_page',
+    });
+
+    expect((result.document as StoryDocument).unplacedAssetIds).not.toContain(assetId);
+    expect((result.document as StoryDocument).pages.at(-1)?.elements[0].assetId).toBe(assetId);
+  });
+
   it('updates accessibility and canonical reading order together', async () => {
     const value = document();
     const elementId = randomUUID();
