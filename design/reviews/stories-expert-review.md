@@ -1,8 +1,8 @@
-# Photobooks expert review
+# Stories expert review
 
 Date: 2026-08-03
 
-Design reviewed: [Photobooks: interactive, designed stories from Immich photos](../photobooks.md)
+Design reviewed: [Stories: interactive, designed narratives from Immich photos](../stories.md)
 
 ## Review panel
 
@@ -14,6 +14,22 @@ The proposal was independently reviewed from three perspectives:
 
 This document synthesizes their findings. It records areas of consensus as well as material disagreements between product, engineering, and security perspectives.
 
+## Subsequent product decisions
+
+After this review, the product direction resolved several questions:
+
+- The public feature name is **Stories**.
+- Stories will reuse Immich's existing sharing system, including public links, and its album collaboration model.
+- Shared viewing will use story-scoped renditions rather than requiring ordinary library access.
+- Version one will use a small hardcoded FOSS visual catalog with bundled, licensed fonts and assets.
+- Version one will support constrained embedded video playback.
+- All committed versions will remain visitable by timestamp, with optional names.
+- A server-wide AI provider is the default and per-user BYOK may override it.
+- First-use AI consent includes a separate choice for sending very-low-resolution thumbnails.
+- Shared links may deep-link to the current page and playback timestamp.
+
+The findings below are retained as the review record; where they posed one of these questions, the subsequent decision above controls.
+
 ## Overall assessment
 
 The proposal is a strong architectural foundation, but it is not ready for Phase 1 implementation. It describes an editor and its safety boundaries more clearly than the end-to-end consumer experience. A product and technical definition phase should precede implementation.
@@ -24,7 +40,7 @@ The central product job is not merely arranging objects on a canvas. It is helpi
 
 All three reviewers supported:
 
-- keeping photobooks separate from albums while making “Create from album” seamless;
+- keeping stories separate from albums while making “Create from album” seamless;
 - snapshot-based album imports;
 - a constrained editor instead of a general-purpose design tool;
 - one typed semantic command API for both human and AI editing;
@@ -63,16 +79,16 @@ Free positioning, arbitrary shapes, detailed borders, uploaded stickers, advance
 
 ### P0: Decide what the product is
 
-“Photobook” implies print, spreads, and physical pages. Animation and video suggest a digital story. “Story” can imply temporary vertical content, while “scrapbook” implies manual decoration.
+The former product name implied print, spreads, and physical pages. Animation and video suggest a digital story. “Story” can imply temporary vertical content, while “scrapbook” implies manual decoration.
 
 Before locking public terminology, decide whether the primary promise is:
 
 - a durable digital memory artifact;
 - an animated photo story;
-- a decorative scrapbook; or
+- a decorative memory collage; or
 - an umbrella called “Creations” containing several formats.
 
-A plausible direction is “Creations” as the product family and “Photo Story” or “Storybook” as the first format. Internal primitives can remain generic scenes or pages without exposing ambiguous terminology to users.
+A plausible direction identified by the review was “Creations” as the product family and “Photo Story” as the first format. The subsequent product decision instead selected **Stories** as the public feature name. Internal primitives can remain generic scenes or pages without exposing ambiguous terminology to users.
 
 ### P0: Treat curation as a core feature
 
@@ -154,19 +170,19 @@ That control surface needs:
 - explicit reading order;
 - viewer zoom or authored minimum text sizes.
 
-Numeric fields alone are not an adequate phone or accessibility fallback. Accessibility testing should cover building an entire book without pointer interaction, including screen-reader focus and announcements at 200% and 400% browser zoom.
+Numeric fields alone are not an adequate phone or accessibility fallback. Accessibility testing should cover building an entire story without pointer interaction, including screen-reader focus and announcements at 200% and 400% browser zoom.
 
-### P0: Define book-scoped media authorization
+### P0: Define story-scoped media authorization
 
-The proposal says a shared book must not expose otherwise unauthorized originals, but it does not define what a book share grants. Checking only ordinary asset access would make many shared books incomplete. Checking only book access could expose originals, metadata, faces, locations, or neighboring assets.
+The proposal says a shared story must not expose otherwise unauthorized originals, but it does not define what a story share grants. Checking only ordinary asset access would make many shared stories incomplete. Checking only story access could expose originals, metadata, faces, locations, or neighboring assets.
 
-Define a book-scoped rendition capability:
+Define a story-scoped rendition capability:
 
-- A viewer can fetch only the rendition necessary to view an asset referenced by that book.
-- Book access does not grant ordinary asset API access.
+- A viewer can fetch only the rendition necessary to view an asset referenced by that story.
+- Story access does not grant ordinary asset API access.
 - Originals, EXIF, face data, locations, and library navigation remain inaccessible.
 - Original download is a separate owner-controlled permission.
-- Every request verifies current book access, the element reference, book and asset state, owner state, and link expiry or revocation.
+- Every request verifies current story access, the element reference, story and asset state, owner state, and link expiry or revocation.
 - Durable bearer grants do not appear in document JSON or media URLs.
 - Cache keys include authorization context and cannot convert private derivatives into public objects.
 - Losing partner-sharing access stops the referenced rendition from resolving by default.
@@ -275,7 +291,7 @@ An AI preview must represent the exact commands later applied:
 2. The server stores an immutable draft containing canonical commands, base revision, actor, asset scope, expiry, provider/model, and content hash.
 3. Preview renders that stored draft.
 4. Apply accepts only the draft ID or short-lived token, not newly supplied commands.
-5. The server verifies the hash, user, book, permissions, asset access, scope, and current revision in one transaction.
+5. The server verifies the hash, user, story, permissions, asset access, scope, and current revision in one transaction.
 6. Any intervening edit invalidates the preview and requires re-previewing.
 
 The initial model tool set must not include canonical apply, sharing, deletion, access changes, credential changes, or external actions.
@@ -360,7 +376,7 @@ Prototype and test:
 
 The product test is whether users can create something they are proud to share without learning a graphics editor.
 
-### Phase 1: lightweight storybook
+### Phase 1: lightweight story
 
 - Separate creation resource and library.
 - Album and photo import.
@@ -372,7 +388,7 @@ The product test is whether users can create something they are proud to share w
 - Cover workflow.
 - Draft and published lifecycle.
 - Responsive viewer and safe sharing.
-- Typed command API, autosave, undo, migrations, and book-scoped renditions.
+- Typed command API, autosave, undo, migrations, and story-scoped renditions.
 
 ### Phase 2: creator tools
 
@@ -408,9 +424,9 @@ A narrow AI feature can ship once its narrow command vocabulary is stable; AI do
 - Renderer conformance scenes covering multilingual text, RTL, emoji, delayed or failed font loading, crop, borders, groups, device pixel ratio, browser zoom, and Safari.
 - Model-based command tests covering inverse/redo, snapshot replay, duplicate mutation IDs, stale bases, canonicalization, crashes, and multiple tabs.
 - Pointer tests covering cancellation, lost capture, second-finger insertion, rotation across ±180°, viewport resize mid-drag, and virtual-keyboard opening.
-- Accessibility tests covering creation of a complete book without pointer input and screen-reader focus and announcements.
+- Accessibility tests covering creation of a complete story without pointer input and screen-reader focus and announcements.
 - Performance gates based on worst-page complexity as well as total page count: decoded memory, compositor layers, DOM nodes, interaction latency, background/foreground transitions, and teardown.
-- Security tests for unauthorized asset IDs, book-rendition escalation, expired/revoked links, SSRF, DNS rebinding, redirect handling, malicious provider responses, visual prompt injection, secret redaction, and support-export leakage.
+- Security tests for unauthorized asset IDs, story-rendition escalation, expired/revoked links, SSRF, DNS rebinding, redirect handling, malicious provider responses, visual prompt injection, secret redaction, and support-export leakage.
 - Recovery invariants proving no duplicate commands, no loss of acknowledged commands, deterministic replay, and a recoverable copy after irreconcilable conflicts.
 
 ## Material disagreements and tradeoffs
@@ -431,9 +447,9 @@ Fixed aspect ratios preserve authored intent but can produce small text when a l
 
 DOM/SVG supports text, focus, and semantics better than a canvas-only renderer, but filters, masks, video, and many transformed nodes can perform poorly on constrained devices. Keep scene state renderer-independent, isolate pages, use CSS containment, lower-quality previews during gestures, and constrain page complexity rather than prematurely moving everything to canvas.
 
-### Book-scoped renditions versus ordinary asset access
+### Story-scoped renditions versus ordinary asset access
 
-Book-scoped media makes sharing useful but creates a new authorization and caching surface. Requiring ordinary asset access is simpler but breaks expected sharing behavior. The review favors book-scoped renditions with strict capabilities.
+Story-scoped media makes sharing useful but creates a new authorization and caching surface. Requiring ordinary asset access is simpler but breaks expected sharing behavior. The review favors story-scoped renditions with strict capabilities.
 
 ### Provider flexibility versus SSRF safety
 
@@ -445,18 +461,15 @@ Static PDF, image, or self-contained web export may align better with memory pre
 
 ## Open decisions
 
-1. What is the primary promised outcome and public name?
-2. Who is the primary author: casual family organizer, enthusiast, or design-oriented creator?
-3. Who is the primary audience: the author, household members, invited Immich users, or public-link recipients?
-4. What is the canonical viewer navigation model?
-5. Are two-page spreads ever part of the format?
-6. Does a shared book grant derivative-only access to referenced assets?
-7. Should an automatic draft reduce the selected photo set or include everything?
-8. What creation-brief questions provide enough signal without becoming onboarding friction?
-9. How are AI-generated factual claims identified and accepted?
-10. Is an external LLM compatible enough with Immich's privacy positioning to be a headline feature?
-11. Is a static or self-contained export more valuable than animation to the initial audience?
-12. Who owns and maintains themes, bundled font and sticker licenses, and the visual-quality bar?
+1. Who is the primary author: casual family organizer, enthusiast, or design-oriented creator?
+2. What is the canonical viewer navigation model?
+3. Are two-page spreads ever part of the format?
+4. Should an automatic draft reduce the selected photo set or include everything?
+5. What creation-brief questions provide enough signal without becoming onboarding friction?
+6. How are AI-generated factual claims identified and accepted?
+7. Is an external LLM compatible enough with Immich's privacy positioning to be a headline feature?
+8. Is a static or self-contained export more valuable than animation to the initial audience?
+9. Who owns the long-term maintenance and license-review process for themes, bundled fonts, and stickers after the hardcoded version-one catalog?
 
 ## Recommended decision
 
