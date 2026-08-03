@@ -11,6 +11,9 @@ describe('StoryPage', () => {
       element.parentElement?.getAttribute('style'),
     );
     expect(layers).toEqual(['z-index: 0;', 'z-index: 1;']);
+    expect(container.querySelector('[data-story-element$="-shape"]')).toHaveStyle(
+      'transform: translate(50px, 50px) rotate(0deg) none',
+    );
     expect(container.querySelector('[data-story-reading-order]')).toHaveTextContent('A story worth remembering');
     expect(screen.getByLabelText('Story page')).toBeInTheDocument();
   });
