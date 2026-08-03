@@ -3,6 +3,14 @@
 Status: proposal
 Scope: responsive web editor and viewer; no native mobile or print support in the first release
 
+Implementation contracts:
+
+- [Phase 0 product and experience](stories/phase0-product.md)
+- [Phase 0 editor and renderer](stories/phase0-editor.md)
+- [Phase 0 server, data, and security](stories/phase0-server.md)
+
+Where these implementation contracts are more specific than this proposal, the Phase 0 contracts control.
+
 ## Summary
 
 Stories should be a resource separate from albums. Albums answer “which assets belong together?” while stories answer “how should this narrative be presented?” A story is an ordered sequence of fixed-aspect-ratio pages containing photos, text, stickers, video, and optional animation. It can import assets from one or more albums without retaining a live dependency on those albums.
@@ -47,9 +55,9 @@ Provenance such as `sourceAlbumId` may be recorded for attribution and a future 
 
 ### Pages, elements, and coordinates
 
-Each story selects a canvas aspect ratio from a small initial set (portrait 4:5, landscape 16:9, and square). All pages in a story use that ratio. Element geometry is stored in page-normalized units (`x`, `y`, `width`, and `height` from 0 to 1), with rotation in degrees and an integer z-index. This makes rendering independent of screen pixels and prevents a desktop layout from changing on a narrow device.
+Each story selects a canvas aspect ratio from a small initial set: portrait 4:5 (`800 × 1000` logical units), landscape 16:9 (`1600 × 900`), and square (`1000 × 1000`). All scenes in a story use that ratio. Element geometry is stored in logical page units, quantized to one thousandth of a unit, with clockwise rotation in degrees. This makes rendering independent of screen pixels while giving borders, bounds, snapping, and conformance tests unambiguous units.
 
-The document contains ordered pages. Each page has a background and ordered elements of these types:
+The document contains one required root cover scene plus ordered content pages. The cover is not content page 1 and cannot enter the content-page ordering. Every scene has a background and an authoritative back-to-front element array containing these types:
 
 - `image`: an Immich photo, with crop, focal point, fit mode, opacity, corner radius, border, and optional shadow;
 - `video`: an Immich video with aspect-ratio-preserving geometry, poster, border, and constrained playback settings;
@@ -57,11 +65,11 @@ The document contains ordered pages. Each page has a background and ordered elem
 - `sticker`: a built-in, versioned graphic or an uploaded Immich image asset;
 - `shape`: a small safe set of rectangles, ellipses, and lines for backgrounds and decoration.
 
-Elements may be locked, hidden, grouped, or designated as the page background. Z-order is explicit. User-provided stickers should be normal Immich assets, not blobs embedded in the document. Built-in stickers need stable IDs and versioned bundled files so an old story continues to render.
+Elements may be locked or hidden. Nested groups are deferred; multi-selection is ephemeral editor state. Page background is scene data rather than a special element. User-provided stickers should be normal Immich assets, not blobs embedded in the document. Built-in stickers need stable IDs and versioned bundled files so an old story continues to render.
 
 ### Ordering
 
-Page order is the canonical presentation order. A filmstrip supports drag-and-drop and keyboard reordering, with “move before/after” actions as an accessible alternative. Within a page, layers use explicit z-order and expose bring forward, send backward, bring to front, and send to back actions. Fractional ordering keys can reduce renumbering during ordinary edits, but the service should periodically normalize them.
+Page-array order is the canonical presentation order. A filmstrip supports drag-and-drop and keyboard reordering, with “move before/after” actions as an accessible alternative. Within a page, element-array order is the layer order and exposes bring forward, send backward, bring to front, and send to back actions. Relative-move commands name neighboring IDs and the server returns canonical arrays; neither z-indexes nor fractional ordering keys are persisted. Each scene also has an independent accessibility reading-order array.
 
 An unplaced-media tray is important: importing 200 photos must not immediately manufacture 200 pages, and removing a photo from a page should not imply removing it from the story's working set.
 
@@ -105,7 +113,7 @@ Plain text only should be stored in version one. Rich text greatly complicates s
 
 Stickers and image overlays use the same geometry, rotation, opacity, grouping, snapping, and z-order controls as other elements. Rotation should snap to 0°, 45°, 90°, and neighboring element angles, while still allowing a numeric degree value.
 
-A border is structured data: width in normalized page units, style (`solid`, `dashed`, or `double` initially), color, opacity, join, and whether it is drawn inside the element bounds. Limiting styles makes rendering consistent across browsers. Shadows likewise use bounded presets plus color and opacity. Transparency applies to the whole element; per-pixel alpha comes from supported PNG/WebP/SVG built-ins. User-supplied SVG should not be accepted initially because it is an active-content and sanitization risk.
+A border is structured data: width in logical page units, style (`solid`, `dashed`, or `double` initially), color, opacity, join, and whether it is drawn inside the element bounds. Limiting styles makes rendering consistent across browsers. Shadows likewise use bounded presets plus color and opacity. Transparency applies to the whole element; per-pixel alpha comes from supported PNG/WebP/SVG built-ins. User-supplied SVG should not be accepted initially because it is an active-content and sanitization risk.
 
 ### Animation
 
@@ -360,7 +368,7 @@ Shipping AI after the command API and editor are mature is deliberate: it lets t
 ## Decisions recommended now
 
 1. Keep stories separate from albums and make album import snapshot-based.
-2. Use a fixed-aspect normalized page coordinate system and adapt editor chrome, not authored layout, across devices.
+2. Use the fixed-aspect logical-unit coordinate system and adapt editor chrome, not authored layout, across devices.
 3. Start with constrained styles and animation presets rather than arbitrary CSS or a free-form timeline.
 4. Make the typed command service the only mutation path for both humans and AI.
 5. Store provider secrets in a dedicated encrypted credential store, never ordinary user settings.
