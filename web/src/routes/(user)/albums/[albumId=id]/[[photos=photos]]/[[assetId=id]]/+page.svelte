@@ -109,7 +109,7 @@
   let viewMode: AlbumPageViewMode = $state(AlbumPageViewMode.VIEW);
   let timelineManager = $state<TimelineManager>() as TimelineManager;
   const filenameViewport: Viewport = $state({ width: 0, height: 0 });
-  let filenameScrollContainer: HTMLElement | undefined = $state();
+  let filenameScrollTop = $state(0);
   let filenameGalleryElement: HTMLElement | undefined = $state();
   let filenameAssets: AssetResponseDto[] = $state([]);
   let filenameNextPage = $state<number | null>(null);
@@ -500,9 +500,9 @@
       {#if isAlternateSort}
         <section
           class="h-full overflow-y-auto pt-8 md:pt-24"
-          bind:this={filenameScrollContainer}
           bind:clientHeight={filenameViewport.height}
           bind:clientWidth={filenameViewport.width}
+          onscroll={(event) => (filenameScrollTop = event.currentTarget.scrollTop)}
         >
           <AlbumTitle
             id={album.id}
@@ -532,8 +532,8 @@
               {albumPriorities}
               onAlbumPriorityChange={setAlbumPriority}
               {primarySortGroupKeys}
-              scrollContainer={filenameScrollContainer}
               slidingWindowOffset={filenameGalleryElement?.offsetTop ?? 0}
+              viewportScrollTop={filenameScrollTop}
               viewport={filenameViewport}
             />
           </div>

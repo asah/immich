@@ -54,7 +54,7 @@
     albumPriorities?: Record<string, number>;
     onAlbumPriorityChange?: (assetId: string, priority: number | null) => void;
     primarySortGroupKeys?: string[];
-    scrollContainer?: HTMLElement;
+    viewportScrollTop?: number;
   };
 
   let {
@@ -76,7 +76,7 @@
     albumPriorities = {},
     onAlbumPriorityChange,
     primarySortGroupKeys,
-    scrollContainer,
+    viewportScrollTop,
   }: Props = $props();
 
   const navigationAssets = $derived(viewerAssets ?? assets);
@@ -105,10 +105,11 @@
   };
 
   let lastAssetMouseEvent: TimelineAsset | null = $state(null);
-  let scrollTop = $state(0);
+  let documentScrollTop = $state(0);
 
   let slidingWindow = $derived.by(() => {
-    const top = (scrollTop || 0) - slidingWindowOffset - INTERSECTION_EXPAND_TOP;
+    const scrollTop = viewportScrollTop ?? documentScrollTop;
+    const top = scrollTop - slidingWindowOffset - INTERSECTION_EXPAND_TOP;
     const bottom = top + viewport.height + slidingWindowOffset + INTERSECTION_EXPAND_BOTTOM;
     return {
       top,
@@ -121,19 +122,7 @@
     assets[index] = asset;
   };
 
-  const updateSlidingWindow = () =>
-    (scrollTop = scrollContainer?.scrollTop ?? document.scrollingElement?.scrollTop ?? 0);
-
-  $effect(() => {
-    if (!scrollContainer) {
-      return;
-    }
-
-    const container = scrollContainer;
-    updateSlidingWindow();
-    container.addEventListener('scroll', updateSlidingWindow, { passive: true });
-    return () => container.removeEventListener('scroll', updateSlidingWindow);
-  });
+  const updateSlidingWindow = () => (documentScrollTop = document.scrollingElement?.scrollTop ?? 0);
 
   const debouncedOnEndReached = debounce(() => onEndReached?.(), 750, { maxWait: 100, leading: true });
 
