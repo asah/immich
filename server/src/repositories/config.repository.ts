@@ -127,6 +127,7 @@ export interface EnvData {
 
   noColor: boolean;
   nodeVersion?: string;
+  aiCredentialKey?: string;
 }
 
 const productionKeys = {
@@ -257,6 +258,7 @@ const getEnv = (): EnvData => {
   }
 
   return {
+    aiCredentialKey: dto.IMMICH_AI_CREDENTIAL_KEY,
     host: dto.IMMICH_HOST,
     port: dto.IMMICH_PORT || 2283,
     environment,

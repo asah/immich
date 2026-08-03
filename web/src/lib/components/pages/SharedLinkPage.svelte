@@ -1,11 +1,14 @@
 <script lang="ts">
   import AlbumViewer from '$lib/components/album-page/AlbumViewer.svelte';
   import IndividualSharedViewer from '$lib/components/share-page/IndividualSharedViewer.svelte';
+  import StoryPlaybackViewer from '$lib/components/story-page/StoryPlaybackViewer.svelte';
+  import { getBaseUrl } from '@immich/sdk';
   import ControlAppBar from '$lib/components/shared-components/ControlAppBar.svelte';
   import ThemeButton from '$lib/components/shared-components/ThemeButton.svelte';
   import { assetViewerManager } from '$lib/managers/asset-viewer-manager.svelte';
   import { authManager } from '$lib/managers/auth-manager.svelte';
   import { setSharedLink } from '$lib/utils';
+  import { storyService } from '$lib/services/story.service';
   import { handleError } from '$lib/utils/handle-error';
   import { navigate } from '$lib/utils/navigation';
   import { sharedLinkLogin, SharedLinkType, type AssetResponseDto, type SharedLinkResponseDto } from '@immich/sdk';
@@ -26,15 +29,17 @@
       slug?: string;
       asset?: AssetResponseDto;
       passwordRequired?: boolean;
+      publishedStory?: import('$lib/services/story.service').SharedPublishedStoryDto;
     };
   };
 
   const { data }: Props = $props();
 
-  let { sharedLink, passwordRequired, key, slug, meta } = $state(data);
+  let { sharedLink, passwordRequired, key, slug, meta, publishedStory } = $state(data);
   let { title, description } = $state(meta);
   let isOwned = $derived(authManager.authenticated && authManager.user.id === sharedLink?.userId);
   let password = $state('');
+  const shareQuery = $derived(new URLSearchParams(key ? { key } : slug ? { slug } : {}).toString());
 
   if (passwordRequired) {
     assetViewerManager.showAssetViewer(false);
@@ -44,6 +49,7 @@
     try {
       sharedLink = await sharedLinkLogin({ key, slug, sharedLinkLoginDto: { password } });
       setSharedLink(sharedLink);
+      if ((sharedLink.type as string) === 'STORY') publishedStory = await storyService.sharedPublished({ key, slug });
       passwordRequired = false;
       title = (sharedLink.album ? sharedLink.album.albumName : $t('public_share')) + ' - Immich';
       description =
@@ -112,4 +118,20 @@
   <div class="immich-scrollbar">
     <IndividualSharedViewer {sharedLink} {isOwned} />
   </div>
+{/if}
+{#if !passwordRequired && (sharedLink?.type as string) === 'STORY' && publishedStory}
+  <main class="flex h-dvh flex-col bg-black text-white">
+    <StoryPlaybackViewer
+      document={publishedStory.document}
+      aspectRatio={publishedStory.story.aspectRatio}
+      initialPageId={publishedStory.resolvedStart?.pageId}
+      initialOffsetMs={publishedStory.resolvedStart?.offsetMs ?? 0}
+      autoplay={false}
+      mediaResolver={(assetId, kind) => ({
+        imageUrl: `${getBaseUrl()}/stories/shared/assets/${assetId}/rendition?${shareQuery}`,
+        posterUrl: `${getBaseUrl()}/stories/shared/assets/${assetId}/rendition?${shareQuery}`,
+        videoUrl: kind === 'video' ? `${getBaseUrl()}/stories/shared/assets/${assetId}/video?${shareQuery}` : undefined,
+      })}
+    />
+  </main>
 {/if}

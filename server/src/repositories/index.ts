@@ -39,6 +39,8 @@ import { SharedLinkAssetRepository } from 'src/repositories/shared-link-asset.re
 import { SharedLinkRepository } from 'src/repositories/shared-link.repository';
 import { StackRepository } from 'src/repositories/stack.repository';
 import { StorageRepository } from 'src/repositories/storage.repository';
+import { StoryAiRepository } from 'src/repositories/story-ai.repository';
+import { StoryRepository } from 'src/repositories/story.repository';
 import { SyncCheckpointRepository } from 'src/repositories/sync-checkpoint.repository';
 import { SyncRepository } from 'src/repositories/sync.repository';
 import { SystemMetadataRepository } from 'src/repositories/system-metadata.repository';
@@ -93,6 +95,8 @@ export const repositories = [
   SharedLinkRepository,
   SharedLinkAssetRepository,
   StackRepository,
+  StoryRepository,
+  StoryAiRepository,
   StorageRepository,
   SyncRepository,
   SyncCheckpointRepository,

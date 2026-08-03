@@ -26,6 +26,7 @@
     mdiMagnify,
     mdiMap,
     mdiMapOutline,
+    mdiBookOpenPageVariantOutline,
     mdiTagMultipleOutline,
     mdiToolbox,
     mdiToolboxOutline,
@@ -79,6 +80,8 @@
       </span>
     {/snippet}
   </NavbarItem>
+
+  <NavbarItem title={$t('stories')} href={Route.stories()} icon={mdiBookOpenPageVariantOutline} />
 
   {#if authManager.preferences.tags.enabled && authManager.preferences.tags.sidebarWeb}
     <NavbarItem title={$t('tags')} href={Route.tags()} icon={{ icon: mdiTagMultipleOutline, flipped: true }} />

@@ -2,6 +2,18 @@ import { OpenQueryParam } from '$lib/constants';
 import { Route } from '$lib/route';
 
 describe('Route', () => {
+  describe('stories', () => {
+    it('builds editor and playback routes', () => {
+      expect(Route.stories()).toBe('/stories');
+      expect(Route.newStory()).toBe('/stories/new');
+      expect(Route.newStory({ albumId: 'album-id' })).toBe('/stories/new?albumId=album-id');
+      expect(Route.viewStory({ id: 'story-id' })).toBe('/stories/story-id');
+      expect(Route.viewStoryPlayer({ id: 'story-id' }, { page: 'page-id', t: 2.5, play: 1 })).toBe(
+        '/stories/story-id/view?page=page-id&t=2.5&play=1',
+      );
+    });
+  });
+
   describe(Route.login.name, () => {
     it('should encode continue', () => {
       expect(Route.login({ continue: '/some/path?with=query', autoLaunch: 1 })).toBe(

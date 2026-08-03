@@ -35,6 +35,10 @@ import { SmartInfoService } from 'src/services/smart-info.service';
 import { StackService } from 'src/services/stack.service';
 import { StorageTemplateService } from 'src/services/storage-template.service';
 import { StorageService } from 'src/services/storage.service';
+import { StoryAiProviderService } from 'src/services/story-ai-provider.service';
+import { StoryAiThumbnailService } from 'src/services/story-ai-thumbnail.service';
+import { StoryAiService } from 'src/services/story-ai.service';
+import { StoryService } from 'src/services/story.service';
 import { SyncService } from 'src/services/sync.service';
 import { SystemConfigService } from 'src/services/system-config.service';
 import { SystemMetadataService } from 'src/services/system-metadata.service';
@@ -86,6 +90,10 @@ export const services = [
   SharedLinkService,
   SmartInfoService,
   StackService,
+  StoryService,
+  StoryAiProviderService,
+  StoryAiThumbnailService,
+  StoryAiService,
   StorageService,
   StorageTemplateService,
   SyncService,

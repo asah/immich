@@ -1,4 +1,5 @@
 import {
+  Check,
   Column,
   CreateDateColumn,
   ForeignKeyColumn,
@@ -9,9 +10,15 @@ import {
 } from '@immich/sql-tools';
 import { SharedLinkType } from 'src/enum';
 import { AlbumTable } from 'src/schema/tables/album.table';
+import { StoryTable } from 'src/schema/tables/story.table';
 import { UserTable } from 'src/schema/tables/user.table';
 
 @Table('shared_link')
+@Check({ name: 'shared_link_startOffsetMs_check', expression: `"startOffsetMs" IS NULL OR "startOffsetMs" >= 0` })
+@Check({
+  name: 'shared_link_story_target_check',
+  expression: `type <> 'STORY' OR ("storyId" IS NOT NULL AND "albumId" IS NULL AND "allowUpload" = false AND "showExif" = false)`,
+})
 export class SharedLinkTable {
   @PrimaryGeneratedColumn()
   id!: Generated<string>;
@@ -39,6 +46,15 @@ export class SharedLinkTable {
 
   @ForeignKeyColumn(() => AlbumTable, { nullable: true, onDelete: 'CASCADE', onUpdate: 'CASCADE' })
   albumId!: string | null;
+
+  @ForeignKeyColumn(() => StoryTable, { nullable: true, onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+  storyId!: Generated<string | null>;
+
+  @Column({ type: 'uuid', nullable: true })
+  startPageId!: Generated<string | null>;
+
+  @Column({ type: 'integer', nullable: true })
+  startOffsetMs!: Generated<number | null>;
 
   @Column({ type: 'boolean', default: true })
   allowDownload!: Generated<boolean>;

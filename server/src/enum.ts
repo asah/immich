@@ -149,6 +149,12 @@ export enum Permission {
   AlbumUserUpdate = 'albumUser.update',
   AlbumUserDelete = 'albumUser.delete',
 
+  StoryCreate = 'story.create',
+  StoryRead = 'story.read',
+  StoryUpdate = 'story.update',
+  StoryDelete = 'story.delete',
+  StoryShare = 'story.share',
+
   AuthChangePassword = 'auth.changePassword',
 
   AuthDeviceDelete = 'authDevice.delete',
@@ -312,11 +318,46 @@ export enum Permission {
 export enum SharedLinkType {
   Album = 'ALBUM',
 
+  Story = 'STORY',
+
   /**
    * Individual asset
    * or group of assets that are not in an album
    */
   Individual = 'INDIVIDUAL',
+}
+
+export enum StoryAspectRatio {
+  Portrait = 'portrait_4_5',
+  Landscape = 'landscape_16_9',
+  Square = 'square_1_1',
+}
+
+export const StoryAspectRatioSchema = z
+  .enum(StoryAspectRatio)
+  .describe('Story aspect ratio')
+  .meta({ id: 'StoryAspectRatio' });
+
+export enum StoryRevisionSource {
+  Create = 'create',
+  Manual = 'manual',
+  Import = 'import',
+  AutomaticDraft = 'automatic_draft',
+  Ai = 'ai',
+  Undo = 'undo',
+  Redo = 'redo',
+  Restore = 'restore',
+  Migration = 'migration',
+}
+
+export enum AiProviderAdapter {
+  OpenAI = 'openai',
+}
+
+export enum AiCredentialTestStatus {
+  Untested = 'untested',
+  Success = 'success',
+  Failed = 'failed',
 }
 
 export const SharedLinkTypeSchema = z.enum(SharedLinkType).describe('Shared link type').meta({ id: 'SharedLinkType' });
@@ -1198,6 +1239,7 @@ export enum ApiTag {
   Sessions = 'Sessions',
   SharedLinks = 'Shared links',
   Stacks = 'Stacks',
+  Stories = 'Stories',
   Sync = 'Sync',
   SystemConfig = 'System config',
   SystemMetadata = 'System metadata',

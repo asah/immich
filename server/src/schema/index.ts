@@ -1,9 +1,13 @@
 import { Database, Extensions, Generated, Int8 } from '@immich/sql-tools';
 import {
+  ai_credential_test_status_enum,
+  ai_provider_adapter_enum,
   album_user_role_enum,
   asset_face_source_type,
   asset_visibility_enum,
   assets_status_enum,
+  story_aspect_ratio_enum,
+  story_revision_source_enum,
 } from 'src/schema/enums';
 import {
   album_user_after_insert,
@@ -26,6 +30,8 @@ import {
   user_metadata_audit,
 } from 'src/schema/functions';
 import { ActivityTable } from 'src/schema/tables/activity.table';
+import { AiCredentialTable } from 'src/schema/tables/ai-credential.table';
+import { AiProviderTable } from 'src/schema/tables/ai-provider.table';
 import { AlbumAssetAuditTable } from 'src/schema/tables/album-asset-audit.table';
 import { AlbumAssetTable } from 'src/schema/tables/album-asset.table';
 import { AlbumAuditTable } from 'src/schema/tables/album-audit.table';
@@ -71,11 +77,19 @@ import { SharedLinkTable } from 'src/schema/tables/shared-link.table';
 import { SmartSearchTable } from 'src/schema/tables/smart-search.table';
 import { StackAuditTable } from 'src/schema/tables/stack-audit.table';
 import { StackTable } from 'src/schema/tables/stack.table';
+import { StoryAiDraftTable } from 'src/schema/tables/story-ai-draft.table';
+import { StoryAssetTable } from 'src/schema/tables/story-asset.table';
+import { StoryMutationTable } from 'src/schema/tables/story-mutation.table';
+import { StoryPublishedAssetTable } from 'src/schema/tables/story-published-asset.table';
+import { StoryRevisionTable } from 'src/schema/tables/story-revision.table';
+import { StoryUserTable } from 'src/schema/tables/story-user.table';
+import { StoryTable } from 'src/schema/tables/story.table';
 import { SessionSyncCheckpointTable } from 'src/schema/tables/sync-checkpoint.table';
 import { SystemMetadataTable } from 'src/schema/tables/system-metadata.table';
 import { TagAssetTable } from 'src/schema/tables/tag-asset.table';
 import { TagClosureTable } from 'src/schema/tables/tag-closure.table';
 import { TagTable } from 'src/schema/tables/tag.table';
+import { UserAiConsentTable } from 'src/schema/tables/user-ai-consent.table';
 import { UserAuditTable } from 'src/schema/tables/user-audit.table';
 import { UserMetadataAuditTable } from 'src/schema/tables/user-metadata-audit.table';
 import { UserMetadataTable } from 'src/schema/tables/user-metadata.table';
@@ -93,6 +107,8 @@ import { WorkflowTable } from 'src/schema/tables/workflow.table';
 @Database({ name: 'immich' })
 export class ImmichDatabase {
   tables = [
+    AiCredentialTable,
+    AiProviderTable,
     ActivityTable,
     AlbumAssetTable,
     AlbumAssetAuditTable,
@@ -136,12 +152,20 @@ export class ImmichDatabase {
     SmartSearchTable,
     StackTable,
     StackAuditTable,
+    StoryTable,
+    StoryUserTable,
+    StoryRevisionTable,
+    StoryAssetTable,
+    StoryPublishedAssetTable,
+    StoryMutationTable,
+    StoryAiDraftTable,
     SessionSyncCheckpointTable,
     SystemMetadataTable,
     TagTable,
     TagAssetTable,
     TagClosureTable,
     UserAuditTable,
+    UserAiConsentTable,
     UserMetadataTable,
     UserMetadataAuditTable,
     UserTable,
@@ -176,7 +200,16 @@ export class ImmichDatabase {
     asset_ocr_delete_audit,
   ];
 
-  enum = [album_user_role_enum, assets_status_enum, asset_face_source_type, asset_visibility_enum];
+  enum = [
+    ai_credential_test_status_enum,
+    ai_provider_adapter_enum,
+    album_user_role_enum,
+    assets_status_enum,
+    asset_face_source_type,
+    asset_visibility_enum,
+    story_aspect_ratio_enum,
+    story_revision_source_enum,
+  ];
 }
 
 export interface Migrations {
@@ -189,6 +222,9 @@ export interface DB {
   kysely_migrations: { timestamp: string; name: string };
 
   activity: ActivityTable;
+
+  ai_credential: AiCredentialTable;
+  ai_provider: AiProviderTable;
 
   album: AlbumTable;
   album_audit: AlbumAuditTable;
@@ -250,6 +286,14 @@ export interface DB {
   shared_link: SharedLinkTable;
   shared_link_asset: SharedLinkAssetTable;
 
+  story: StoryTable;
+  story_user: StoryUserTable;
+  story_revision: StoryRevisionTable;
+  story_asset: StoryAssetTable;
+  story_published_asset: StoryPublishedAssetTable;
+  story_mutation: StoryMutationTable;
+  story_ai_draft: StoryAiDraftTable;
+
   smart_search: SmartSearchTable;
 
   stack: StackTable;
@@ -263,6 +307,7 @@ export interface DB {
 
   user: UserTable;
   user_audit: UserAuditTable;
+  user_ai_consent: UserAiConsentTable;
   user_metadata: UserMetadataTable;
   user_metadata_audit: UserMetadataAuditTable;
 

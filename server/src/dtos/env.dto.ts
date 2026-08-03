@@ -52,6 +52,10 @@ export const EnvSchema = z
     IMMICH_MEDIA_LOCATION: absolutePath,
     IMMICH_MICROSERVICES_METRICS_PORT: z.coerce.number().int().optional(),
     IMMICH_ALLOW_EXTERNAL_PLUGINS: stringBool.optional(),
+    IMMICH_AI_CREDENTIAL_KEY: z
+      .string()
+      .optional()
+      .refine((value) => !value || Buffer.from(value, 'base64').length === 32, 'Must be a base64-encoded 32-byte key'),
     IMMICH_PLUGINS_INSTALL_FOLDER: absolutePath,
     IMMICH_PORT: z.coerce.number().int().optional(),
     IMMICH_REPOSITORY: z.string().optional(),

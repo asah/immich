@@ -101,6 +101,9 @@ const checkOtherAccess = async (access: AccessRepository, request: OtherAccessRe
   const { auth, permission, ids } = request;
 
   switch (permission) {
+    case Permission.StoryShare: {
+      return access.story.checkOwnerAccess(auth.user.id, ids);
+    }
     // uses album id
     case Permission.ActivityCreate: {
       return await access.activity.checkCreateAccess(auth.user.id, ids);

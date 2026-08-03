@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { ExpressionBuilder, Insertable, Kysely, Selectable, ShallowDehydrateObject, sql, Updateable } from 'kysely';
 import { jsonArrayFrom, jsonObjectFrom } from 'kysely/helpers/postgres';
 import _ from 'lodash';
@@ -112,9 +112,16 @@ export class SharedLinkRepository {
         (join) => join.onTrue(),
       )
       .select((eb) => eb.fn.toJson(eb.table('album')).$castTo<ShallowDehydrateObject<Album> | null>().as('album'))
+      .leftJoin('story', (join) => join.onRef('story.id', '=', 'shared_link.storyId').on('story.deletedAt', 'is', null))
       .where('shared_link.id', '=', id)
       .where('shared_link.userId', '=', userId)
-      .where((eb) => eb.or([eb('shared_link.type', '=', SharedLinkType.Individual), eb('album.id', 'is not', null)]))
+      .where((eb) =>
+        eb.or([
+          eb('shared_link.type', '=', SharedLinkType.Individual),
+          eb('album.id', 'is not', null),
+          eb('story.id', 'is not', null),
+        ]),
+      )
       .orderBy('shared_link.createdAt', 'desc')
       .executeTakeFirst();
   }
@@ -135,7 +142,14 @@ export class SharedLinkRepository {
         (join) => join.onTrue(),
       )
       .select((eb) => eb.fn.toJson('album').$castTo<ShallowDehydrateObject<Album> | null>().as('album'))
-      .where((eb) => eb.or([eb('shared_link.type', '=', SharedLinkType.Individual), eb('album.id', 'is not', null)]))
+      .leftJoin('story', (join) => join.onRef('story.id', '=', 'shared_link.storyId').on('story.deletedAt', 'is', null))
+      .where((eb) =>
+        eb.or([
+          eb('shared_link.type', '=', SharedLinkType.Individual),
+          eb('album.id', 'is not', null),
+          eb('story.id', 'is not', null),
+        ]),
+      )
       .$if(!!albumId, (eb) => eb.where('shared_link.albumId', '=', albumId!))
       .$if(!!id, (eb) => eb.where('shared_link.id', '=', id!))
       .orderBy('shared_link.createdAt', 'desc')
@@ -156,11 +170,16 @@ export class SharedLinkRepository {
     return this.db
       .selectFrom('shared_link')
       .leftJoin('album', 'album.id', 'shared_link.albumId')
+      .leftJoin('story', 'story.id', 'shared_link.storyId')
       .where('album.deletedAt', 'is', null)
+      .where('story.deletedAt', 'is', null)
       .select((eb) => [
         'shared_link.id',
         'shared_link.userId',
         'shared_link.albumId',
+        'shared_link.storyId',
+        'shared_link.startPageId',
+        'shared_link.startOffsetMs',
         'shared_link.expiresAt',
         'shared_link.showExif',
         'shared_link.allowUpload',
@@ -170,10 +189,38 @@ export class SharedLinkRepository {
           eb.selectFrom('user').select(columns.authUser).whereRef('user.id', '=', 'shared_link.userId'),
         ).as('user'),
       ])
-      .where((eb) => eb.or([eb('shared_link.type', '=', SharedLinkType.Individual), eb('album.id', 'is not', null)]));
+      .where((eb) =>
+        eb.or([
+          eb('shared_link.type', '=', SharedLinkType.Individual),
+          eb('album.id', 'is not', null),
+          eb.and([eb('story.id', 'is not', null), eb('story.publishedRevisionId', 'is not', null)]),
+        ]),
+      );
   }
 
   async create(entity: Insertable<SharedLinkTable> & { assetIds?: string[] }) {
+    if (entity.type === SharedLinkType.Story) {
+      const owner = await this.db
+        .selectFrom('story_user')
+        .innerJoin('story', 'story.id', 'story_user.storyId')
+        .innerJoin('story_revision', 'story_revision.id', 'story.publishedRevisionId')
+        .select(['story_user.userId', 'story_revision.document'])
+        .where('storyId', '=', entity.storyId!)
+        .where('userId', '=', entity.userId)
+        .where('role', '=', AlbumUserRole.Owner)
+        .executeTakeFirst();
+      if (!owner) {
+        throw new BadRequestException('Story must be published and owned by the shared-link creator');
+      }
+      const document = owner.document as { pages?: Array<{ id: string; durationMs: number }> };
+      const requestedPage = entity.startPageId
+        ? document.pages?.find(({ id }) => id === entity.startPageId)
+        : undefined;
+      entity.startPageId = requestedPage?.id ?? null;
+      entity.startOffsetMs = requestedPage
+        ? Math.min(Math.max(entity.startOffsetMs ?? 0, 0), requestedPage.durationMs)
+        : null;
+    }
     const { id } = await this.db
       .insertInto('shared_link')
       .values(_.omit(entity, 'assetIds'))
@@ -191,6 +238,23 @@ export class SharedLinkRepository {
   }
 
   async update(entity: Updateable<SharedLinkTable> & { id: string; assetIds?: string[] }) {
+    if (entity.startPageId !== undefined || entity.startOffsetMs !== undefined) {
+      const target = await this.db
+        .selectFrom('shared_link')
+        .innerJoin('story', 'story.id', 'shared_link.storyId')
+        .innerJoin('story_revision', 'story_revision.id', 'story.publishedRevisionId')
+        .select(['shared_link.startPageId', 'shared_link.startOffsetMs', 'story_revision.document'])
+        .where('shared_link.id', '=', entity.id)
+        .executeTakeFirst();
+      if (target) {
+        const document = target.document as { pages?: Array<{ id: string; durationMs: number }> };
+        const pageId = entity.startPageId === undefined ? target.startPageId : entity.startPageId;
+        const page = pageId ? document.pages?.find(({ id }) => id === pageId) : undefined;
+        entity.startPageId = page?.id ?? null;
+        const offset = entity.startOffsetMs === undefined ? target.startOffsetMs : entity.startOffsetMs;
+        entity.startOffsetMs = page ? Math.min(Math.max(offset ?? 0, 0), page.durationMs) : null;
+      }
+    }
     const { id } = await this.db
       .updateTable('shared_link')
       .set(_.omit(entity, 'assets', 'album', 'assetIds'))

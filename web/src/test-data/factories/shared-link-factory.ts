@@ -16,4 +16,7 @@ export const sharedLinkFactory = Sync.makeFactory<SharedLinkResponseDto>({
   allowDownload: Sync.each(() => faker.datatype.boolean()),
   showMetadata: Sync.each(() => faker.datatype.boolean()),
   slug: null,
+  startOffsetMs: null,
+  startPageId: null,
+  storyId: null,
 });

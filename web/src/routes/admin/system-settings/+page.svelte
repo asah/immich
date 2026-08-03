@@ -13,6 +13,7 @@
   import NightlyTasksSettings from './NightlyTasksSettings.svelte';
   import NotificationSettings from './NotificationSettings.svelte';
   import ServerSettings from './ServerSettings.svelte';
+  import StoryAiSettings from './StoryAiSettings.svelte';
   import StorageTemplateSettings from '$lib/components/admin-settings/StorageTemplateSettings.svelte';
   import ThemeSettings from './ThemeSettings.svelte';
   import TrashSettings from './TrashSettings.svelte';
@@ -63,6 +64,13 @@
     key: string;
     icon: string;
   }> = [
+    {
+      component: StoryAiSettings,
+      title: $t('admin.story_ai_provider'),
+      subtitle: $t('admin.story_ai_provider_description'),
+      key: 'story-ai',
+      icon: mdiRobotOutline,
+    },
     {
       component: AuthSettings,
       title: $t('admin.authentication_settings'),

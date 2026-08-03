@@ -11,6 +11,8 @@
     allowUpload: boolean;
     showMetadata: boolean;
     expiresAt: string | null;
+    allowUploadVisible?: boolean;
+    downloadRequiresMetadata?: boolean;
   };
 
   let {
@@ -21,10 +23,12 @@
     allowUpload = $bindable(),
     showMetadata = $bindable(),
     expiresAt = $bindable(),
+    allowUploadVisible = true,
+    downloadRequiresMetadata = true,
   }: Props = $props();
 
   $effect(() => {
-    if (!showMetadata && allowDownload) {
+    if (downloadRequiresMetadata && !showMetadata && allowDownload) {
       allowDownload = false;
     }
   });
@@ -56,11 +60,13 @@
     <Switch bind:checked={showMetadata} />
   </Field>
 
-  <Field label={$t('allow_public_user_to_download')} disabled={!showMetadata}>
+  <Field label={$t('allow_public_user_to_download')} disabled={downloadRequiresMetadata && !showMetadata}>
     <Switch bind:checked={allowDownload} />
   </Field>
 
-  <Field label={$t('allow_public_user_to_upload')}>
-    <Switch bind:checked={allowUpload} />
-  </Field>
+  {#if allowUploadVisible}
+    <Field label={$t('allow_public_user_to_upload')}>
+      <Switch bind:checked={allowUpload} />
+    </Field>
+  {/if}
 </div>

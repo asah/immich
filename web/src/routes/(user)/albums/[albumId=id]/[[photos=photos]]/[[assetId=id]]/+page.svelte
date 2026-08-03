@@ -60,6 +60,7 @@
     AlbumUserRole,
     AssetOrder,
     AssetVisibility,
+    Field,
     getAlbumAssetPriorities,
     getAlbumInfo,
     searchAssets,
@@ -91,6 +92,7 @@
     mdiNumeric,
     mdiPlus,
     mdiPresentationPlay,
+    mdiBookOpenPageVariantOutline,
   } from '@mdi/js';
   import { onDestroy, untrack } from 'svelte';
   import { t } from 'svelte-i18n';
@@ -323,12 +325,12 @@
           sort: sortCriteria.map(({ sortBy, sortOrder }) => ({
             field:
               sortBy === AlbumAssetSortBy.Priority
-                ? 'albumPriority'
+                ? Field.AlbumPriority
                 : sortBy === AlbumAssetSortBy.FileSize
-                  ? 'fileSizeInByte'
+                  ? Field.FileSizeInByte
                   : sortBy === AlbumAssetSortBy.FileName
-                    ? 'originalFileName'
-                    : 'fileCreatedAt',
+                    ? Field.OriginalFileName
+                    : Field.FileCreatedAt,
             order: sortOrder === SortOrder.Asc ? AssetOrder.Asc : AssetOrder.Desc,
           })),
           page: page ?? 1,
@@ -734,6 +736,18 @@
             {/if}
 
             <ActionButton action={Share} />
+
+            {#if album.assetCount > 0}
+              <IconButton
+                shape="round"
+                variant="ghost"
+                color="secondary"
+                aria-label={$t('create_story_from_album')}
+                title={$t('create_story_from_album')}
+                onclick={() => goto(Route.newStory({ albumId: album.id }))}
+                icon={mdiBookOpenPageVariantOutline}
+              />
+            {/if}
 
             {#if featureFlagsManager.value.map}
               <AlbumMap {album} />

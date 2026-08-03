@@ -59,6 +59,15 @@ export const Route = {
   viewAlbumAsset: ({ albumId, assetId }: { albumId: string; assetId: string }) =>
     `/albums/${albumId}/photos/${assetId}`,
 
+  // stories
+  stories: () => '/stories',
+  newStory: (params?: { albumId?: string }) => '/stories/new' + asQueryString(params),
+  viewStory: ({ id }: { id: string }) => `/stories/${id}`,
+  viewStoryPlayer: (
+    { id }: { id: string },
+    params?: { page?: string; t?: number; play?: 0 | 1; revisionId?: string },
+  ) => `/stories/${id}/view` + asQueryString(params),
+
   // buy
   buy: () => '/buy',
 

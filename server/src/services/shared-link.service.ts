@@ -85,6 +85,13 @@ export class SharedLinkService extends BaseService {
 
         break;
       }
+      case SharedLinkType.Story: {
+        if (!dto.storyId) {
+          throw new BadRequestException('Invalid storyId');
+        }
+        await this.requireAccess({ auth, permission: Permission.StoryShare, ids: [dto.storyId] });
+        break;
+      }
     }
 
     try {
@@ -93,13 +100,21 @@ export class SharedLinkService extends BaseService {
         userId: auth.user.id,
         type: dto.type,
         albumId: dto.albumId || null,
-        assetIds: dto.assetIds,
+        ...(dto.storyId && { storyId: dto.storyId }),
+        ...(dto.startPageId && { startPageId: dto.startPageId }),
+        ...(dto.startOffsetMs !== undefined && { startOffsetMs: dto.startOffsetMs }),
+        ...(dto.assetIds && { assetIds: dto.assetIds }),
         description: dto.description || null,
-        password: dto.password,
+        ...(dto.password !== undefined && { password: dto.password }),
         expiresAt: dto.expiresAt || null,
-        allowUpload: dto.allowUpload ?? true,
-        allowDownload: dto.showMetadata === false ? false : (dto.allowDownload ?? true),
-        showExif: dto.showMetadata ?? true,
+        allowUpload: dto.type === SharedLinkType.Story ? false : (dto.allowUpload ?? true),
+        allowDownload:
+          dto.type === SharedLinkType.Story
+            ? (dto.allowDownload ?? true)
+            : dto.showMetadata === false
+              ? false
+              : (dto.allowDownload ?? true),
+        showExif: dto.type === SharedLinkType.Story ? false : (dto.showMetadata ?? true),
         slug: dto.slug || null,
       });
 
@@ -118,7 +133,7 @@ export class SharedLinkService extends BaseService {
   }
 
   async update(auth: AuthDto, id: string, dto: SharedLinkEditDto) {
-    await this.findOrFail(auth.user.id, id);
+    const existing = await this.findOrFail(auth.user.id, id);
     try {
       const sharedLink = await this.sharedLinkRepository.update({
         id,
@@ -128,8 +143,10 @@ export class SharedLinkService extends BaseService {
         expiresAt: dto.expiresAt,
         allowUpload: dto.allowUpload,
         allowDownload: dto.allowDownload,
-        showExif: dto.showMetadata,
+        showExif: existing.type === SharedLinkType.Story ? false : dto.showMetadata,
         slug: dto.slug || null,
+        startPageId: dto.startPageId,
+        startOffsetMs: dto.startOffsetMs,
       });
       return mapSharedLink(sharedLink, { stripAssetMetadata: false });
     } catch (error) {

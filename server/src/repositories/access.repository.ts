@@ -497,6 +497,28 @@ class TagAccess {
   }
 }
 
+class StoryAccess {
+  constructor(private db: Kysely<DB>) {}
+
+  @GenerateSql({ params: [DummyValue.UUID, DummyValue.UUID_SET] })
+  @ChunkedSet({ paramIndex: 1 })
+  async checkOwnerAccess(userId: string, storyIds: Set<string>) {
+    if (storyIds.size === 0) {
+      return new Set<string>();
+    }
+    return this.db
+      .selectFrom('story')
+      .innerJoin('story_user', 'story_user.storyId', 'story.id')
+      .select('story.id')
+      .where('story.id', 'in', [...storyIds])
+      .where('story.deletedAt', 'is', null)
+      .where('story_user.userId', '=', userId)
+      .where('story_user.role', '=', AlbumUserRole.Owner)
+      .execute()
+      .then((stories) => new Set(stories.map(({ id }) => id)));
+  }
+}
+
 class WorkflowAccess {
   constructor(private db: Kysely<DB>) {}
 
@@ -530,6 +552,7 @@ export class AccessRepository {
   partner: PartnerAccess;
   session: SessionAccess;
   stack: StackAccess;
+  story: StoryAccess;
   tag: TagAccess;
   timeline: TimelineAccess;
   workflow: WorkflowAccess;
@@ -546,6 +569,7 @@ export class AccessRepository {
     this.partner = new PartnerAccess(db);
     this.session = new SessionAccess(db);
     this.stack = new StackAccess(db);
+    this.story = new StoryAccess(db);
     this.tag = new TagAccess(db);
     this.timeline = new TimelineAccess(db);
     this.workflow = new WorkflowAccess(db);

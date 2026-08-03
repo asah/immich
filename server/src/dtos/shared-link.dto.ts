@@ -23,6 +23,15 @@ const SharedLinkCreateSchema = z
     type: SharedLinkTypeSchema,
     assetIds: z.array(z.uuidv4()).optional().describe('Asset IDs (for individual assets)'),
     albumId: z.uuidv4().optional().describe('Album ID (for album sharing)'),
+    storyId: z.uuidv4().optional().describe('Story ID (for story sharing)'),
+    startPageId: z.uuidv4().nullable().optional().describe('Story page where playback starts'),
+    startOffsetMs: z
+      .number()
+      .int()
+      .nonnegative()
+      .nullable()
+      .optional()
+      .describe('Story playback offset in milliseconds'),
     description: z.string().nullable().optional().describe('Link description'),
     password: z.string().nullable().optional().describe('Link password'),
     slug: z.string().nullable().optional().describe('Custom URL slug'),
@@ -38,6 +47,14 @@ const SharedLinkEditSchema = z
     description: z.string().nullable().optional().describe('Link description'),
     password: z.string().nullable().optional().describe('Link password'),
     slug: z.string().nullable().optional().describe('Custom URL slug'),
+    startPageId: z.uuidv4().nullable().optional().describe('Story page where playback starts'),
+    startOffsetMs: z
+      .number()
+      .int()
+      .nonnegative()
+      .nullable()
+      .optional()
+      .describe('Story playback offset in milliseconds'),
     expiresAt: isoDatetimeToDate.nullish().describe('Expiration date'),
     allowUpload: z.boolean().optional().describe('Allow uploads'),
     allowDownload: z.boolean().optional().describe('Allow downloads'),
@@ -63,6 +80,9 @@ const SharedLinkResponseSchema = z
     expiresAt: isoDatetimeToDate.nullable().describe('Expiration date'),
     assets: z.array(AssetResponseSchema),
     album: AlbumResponseSchema.optional(),
+    storyId: z.uuidv4().nullable(),
+    startPageId: z.uuidv4().nullable(),
+    startOffsetMs: z.number().int().nonnegative().nullable(),
     allowUpload: z.boolean().describe('Allow uploads'),
     allowDownload: z.boolean().describe('Allow downloads'),
     showMetadata: z.boolean().describe('Show metadata'),
@@ -91,6 +111,9 @@ export function mapSharedLink(sharedLink: SharedLink, options: { stripAssetMetad
     expiresAt: sharedLink.expiresAt,
     assets: assets.map((asset) => mapAsset(asset, { stripMetadata: options.stripAssetMetadata })),
     album: sharedLink.album ? mapAlbum(sharedLink.album) : undefined,
+    storyId: sharedLink.storyId ?? null,
+    startPageId: sharedLink.startPageId ?? null,
+    startOffsetMs: sharedLink.startOffsetMs ?? null,
     allowUpload: sharedLink.allowUpload,
     allowDownload: sharedLink.allowDownload,
     showMetadata: sharedLink.showExif,

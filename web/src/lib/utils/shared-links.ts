@@ -1,4 +1,5 @@
 import { getMySharedLink, isHttpError } from '@immich/sdk';
+import { storyService } from '$lib/services/story.service';
 import { getAssetMediaUrl, getSharedLink as getCachedSharedLink, setSharedLink } from '$lib/utils';
 import { authenticate } from '$lib/utils/auth';
 import { getFormatter } from '$lib/utils/i18n';
@@ -39,6 +40,8 @@ export const loadSharedLink = async ({
   try {
     const [sharedLink, asset] = await Promise.all([sharedLinkPromise, getAssetInfoFromParam(params)]);
     setSharedLink(sharedLink);
+    const publishedStory =
+      (sharedLink.type as string) === 'STORY' ? await storyService.sharedPublished({ key, slug }) : undefined;
     const assetCount = sharedLink.assets.length;
     const assetId = sharedLink.album?.albumThumbnailAssetId || sharedLink.assets[0]?.id;
     const assetPath = assetId ? getAssetMediaUrl({ id: assetId }) : '/feature-panel.png';
@@ -46,9 +49,10 @@ export const loadSharedLink = async ({
     return {
       ...common,
       sharedLink,
+      publishedStory,
       asset,
       meta: {
-        title: sharedLink.album ? sharedLink.album.albumName : $t('public_share'),
+        title: publishedStory?.story.title ?? (sharedLink.album ? sharedLink.album.albumName : $t('public_share')),
         description: sharedLink.description || $t('shared_photos_and_videos_count', { values: { assetCount } }),
         imageUrl: assetPath,
       },

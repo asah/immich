@@ -28,6 +28,8 @@ import { ServerController } from 'src/controllers/server.controller';
 import { SessionController } from 'src/controllers/session.controller';
 import { SharedLinkController } from 'src/controllers/shared-link.controller';
 import { StackController } from 'src/controllers/stack.controller';
+import { StoryAiController } from 'src/controllers/story-ai.controller';
+import { StoryController } from 'src/controllers/story.controller';
 import { SyncController } from 'src/controllers/sync.controller';
 import { SystemConfigController } from 'src/controllers/system-config.controller';
 import { SystemMetadataController } from 'src/controllers/system-metadata.controller';
@@ -71,6 +73,8 @@ export const controllers = [
   SessionController,
   SharedLinkController,
   StackController,
+  StoryAiController,
+  StoryController,
   SyncController,
   SystemConfigController,
   SystemMetadataController,

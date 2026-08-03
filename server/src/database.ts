@@ -166,6 +166,9 @@ export type AuthSharedLink = {
   expiresAt: Date | null;
   userId: string;
   albumId: string | null;
+  storyId?: string | null;
+  startPageId?: string | null;
+  startOffsetMs?: number | null;
   showExif: boolean;
   allowUpload: boolean;
   allowDownload: boolean;
@@ -176,6 +179,9 @@ export type SharedLink = {
   id: string;
   album?: ShallowDehydrateObject<Album> | null;
   albumId: string | null;
+  storyId?: string | null;
+  startPageId?: string | null;
+  startOffsetMs?: number | null;
   allowDownload: boolean;
   allowUpload: boolean;
   assets: ShallowDehydrateObject<MapAsset>[];

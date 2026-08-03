@@ -232,9 +232,68 @@ describe(SharedLinkService.name, () => {
         key: Buffer.from('random-bytes', 'utf8'),
       });
     });
+
+    it('should create a story link with safe playback defaults', async () => {
+      const storyId = factory.uuid();
+      const startPageId = factory.uuid();
+      const sharedLink = SharedLinkFactory.create({
+        type: SharedLinkType.Story,
+        storyId,
+        startPageId,
+        startOffsetMs: 2500,
+        allowUpload: false,
+        showExif: false,
+      });
+      mocks.sharedLink.create.mockResolvedValue(getForSharedLink(sharedLink));
+      mocks.access.story.checkOwnerAccess.mockResolvedValue(new Set([storyId]));
+
+      await sut.create(authStub.admin, {
+        type: SharedLinkType.Story,
+        storyId,
+        startPageId,
+        startOffsetMs: 2500,
+        allowUpload: true,
+        allowDownload: true,
+        showMetadata: false,
+      });
+
+      expect(mocks.sharedLink.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: SharedLinkType.Story,
+          storyId,
+          startPageId,
+          startOffsetMs: 2500,
+          allowUpload: false,
+          allowDownload: true,
+          showExif: false,
+        }),
+      );
+    });
+
+    it('rejects creating a shared link for a Story the user does not own', async () => {
+      const targetStoryId = factory.uuid();
+
+      await expect(
+        sut.create(authStub.user1, { type: SharedLinkType.Story, storyId: targetStoryId }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+
+      expect(mocks.sharedLink.create).not.toHaveBeenCalled();
+    });
   });
 
   describe('update', () => {
+    it('keeps EXIF disabled when updating a Story shared link', async () => {
+      const link = SharedLinkFactory.create({ type: SharedLinkType.Story, storyId: factory.uuid(), showExif: false });
+      mocks.sharedLink.get.mockResolvedValue(getForSharedLink(link));
+      mocks.sharedLink.update.mockResolvedValue(getForSharedLink(link));
+
+      await sut.update(authStub.user1, link.id, { showMetadata: true, allowDownload: true });
+
+      expect(mocks.sharedLink.update).toHaveBeenCalledWith(
+        expect.objectContaining({ id: link.id, showExif: false, allowDownload: true }),
+      );
+    });
+
     it('should throw an error for an invalid shared link', async () => {
       mocks.sharedLink.get.mockResolvedValue(void 0);
 
