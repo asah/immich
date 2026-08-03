@@ -46,8 +46,13 @@
   style:background={scene.background === 'theme' ? '#FFFFFF' : scene.background}
 >
   <div class="absolute inset-0">
-    {#each scene.elements as element (element.id)}
-      <StoryElementView {element} {pageTime} {motion} {mediaResolver} {stickerResolver} />
+    {#each scene.elements as element, index (element.id)}
+      <!-- Keep the document order explicit in CSS. Every element has a transform (and
+        therefore its own stacking context), so relying on DOM order alone made
+        stickers intermittently render below images after a layer move. -->
+      <div class="absolute inset-0" style:z-index={index}>
+        <StoryElementView {element} {pageTime} {motion} {mediaResolver} {stickerResolver} />
+      </div>
     {/each}
   </div>
 

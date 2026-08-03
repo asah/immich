@@ -7,6 +7,10 @@ describe('StoryPage', () => {
   it('renders visual layers and a separate semantic reading order', () => {
     const { container } = render(StoryPage, { scene: storyDocumentFixture.cover, aspectRatio: 'portrait-4:5' });
     expect(container.querySelectorAll('[data-story-element]')).toHaveLength(2);
+    const layers = [...container.querySelectorAll('[data-story-element]')].map((element) =>
+      element.parentElement?.getAttribute('style'),
+    );
+    expect(layers).toEqual(['z-index: 0;', 'z-index: 1;']);
     expect(container.querySelector('[data-story-reading-order]')).toHaveTextContent('A story worth remembering');
     expect(screen.getByLabelText('Story page')).toBeInTheDocument();
   });
