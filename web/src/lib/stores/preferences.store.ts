@@ -89,7 +89,7 @@ export enum AlbumAssetSortBy {
   DateTaken = 'dateTaken',
   FileName = 'fileName',
   FileSize = 'fileSize',
-  Priority = 'priority',
+  Tag = 'tag',
 }
 
 export interface AlbumAssetViewSettings {

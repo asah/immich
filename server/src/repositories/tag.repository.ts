@@ -27,8 +27,8 @@ export class TagRepository {
     return this.db
       .selectFrom('tag')
       .select(columns.tag)
-      .where('userId', '=', userId)
       .where('value', '=', value)
+      .orderBy('createdAt', 'asc')
       .executeTakeFirst();
   }
 
@@ -69,8 +69,8 @@ export class TagRepository {
   }
 
   @GenerateSql({ params: [DummyValue.UUID] })
-  getAll(userId: string) {
-    return this.db.selectFrom('tag').select(columns.tag).where('userId', '=', userId).orderBy('value').execute();
+  getAll(_userId?: string) {
+    return this.db.selectFrom('tag').select(columns.tag).orderBy('value').execute();
   }
 
   @GenerateSql({ params: [{ userId: DummyValue.UUID, color: DummyValue.STRING, value: DummyValue.STRING }] })

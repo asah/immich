@@ -88,6 +88,7 @@ export type Tag = {
   updatedAt: Date;
   color: string | null;
   parentId: string | null;
+  description?: string | null;
 };
 
 export type Memory = {

@@ -13,6 +13,7 @@
     AssetMediaSize,
     AssetVisibility,
     getAllAlbums,
+    getAllTags,
     searchAssets,
     searchSmart,
     type AlbumResponseDto,
@@ -49,7 +50,8 @@
 
   export type AutocompleteResult =
     | { type: 'album'; id: string; label: string; thumbnailUrl?: string }
-    | { type: 'photo'; id: string; label: string; thumbnailUrl?: string };
+    | { type: 'photo'; id: string; label: string; thumbnailUrl?: string }
+    | { type: 'tag'; id: string; label: string; thumbnailUrl?: string };
 
   const listboxId = generateId();
   const searchTypeId = generateId();
@@ -206,6 +208,9 @@
 
   const loadAutocompleteResults = async (query: string, searchType: string, request: number) => {
     const albumPromise = getAllAlbums({ name: query });
+    const tagPromise = getAllTags().then((tags) =>
+      tags.filter(({ name }) => name.toLowerCase().includes(query.toLowerCase())).slice(0, 5),
+    );
     const photoPromise =
       searchType === 'smart' && featureFlagsManager.value.smartSearch
         ? searchSmart({
@@ -224,13 +229,14 @@
             },
           }).then(({ assets }) => assets.items);
 
-    const [albums, photos] = await Promise.all([albumPromise, photoPromise]);
+    const [albums, photos, tags] = await Promise.all([albumPromise, photoPromise, tagPromise]);
     if (request !== autocompleteRequest || query !== value.trim()) {
       return;
     }
 
     autocompleteResults = [
       ...albums.map((album) => toAlbumAutocompleteResult(album)),
+      ...tags.map((tag) => ({ type: 'tag' as const, id: tag.id, label: `#${tag.name}` })),
       ...photos.map((photo) => toPhotoAutocompleteResult(photo)),
     ].slice(0, 10);
   };
@@ -257,7 +263,13 @@
 
   const onAutocompleteResultClick = async (result: AutocompleteResult) => {
     closeDropdown();
-    await goto(result.type === 'album' ? Route.viewAlbum({ id: result.id }) : Route.viewAsset({ id: result.id }));
+    await goto(
+      result.type === 'album'
+        ? Route.viewAlbum({ id: result.id })
+        : result.type === 'tag'
+          ? Route.tag({ id: result.id, slug: result.label.slice(1) })
+          : Route.viewAsset({ id: result.id }),
+    );
   };
 
   const openDropdown = () => {

@@ -92,7 +92,7 @@
     { label: $t('date_taken'), value: AlbumAssetSortBy.DateTaken },
     { label: $t('file_name_text'), value: AlbumAssetSortBy.FileName },
     { label: $t('file_size'), value: AlbumAssetSortBy.FileSize },
-    { label: $t('album_priority'), value: AlbumAssetSortBy.Priority },
+    { label: 'Tag', value: AlbumAssetSortBy.Tag },
   ]);
 
   const saveSortCriteria = async (criteria: AlbumAssetSortCriterion[]) => {
@@ -125,7 +125,6 @@
     { key: 'cameraSettings', label: $t('camera_settings') },
     { key: 'lens', label: $t('lens_name') },
     { key: 'lensSettings', label: $t('lens_settings') },
-    { key: 'priority', label: $t('album_priority') },
   ]);
 
   const setDisplayInfo = (key: keyof AlbumAssetDisplayInfo, checked: boolean) => {
