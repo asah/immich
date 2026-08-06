@@ -109,9 +109,9 @@ export interface SearchAlbumOptions {
 
 export interface SearchOrderOptions {
   orderDirection?: 'asc' | 'desc';
-  orderBy?: 'fileCreatedAt' | 'originalFileName' | 'fileSizeInByte' | 'albumPriority';
+  orderBy?: 'fileCreatedAt' | 'originalFileName' | 'fileSizeInByte';
   sort?: Array<{
-    field: 'fileCreatedAt' | 'originalFileName' | 'fileSizeInByte' | 'albumPriority';
+    field: 'fileCreatedAt' | 'originalFileName' | 'fileSizeInByte';
     order: 'asc' | 'desc';
   }>;
 }
@@ -231,13 +231,9 @@ export class SearchRepository {
       ? options.sort
       : [{ field: options.orderBy ?? 'fileCreatedAt', order: orderDirection }];
     const hasFileSize = criteria.some(({ field }) => field === 'fileSizeInByte');
-    const hasAlbumPriority = criteria.some(({ field }) => field === 'albumPriority') && options.albumIds?.length === 1;
     const searchOptions = hasFileSize ? { ...options, withExif: true } : options;
     const orderExpressions = criteria.flatMap(({ field, order }) => {
       const direction = order.toLowerCase() as OrderByDirection;
-      if (field === 'albumPriority') {
-        return hasAlbumPriority ? [sql`"priorityAlbumAsset"."priority" ${sql.raw(direction)} nulls last`] : [];
-      }
       const column =
         field === 'originalFileName'
           ? 'asset.originalFileName'
@@ -251,13 +247,6 @@ export class SearchRepository {
     }
     const items = await searchAssetBuilderLegacy(this.db, searchOptions)
       .select(columns.searchAsset)
-      .$if(hasAlbumPriority, (query) =>
-        query.innerJoin('album_asset as priorityAlbumAsset', (join) =>
-          join
-            .onRef('priorityAlbumAsset.assetId', '=', 'asset.id')
-            .on('priorityAlbumAsset.albumId', '=', options.albumIds![0]),
-        ),
-      )
       .orderBy(orderExpressions)
       .orderBy('asset.id', 'asc')
       .limit(pagination.size + 1)

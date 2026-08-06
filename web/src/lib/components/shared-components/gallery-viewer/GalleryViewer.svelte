@@ -51,8 +51,6 @@
     arrowNavigation?: boolean;
     allowDeletion?: boolean;
     album?: AlbumResponseDto;
-    albumPriorities?: Record<string, number>;
-    onAlbumPriorityChange?: (assetId: string, priority: number | null) => void;
     primarySortGroupKeys?: string[];
     viewportScrollTop?: number;
   };
@@ -73,8 +71,6 @@
     arrowNavigation = true,
     allowDeletion = true,
     album,
-    albumPriorities = {},
-    onAlbumPriorityChange,
     primarySortGroupKeys,
     viewportScrollTop,
   }: Props = $props();
@@ -391,11 +387,6 @@
             thumbnailWidth={geometry.getWidth(index)}
             thumbnailHeight={geometry.getHeight(index)}
           />
-          {#if displayAssetInfo?.priority && albumPriorities[asset.id]}
-            <div class="absolute top-2 left-2 rounded-full bg-black/75 px-2 py-0.5 text-sm font-bold text-white">
-              {albumPriorities[asset.id]}
-            </div>
-          {/if}
           {#if displayAssetInfo && !isTimelineAsset(asset)}
             <GalleryAssetInfo {asset} settings={displayAssetInfo} />
           {:else if showAssetName && !isTimelineAsset(asset)}
@@ -418,8 +409,6 @@
       <AssetViewer
         cursor={assetCursor}
         {album}
-        albumPriority={albumPriorities[assetCursor.current.id] ?? null}
-        {onAlbumPriorityChange}
         onAction={handleAction}
         onRandom={handleRandom}
         onAssetChange={updateCurrentAsset}

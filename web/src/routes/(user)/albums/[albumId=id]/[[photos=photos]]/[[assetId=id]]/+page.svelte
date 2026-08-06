@@ -506,7 +506,6 @@
               showArchiveIcon={true}
               displayAssetInfo={{ ...defaultAlbumAssetDisplayInfo, ...$albumAssetViewSettings.displayInfo }}
               {album}
-              albumPriorities={{}}
               {primarySortGroupKeys}
               slidingWindowOffset={filenameGalleryElement?.offsetTop ?? 0}
               viewportScrollTop={filenameScrollTop}

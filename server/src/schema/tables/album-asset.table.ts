@@ -27,8 +27,6 @@ export class AlbumAssetTable {
   @ForeignKeyColumn(() => AssetTable, { onDelete: 'CASCADE', onUpdate: 'CASCADE', nullable: false, primary: true })
   assetId!: string;
 
-  priority!: number | null;
-
   @CreateDateColumn()
   createdAt!: Generated<Timestamp>;
 
