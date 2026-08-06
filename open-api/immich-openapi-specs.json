@@ -34870,6 +34870,12 @@
             "pattern": "^#?([0-9A-Fa-f]{3}|[0-9A-Fa-f]{4}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$",
             "type": "string"
           },
+          "description": {
+            "description": "Optional tag description",
+            "maxLength": 2000,
+            "nullable": true,
+            "type": "string"
+          },
           "name": {
             "description": "Tag name",
             "type": "string"
@@ -34896,6 +34902,11 @@
           "createdAt": {
             "description": "Creation date",
             "format": "date-time",
+            "type": "string"
+          },
+          "description": {
+            "description": "Optional tag description",
+            "nullable": true,
             "type": "string"
           },
           "id": {
@@ -34937,6 +34948,12 @@
             "description": "Tag color (hex)",
             "nullable": true,
             "pattern": "^#?([0-9A-Fa-f]{3}|[0-9A-Fa-f]{4}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$",
+            "type": "string"
+          },
+          "description": {
+            "description": "Optional tag description",
+            "maxLength": 2000,
+            "nullable": true,
             "type": "string"
           }
         },
