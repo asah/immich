@@ -54,6 +54,7 @@ export class TagService extends BaseService {
       value,
       color,
       parentId: parent?.id,
+      description: dto.description,
     });
 
     return mapTag(tag);
@@ -62,8 +63,8 @@ export class TagService extends BaseService {
   async update(auth: AuthDto, id: string, dto: TagUpdateDto): Promise<TagResponseDto> {
     await this.requireAccess({ auth, permission: Permission.TagUpdate, ids: [id] });
 
-    const { color } = dto;
-    const tag = await this.tagRepository.update(id, { color });
+    const { color, description } = dto;
+    const tag = await this.tagRepository.update(id, { color, description });
     return mapTag(tag);
   }
 
