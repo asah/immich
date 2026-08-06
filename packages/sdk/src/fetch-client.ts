@@ -885,6 +885,8 @@ export type TagResponseDto = {
     updatedAt: string;
     /** Tag value (full path) */
     value: string;
+    /** Optional tag description */
+    description?: string | null;
 };
 export type AssetResponseDto = {
     /** Base64 encoded SHA1 hash */
@@ -3732,6 +3734,8 @@ export type TagBulkAssetsResponseDto = {
 export type TagUpdateDto = {
     /** Tag color (hex) */
     color?: string | null;
+    /** Optional tag description */
+    description?: string | null;
 };
 export type TimeBucketAssetResponseDto = {
     /** Array of city names extracted from EXIF GPS data */

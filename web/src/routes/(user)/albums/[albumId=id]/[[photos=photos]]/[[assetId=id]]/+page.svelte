@@ -67,6 +67,7 @@
     updateAlbumInfo,
     type AlbumResponseDto,
     type AssetResponseDto,
+    type TagResponseDto,
   } from '@immich/sdk';
   import {
     ActionButton,
@@ -115,7 +116,7 @@
   let filenameNextPage = $state<number | null>(null);
   let filenameLoading = $state(false);
   let filenameRequest = 0;
-  let availableTags: Array<{ id: string; name: string; description?: string }> = $state([]);
+  let availableTags: TagResponseDto[] = $state([]);
   let showAlbumUsers = $derived(timelineManager?.showAssetOwners ?? false);
 
   const timelineMultiSelectManager = new AssetMultiSelectManager();
@@ -273,6 +274,13 @@
         return filenameAssets.map(({ tags }) => tags?.[0]?.name ?? 'Untagged');
       }
     }
+  });
+
+  const primarySortGroupDescriptions = $derived.by(() => {
+    if (sortCriteria[0]?.sortBy !== AlbumAssetSortBy.Tag) {
+      return undefined;
+    }
+    return Object.fromEntries(availableTags.map((tag) => [tag.name, tag.description ?? null]));
   });
 
   const containsEditors = $derived(album?.shared && album.albumUsers.some(({ role }) => role === AlbumUserRole.Editor));
@@ -507,6 +515,7 @@
               displayAssetInfo={{ ...defaultAlbumAssetDisplayInfo, ...$albumAssetViewSettings.displayInfo }}
               {album}
               {primarySortGroupKeys}
+              {primarySortGroupDescriptions}
               slidingWindowOffset={filenameGalleryElement?.offsetTop ?? 0}
               viewportScrollTop={filenameScrollTop}
               viewport={filenameViewport}

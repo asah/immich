@@ -1,7 +1,7 @@
 <script lang="ts">
   import { handleCreateTag } from '$lib/services/tag.service';
   import type { TreeNode } from '$lib/utils/tree-utils';
-  import { Field, FormModal, Input, Text } from '@immich/ui';
+  import { Field, FormModal, Input, Text, Textarea } from '@immich/ui';
   import { mdiTag } from '@mdi/js';
   import { t } from 'svelte-i18n';
 
@@ -13,9 +13,10 @@
   const { onClose, baseTag }: Props = $props();
 
   let tagValue = $state(baseTag?.path ? `${baseTag.path}/` : '');
+  let description = $state('');
 
   const onSubmit = async () => {
-    const success = await handleCreateTag(tagValue);
+    const success = await handleCreateTag(tagValue, description);
     if (success) {
       onClose();
     }
@@ -26,5 +27,8 @@
   <Text size="small">{$t('create_tag_description')}</Text>
   <Field label={$t('tag')} required>
     <Input autofocus bind:value={tagValue} />
+  </Field>
+  <Field label={$t('description')}>
+    <Textarea bind:value={description} rows={3} />
   </Field>
 </FormModal>

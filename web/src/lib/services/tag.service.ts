@@ -33,7 +33,7 @@ export const getTagActions = ($t: MessageFormatter, tag: TreeNode) => {
   return { Create, Update, Delete };
 };
 
-export const handleCreateTag = async (tagValue: string) => {
+export const handleCreateTag = async (tagValue: string, description?: string) => {
   const $t = await getFormatter();
 
   try {
@@ -42,6 +42,9 @@ export const handleCreateTag = async (tagValue: string) => {
       return;
     }
 
+    if (description?.trim() && tag.id) {
+      await updateTag({ id: tag.id, tagUpdateDto: { description: description.trim() } });
+    }
     toastManager.primary($t('tag_created', { values: { tag: tag.value } }));
     eventManager.emit('TagCreate', tag);
 

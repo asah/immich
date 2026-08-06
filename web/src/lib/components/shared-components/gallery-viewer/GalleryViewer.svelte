@@ -52,6 +52,7 @@
     allowDeletion?: boolean;
     album?: AlbumResponseDto;
     primarySortGroupKeys?: string[];
+    primarySortGroupDescriptions?: Record<string, string | null | undefined>;
     viewportScrollTop?: number;
   };
 
@@ -72,6 +73,7 @@
     allowDeletion = true,
     album,
     primarySortGroupKeys,
+    primarySortGroupDescriptions,
     viewportScrollTop,
   }: Props = $props();
 
@@ -89,6 +91,21 @@
       : getJustifiedLayoutFromAssets(assets, layoutOptions),
   );
   const dividerTops = $derived('dividerTops' in geometry ? (geometry.dividerTops as number[]) : []);
+  const dividerLabels = $derived.by(() => {
+    if (!primarySortGroupKeys || !primarySortGroupDescriptions) {
+      return [] as Array<{ top: number; key: string; description?: string | null }>;
+    }
+    const labels: Array<{ top: number; key: string; description?: string | null }> = [];
+    let groupIndex = 0;
+    for (let index = 1; index < primarySortGroupKeys.length; index++) {
+      if (primarySortGroupKeys[index] !== primarySortGroupKeys[index - 1]) {
+        const top = dividerTops[groupIndex++];
+        const key = primarySortGroupKeys[index];
+        labels.push({ top, key, description: primarySortGroupDescriptions[key] });
+      }
+    }
+    return labels.filter(({ top }) => top !== undefined);
+  });
 
   const getStyle = (index: number) => {
     return `top: ${geometry.getTop(index)}px; left: ${geometry.getLeft(index)}px; width: ${geometry.getWidth(index)}px; height: ${geometry.getHeight(index)}px;`;
@@ -363,6 +380,11 @@
   >
     {#each dividerTops as top}
       <hr class="absolute m-0 w-full border-0 border-t border-gray-300 dark:border-gray-600" style:top={top + 'px'} />
+    {/each}
+    {#each dividerLabels as label (label.top + label.key)}
+      <div class="absolute start-2 z-10 max-w-[90%] -translate-y-1/2 truncate bg-white/80 px-2 text-xs text-gray-500 dark:bg-immich-dark-gray/80" style:top={label.top}>
+        <span class="font-semibold">{label.key}</span>{#if label.description} · {label.description}{/if}
+      </div>
     {/each}
     {#each assets as asset, index (asset.id + '-' + index)}
       {#if isInOrNearViewport(index)}
