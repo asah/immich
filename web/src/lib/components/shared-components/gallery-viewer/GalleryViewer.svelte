@@ -89,7 +89,12 @@
   });
   const geometry = $derived(
     primarySortGroupKeys?.length === assets.length
-      ? getGroupedJustifiedLayoutFromAssets(assets, primarySortGroupKeys, layoutOptions)
+      ? getGroupedJustifiedLayoutFromAssets(
+          assets,
+          primarySortGroupKeys,
+          layoutOptions,
+          primarySortGroupDescriptions ? 64 : 32,
+        )
       : getJustifiedLayoutFromAssets(assets, layoutOptions),
   );
   const dividerTops = $derived('dividerTops' in geometry ? (geometry.dividerTops as number[]) : []);
@@ -113,7 +118,7 @@
       if (primarySortGroupKeys[index] !== primarySortGroupKeys[index - 1]) {
         const top = dividerTops[groupIndex++];
         const key = primarySortGroupKeys[index];
-        labels.push({ top: top - 16, key, description: primarySortGroupDescriptions[key] });
+        labels.push({ top, key, description: primarySortGroupDescriptions[key] });
       }
     }
     return labels.filter(({ top }) => top !== undefined);
