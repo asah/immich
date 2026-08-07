@@ -107,13 +107,13 @@
     let groupIndex = 0;
     if (primarySortGroupKeys.length > 0) {
       const key = primarySortGroupKeys[0];
-      labels.push({ top: -56, key, description: primarySortGroupDescriptions[key] });
+      labels.push({ top: -60, key, description: primarySortGroupDescriptions[key] });
     }
     for (let index = 1; index < primarySortGroupKeys.length; index++) {
       if (primarySortGroupKeys[index] !== primarySortGroupKeys[index - 1]) {
         const top = dividerTops[groupIndex++];
         const key = primarySortGroupKeys[index];
-        labels.push({ top, key, description: primarySortGroupDescriptions[key] });
+        labels.push({ top: top - 16, key, description: primarySortGroupDescriptions[key] });
       }
     }
     return labels.filter(({ top }) => top !== undefined);
@@ -398,7 +398,7 @@
     {/if}
     {#each dividerLabels as label (label.top + label.key)}
       <div
-        class="absolute start-2 z-10 max-w-[90%] -translate-y-1/2 truncate bg-white/80 px-2 text-xs text-gray-500 dark:bg-immich-dark-gray/80"
+        class="absolute start-2 z-10 max-w-[90%] truncate bg-white/90 px-2 text-xs text-gray-500 dark:bg-immich-dark-gray/90"
         style:top={`${label.top + groupHeaderOffset}px`}
       >
         {#if primarySortGroupColors?.[label.key]}
