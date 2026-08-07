@@ -382,7 +382,10 @@
       <hr class="absolute m-0 w-full border-0 border-t border-gray-300 dark:border-gray-600" style:top={top + 'px'} />
     {/each}
     {#each dividerLabels as label (label.top + label.key)}
-      <div class="absolute start-2 z-10 max-w-[90%] -translate-y-1/2 truncate bg-white/80 px-2 text-xs text-gray-500 dark:bg-immich-dark-gray/80" style:top={label.top}>
+      <div
+        class="absolute start-2 z-10 max-w-[90%] -translate-y-1/2 truncate bg-white/80 px-2 text-xs text-gray-500 dark:bg-immich-dark-gray/80"
+        style:top={`${label.top}px`}
+      >
         <span class="font-semibold">{label.key}</span>{#if label.description} · {label.description}{/if}
       </div>
     {/each}
