@@ -138,6 +138,7 @@ export function getGroupedJustifiedLayoutFromAssets(
   groupKeys: string[],
   options: CommonLayoutOptions,
   dividerHeight = 32,
+  headerHeight = 0,
 ): GroupedJustifiedLayout {
   if (assets.length === 0) {
     return {
@@ -162,7 +163,10 @@ export function getGroupedJustifiedLayoutFromAssets(
       continue;
     }
 
-    if (groupStart > 0) {
+    if (headerHeight > 0) {
+      dividerTops.push(topOffset + headerHeight / 2);
+      topOffset += headerHeight;
+    } else if (groupStart > 0) {
       dividerTops.push(topOffset + dividerHeight / 2);
       topOffset += dividerHeight;
     }

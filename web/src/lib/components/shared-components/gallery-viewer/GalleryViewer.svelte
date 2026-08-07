@@ -93,7 +93,8 @@
           assets,
           primarySortGroupKeys,
           layoutOptions,
-          primarySortGroupDescriptions ? 96 : 32,
+          primarySortGroupDescriptions ? 0 : 32,
+          primarySortGroupDescriptions ? 96 : 0,
         )
       : getJustifiedLayoutFromAssets(assets, layoutOptions),
   );
@@ -103,34 +104,28 @@
       .replaceAll(/<\/?(?:script|iframe|object|embed|style)[^>]*>/gi, '')
       .replaceAll(/\son\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
       .replaceAll(/javascript\s*:/gi, '');
-  const groupHeaderOffset = $derived(primarySortGroupDescriptions ? 64 : 0);
   const dividerLabels = $derived.by(() => {
     if (!primarySortGroupKeys || !primarySortGroupDescriptions) {
       return [] as Array<{ top: number; key: string; description?: string | null }>;
     }
     const labels: Array<{ top: number; key: string; description?: string | null }> = [];
     let groupIndex = 0;
-    if (primarySortGroupKeys.length > 0) {
-      const key = primarySortGroupKeys[0];
-      labels.push({ top: -60, key, description: primarySortGroupDescriptions[key] });
-    }
-    for (let index = 1; index < primarySortGroupKeys.length; index++) {
-      if (primarySortGroupKeys[index] !== primarySortGroupKeys[index - 1]) {
-        const top = dividerTops[groupIndex++];
-        const key = primarySortGroupKeys[index];
-        labels.push({ top, key, description: primarySortGroupDescriptions[key] });
-      }
+    for (let index = 0; index < primarySortGroupKeys.length; index++) {
+      if (index > 0 && primarySortGroupKeys[index] === primarySortGroupKeys[index - 1]) continue;
+      const top = dividerTops[groupIndex++] - 48;
+      const key = primarySortGroupKeys[index];
+      labels.push({ top, key, description: primarySortGroupDescriptions[key] });
     }
     return labels.filter(({ top }) => top !== undefined);
   });
 
   const getStyle = (index: number) => {
-    return `top: ${geometry.getTop(index) + groupHeaderOffset}px; left: ${geometry.getLeft(index)}px; width: ${geometry.getWidth(index)}px; height: ${geometry.getHeight(index)}px;`;
+    return `top: ${geometry.getTop(index)}px; left: ${geometry.getLeft(index)}px; width: ${geometry.getWidth(index)}px; height: ${geometry.getHeight(index)}px;`;
   };
 
   const isInOrNearViewport = (index: number) => {
     const window = slidingWindow;
-    const top = geometry.getTop(index) + groupHeaderOffset;
+    const top = geometry.getTop(index);
     return top + pageHeaderOffset < window.bottom && top + geometry.getHeight(index) > window.top;
   };
 
@@ -392,13 +387,13 @@
 {#if assets.length > 0}
   <div
     style:position="relative"
-    style:height={geometry.containerHeight + groupHeaderOffset + 'px'}
+    style:height={geometry.containerHeight + 'px'}
     style:width={geometry.containerWidth + 'px'}
   >
     {#each dividerLabels as label (label.top + label.key)}
       <div
         class="absolute inset-x-0 z-10 border-t border-gray-300 bg-white/90 px-2 py-2 text-xs leading-5 text-gray-500 dark:border-gray-600 dark:bg-immich-dark-gray/90"
-        style:top={`${label.top + groupHeaderOffset}px`}
+        style:top={`${label.top}px`}
       >
         <div class="max-w-[90%] truncate">
           {#if primarySortGroupColors?.[label.key]}
