@@ -16,6 +16,7 @@ import {
   searchMetadataV3Examples,
   searchStatisticsV3Examples,
   withExifInner,
+  withTags,
   withSearchOrder,
 } from 'src/utils/database';
 import { paginationHelper } from 'src/utils/pagination';
@@ -246,7 +247,7 @@ export class SearchRepository {
       orderExpressions.push(sql`"asset"."fileCreatedAt" desc`);
     }
     const items = await searchAssetBuilderLegacy(this.db, searchOptions)
-      .select(columns.searchAsset)
+      .select((eb) => [...columns.searchAsset, withTags(eb)])
       .orderBy(orderExpressions)
       .orderBy('asset.id', 'asc')
       .limit(pagination.size + 1)
