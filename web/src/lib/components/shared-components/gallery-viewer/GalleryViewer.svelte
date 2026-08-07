@@ -112,7 +112,7 @@
     let groupIndex = 0;
     for (let index = 0; index < primarySortGroupKeys.length; index++) {
       if (index > 0 && primarySortGroupKeys[index] === primarySortGroupKeys[index - 1]) continue;
-      const top = dividerTops[groupIndex] - (groupIndex === 0 ? 32 : 48);
+      const top = dividerTops[groupIndex] - (groupIndex === 0 ? 32 : 16);
       groupIndex++;
       const key = primarySortGroupKeys[index];
       labels.push({ top, key, description: primarySortGroupDescriptions[key] });

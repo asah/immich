@@ -491,7 +491,7 @@
     <main class="relative h-dvh overflow-hidden px-2 pt-(--navbar-height) max-md:pt-(--navbar-height-md) md:px-6">
       {#if isAlternateSort}
         <section
-          class="h-full overflow-y-auto pt-8 md:pt-24"
+          class="h-full overflow-y-auto pt-8 md:pt-8"
           bind:clientHeight={filenameViewport.height}
           bind:clientWidth={filenameViewport.width}
           onscroll={(event) => (filenameScrollTop = event.currentTarget.scrollTop)}
