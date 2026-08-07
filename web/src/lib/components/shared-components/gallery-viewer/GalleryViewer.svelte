@@ -395,26 +395,18 @@
     style:height={geometry.containerHeight + groupHeaderOffset + 'px'}
     style:width={geometry.containerWidth + 'px'}
   >
-    {#each dividerTops as top}
-      <hr class="absolute m-0 w-full border-0 border-t border-gray-300 dark:border-gray-600" style:top={top + groupHeaderOffset + 'px'} />
-    {/each}
-    {#if primarySortGroupDescriptions}
-      <hr class="absolute m-0 w-full border-0 border-t border-gray-300 dark:border-gray-600" style:top={groupHeaderOffset + 'px'} />
-    {/if}
     {#each dividerLabels as label (label.top + label.key)}
       <div
-        class="absolute start-2 z-10 max-w-[90%] truncate bg-white/90 px-2 text-xs text-gray-500 dark:bg-immich-dark-gray/90"
+        class="absolute inset-x-0 z-10 border-t border-gray-300 bg-white/90 px-2 text-xs text-gray-500 dark:border-gray-600 dark:bg-immich-dark-gray/90"
         style:top={`${label.top + groupHeaderOffset}px`}
       >
-        {#if primarySortGroupColors?.[label.key]}
-          <span class="me-1 inline-block size-2.5 rounded-full" style:background-color={primarySortGroupColors[label.key]}></span>
-        {/if}
-        <div>
+        <div class="max-w-[90%] truncate">
+          {#if primarySortGroupColors?.[label.key]}
+            <span class="me-1 inline-block size-2.5 rounded-full" style:background-color={primarySortGroupColors[label.key]}></span>
+          {/if}
           <a class="font-semibold underline hover:text-primary" href={Route.tags({ path: label.key })}>{label.key}</a>
         </div>
-        {#if label.description}
-          <div class="max-w-full truncate text-xs text-gray-600 dark:text-gray-300">{@html sanitizeDescription(label.description)}</div>
-        {/if}
+        {#if label.description}<div class="max-w-[90%] truncate text-xs text-gray-600 dark:text-gray-300">{@html sanitizeDescription(label.description)}</div>{/if}
       </div>
     {/each}
     {#each assets as asset, index (asset.id + '-' + index)}
