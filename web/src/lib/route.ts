@@ -141,6 +141,7 @@ export const Route = {
 
   // tags
   tags: (params?: { path?: string }) => '/tags' + asQueryString(params),
+  tagName: (name: string) => `/tag/${encodeURIComponent(name)}`,
 
   // users
   users: () => '/admin/users',

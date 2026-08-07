@@ -91,12 +91,17 @@
       : getJustifiedLayoutFromAssets(assets, layoutOptions),
   );
   const dividerTops = $derived('dividerTops' in geometry ? (geometry.dividerTops as number[]) : []);
+  const groupHeaderOffset = $derived(primarySortGroupDescriptions ? 32 : 0);
   const dividerLabels = $derived.by(() => {
     if (!primarySortGroupKeys || !primarySortGroupDescriptions) {
       return [] as Array<{ top: number; key: string; description?: string | null }>;
     }
     const labels: Array<{ top: number; key: string; description?: string | null }> = [];
     let groupIndex = 0;
+    if (primarySortGroupKeys.length > 0) {
+      const key = primarySortGroupKeys[0];
+      labels.push({ top: 0, key, description: primarySortGroupDescriptions[key] });
+    }
     for (let index = 1; index < primarySortGroupKeys.length; index++) {
       if (primarySortGroupKeys[index] !== primarySortGroupKeys[index - 1]) {
         const top = dividerTops[groupIndex++];
@@ -108,12 +113,12 @@
   });
 
   const getStyle = (index: number) => {
-    return `top: ${geometry.getTop(index)}px; left: ${geometry.getLeft(index)}px; width: ${geometry.getWidth(index)}px; height: ${geometry.getHeight(index)}px;`;
+    return `top: ${geometry.getTop(index) + groupHeaderOffset}px; left: ${geometry.getLeft(index)}px; width: ${geometry.getWidth(index)}px; height: ${geometry.getHeight(index)}px;`;
   };
 
   const isInOrNearViewport = (index: number) => {
     const window = slidingWindow;
-    const top = geometry.getTop(index);
+    const top = geometry.getTop(index) + groupHeaderOffset;
     return top + pageHeaderOffset < window.bottom && top + geometry.getHeight(index) > window.top;
   };
 
@@ -375,18 +380,18 @@
 {#if assets.length > 0}
   <div
     style:position="relative"
-    style:height={geometry.containerHeight + 'px'}
+    style:height={geometry.containerHeight + groupHeaderOffset + 'px'}
     style:width={geometry.containerWidth + 'px'}
   >
     {#each dividerTops as top}
-      <hr class="absolute m-0 w-full border-0 border-t border-gray-300 dark:border-gray-600" style:top={top + 'px'} />
+      <hr class="absolute m-0 w-full border-0 border-t border-gray-300 dark:border-gray-600" style:top={top + groupHeaderOffset + 'px'} />
     {/each}
     {#each dividerLabels as label (label.top + label.key)}
       <div
         class="absolute start-2 z-10 max-w-[90%] -translate-y-1/2 truncate bg-white/80 px-2 text-xs text-gray-500 dark:bg-immich-dark-gray/80"
-        style:top={`${label.top}px`}
+        style:top={`${label.top + groupHeaderOffset}px`}
       >
-        <span class="font-semibold">{label.key}</span>{#if label.description} · {label.description}{/if}
+        <a class="font-semibold underline hover:text-primary" href={Route.tags({ path: label.key })}>{label.key}</a>{#if label.description} · {label.description}{/if}
       </div>
     {/each}
     {#each assets as asset, index (asset.id + '-' + index)}
