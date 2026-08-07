@@ -53,6 +53,7 @@
     album?: AlbumResponseDto;
     primarySortGroupKeys?: string[];
     primarySortGroupDescriptions?: Record<string, string | null | undefined>;
+    primarySortGroupColors?: Record<string, string | null | undefined>;
     viewportScrollTop?: number;
   };
 
@@ -74,6 +75,7 @@
     album,
     primarySortGroupKeys,
     primarySortGroupDescriptions,
+    primarySortGroupColors,
     viewportScrollTop,
   }: Props = $props();
 
@@ -91,6 +93,11 @@
       : getJustifiedLayoutFromAssets(assets, layoutOptions),
   );
   const dividerTops = $derived('dividerTops' in geometry ? (geometry.dividerTops as number[]) : []);
+  const sanitizeDescription = (value: string) =>
+    value
+      .replaceAll(/<\/?(?:script|iframe|object|embed|style)[^>]*>/gi, '')
+      .replaceAll(/\son\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+      .replaceAll(/javascript\s*:/gi, '');
   const groupHeaderOffset = $derived(primarySortGroupDescriptions ? 32 : 0);
   const dividerLabels = $derived.by(() => {
     if (!primarySortGroupKeys || !primarySortGroupDescriptions) {
@@ -391,7 +398,11 @@
         class="absolute start-2 z-10 max-w-[90%] -translate-y-1/2 truncate bg-white/80 px-2 text-xs text-gray-500 dark:bg-immich-dark-gray/80"
         style:top={`${label.top + groupHeaderOffset}px`}
       >
-        <a class="font-semibold underline hover:text-primary" href={Route.tags({ path: label.key })}>{label.key}</a>{#if label.description} · {label.description}{/if}
+        {#if primarySortGroupColors?.[label.key]}
+          <span class="me-1 inline-block size-2.5 rounded-full" style:background-color={primarySortGroupColors[label.key]}></span>
+        {/if}
+        <a class="font-semibold underline hover:text-primary" href={Route.tags({ path: label.key })}>{label.key}</a>
+        {#if label.description} · {@html sanitizeDescription(label.description)}{/if}
       </div>
     {/each}
     {#each assets as asset, index (asset.id + '-' + index)}

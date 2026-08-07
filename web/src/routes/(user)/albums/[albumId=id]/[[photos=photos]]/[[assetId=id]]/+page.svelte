@@ -283,6 +283,13 @@
     return Object.fromEntries(availableTags.map((tag) => [tag.name, tag.description ?? null]));
   });
 
+  const primarySortGroupColors = $derived.by(() => {
+    if (sortCriteria[0]?.sortBy !== AlbumAssetSortBy.Tag) {
+      return undefined;
+    }
+    return Object.fromEntries(availableTags.map((tag) => [tag.name, tag.color ?? null]));
+  });
+
   const containsEditors = $derived(album?.shared && album.albumUsers.some(({ role }) => role === AlbumUserRole.Editor));
   const albumUsers = $derived(showAlbumUsers && containsEditors ? album.albumUsers.map(({ user }) => user) : []);
 
@@ -516,6 +523,7 @@
               {album}
               {primarySortGroupKeys}
               {primarySortGroupDescriptions}
+              {primarySortGroupColors}
               slidingWindowOffset={filenameGalleryElement?.offsetTop ?? 0}
               viewportScrollTop={filenameScrollTop}
               viewport={filenameViewport}

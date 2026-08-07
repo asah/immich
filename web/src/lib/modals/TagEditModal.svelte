@@ -1,9 +1,10 @@
 <script lang="ts">
   import SettingInputField from '$lib/components/shared-components/settings/SettingInputField.svelte';
+  import RichTextEditor from '$lib/components/shared-components/RichTextEditor.svelte';
   import { SettingInputFieldType } from '$lib/constants';
   import { handleUpdateTag } from '$lib/services/tag.service';
   import type { TreeNode } from '$lib/utils/tree-utils';
-  import { Field, FormModal, Textarea } from '@immich/ui';
+  import { FormModal } from '@immich/ui';
   import { mdiTag } from '@mdi/js';
   import { t } from 'svelte-i18n';
 
@@ -27,7 +28,5 @@
 
 <FormModal title={$t('edit_tag')} size="small" icon={mdiTag} {onClose} {onSubmit}>
   <SettingInputField inputType={SettingInputFieldType.COLOR} label={$t('color')} bind:value={tagColor} />
-  <Field label={$t('description')}>
-    <Textarea bind:value={description} rows={4} />
-  </Field>
+  <RichTextEditor label={$t('description')} bind:value={description} />
 </FormModal>

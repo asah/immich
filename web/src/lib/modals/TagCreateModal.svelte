@@ -1,7 +1,8 @@
 <script lang="ts">
   import { handleCreateTag } from '$lib/services/tag.service';
+  import RichTextEditor from '$lib/components/shared-components/RichTextEditor.svelte';
   import type { TreeNode } from '$lib/utils/tree-utils';
-  import { Field, FormModal, Input, Text, Textarea } from '@immich/ui';
+  import { Field, FormModal, Input, Text } from '@immich/ui';
   import { mdiTag } from '@mdi/js';
   import { t } from 'svelte-i18n';
 
@@ -28,7 +29,5 @@
   <Field label={$t('tag')} required>
     <Input autofocus bind:value={tagValue} />
   </Field>
-  <Field label={$t('description')}>
-    <Textarea bind:value={description} rows={3} />
-  </Field>
+  <RichTextEditor label={$t('description')} bind:value={description} />
 </FormModal>

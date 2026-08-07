@@ -5,19 +5,29 @@ import { asDateTimeString } from 'src/utils/date';
 import { hexColor } from 'src/validation';
 import z from 'zod';
 
+const richTextDescription = z
+  .string()
+  .max(2000)
+  .transform((value) =>
+    value
+      .replaceAll(/<\/?(?:script|iframe|object|embed|style)[^>]*>/gi, '')
+      .replaceAll(/\son\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+      .replaceAll(/javascript\s*:/gi, ''),
+  );
+
 const TagCreateSchema = z
   .object({
     name: z.string().describe('Tag name'),
     parentId: z.uuidv4().nullish().describe('Parent tag ID'),
     color: hexColor.nullable().optional().describe('Tag color (hex)'),
-    description: z.string().max(2000).nullable().optional().describe('Optional tag description'),
+    description: richTextDescription.nullable().optional().describe('Optional rich-text tag description'),
   })
   .meta({ id: 'TagCreateDto' });
 
 const TagUpdateSchema = z
   .object({
     color: hexColor.nullable().optional().describe('Tag color (hex)'),
-    description: z.string().max(2000).nullable().optional().describe('Optional tag description'),
+    description: richTextDescription.nullable().optional().describe('Optional rich-text tag description'),
   })
   .meta({ id: 'TagUpdateDto' });
 
