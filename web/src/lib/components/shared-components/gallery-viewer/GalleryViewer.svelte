@@ -93,7 +93,7 @@
           assets,
           primarySortGroupKeys,
           layoutOptions,
-          primarySortGroupDescriptions ? 64 : 32,
+          primarySortGroupDescriptions ? 96 : 32,
         )
       : getJustifiedLayoutFromAssets(assets, layoutOptions),
   );
