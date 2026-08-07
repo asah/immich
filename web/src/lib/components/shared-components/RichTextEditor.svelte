@@ -2,6 +2,7 @@
   import { Button, Field } from '@immich/ui';
   import { mdiFormatBold, mdiFormatItalic, mdiFormatUnderline, mdiLink, mdiPalette } from '@mdi/js';
   import { Icon } from '@immich/ui';
+  import { onMount } from 'svelte';
 
   type Props = { value?: string; label?: string };
   let { value = $bindable(''), label = '' }: Props = $props();
@@ -18,6 +19,12 @@
     const url = prompt('URL');
     if (url) command('createLink', url);
   };
+
+  onMount(() => {
+    if (editor) {
+      editor.innerHTML = value;
+    }
+  });
 </script>
 
 <Field {label}>
@@ -43,6 +50,6 @@
       aria-multiline="true"
       oninput={() => (value = editor?.innerHTML ?? '')}
       onblur={() => (value = editor?.innerHTML ?? '')}
-    >{@html value}</div>
+    ></div>
   </div>
 </Field>

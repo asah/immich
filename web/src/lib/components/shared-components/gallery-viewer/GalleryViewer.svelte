@@ -98,7 +98,7 @@
       .replaceAll(/<\/?(?:script|iframe|object|embed|style)[^>]*>/gi, '')
       .replaceAll(/\son\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
       .replaceAll(/javascript\s*:/gi, '');
-  const groupHeaderOffset = $derived(primarySortGroupDescriptions ? 32 : 0);
+  const groupHeaderOffset = $derived(primarySortGroupDescriptions ? 64 : 0);
   const dividerLabels = $derived.by(() => {
     if (!primarySortGroupKeys || !primarySortGroupDescriptions) {
       return [] as Array<{ top: number; key: string; description?: string | null }>;
@@ -107,7 +107,7 @@
     let groupIndex = 0;
     if (primarySortGroupKeys.length > 0) {
       const key = primarySortGroupKeys[0];
-      labels.push({ top: -8, key, description: primarySortGroupDescriptions[key] });
+      labels.push({ top: -56, key, description: primarySortGroupDescriptions[key] });
     }
     for (let index = 1; index < primarySortGroupKeys.length; index++) {
       if (primarySortGroupKeys[index] !== primarySortGroupKeys[index - 1]) {
@@ -393,6 +393,9 @@
     {#each dividerTops as top}
       <hr class="absolute m-0 w-full border-0 border-t border-gray-300 dark:border-gray-600" style:top={top + groupHeaderOffset + 'px'} />
     {/each}
+    {#if primarySortGroupDescriptions}
+      <hr class="absolute m-0 w-full border-0 border-t border-gray-300 dark:border-gray-600" style:top={groupHeaderOffset + 'px'} />
+    {/if}
     {#each dividerLabels as label (label.top + label.key)}
       <div
         class="absolute start-2 z-10 max-w-[90%] -translate-y-1/2 truncate bg-white/80 px-2 text-xs text-gray-500 dark:bg-immich-dark-gray/80"
@@ -401,8 +404,12 @@
         {#if primarySortGroupColors?.[label.key]}
           <span class="me-1 inline-block size-2.5 rounded-full" style:background-color={primarySortGroupColors[label.key]}></span>
         {/if}
-        <a class="font-semibold underline hover:text-primary" href={Route.tags({ path: label.key })}>{label.key}</a>
-        {#if label.description} · {@html sanitizeDescription(label.description)}{/if}
+        <div>
+          <a class="font-semibold underline hover:text-primary" href={Route.tags({ path: label.key })}>{label.key}</a>
+        </div>
+        {#if label.description}
+          <div class="max-w-full truncate text-xs text-gray-600 dark:text-gray-300">{@html sanitizeDescription(label.description)}</div>
+        {/if}
       </div>
     {/each}
     {#each assets as asset, index (asset.id + '-' + index)}
