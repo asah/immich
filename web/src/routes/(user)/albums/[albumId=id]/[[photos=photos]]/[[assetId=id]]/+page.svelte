@@ -61,13 +61,13 @@
     AssetOrder,
     AssetVisibility,
     Field,
-    getAlbumAssetPriorities,
+    getAllTags,
     getAlbumInfo,
     searchAssets,
-    updateAlbumAssetPriority,
     updateAlbumInfo,
     type AlbumResponseDto,
     type AssetResponseDto,
+    type TagResponseDto,
   } from '@immich/sdk';
   import {
     ActionButton,
@@ -89,7 +89,6 @@
     mdiImageOutline,
     mdiImagePlusOutline,
     mdiLink,
-    mdiNumeric,
     mdiPlus,
     mdiPresentationPlay,
     mdiBookOpenPageVariantOutline,
@@ -117,7 +116,7 @@
   let filenameNextPage = $state<number | null>(null);
   let filenameLoading = $state(false);
   let filenameRequest = 0;
-  let albumPriorities: Record<string, number> = $state({});
+  let availableTags: TagResponseDto[] = $state([]);
   let showAlbumUsers = $derived(timelineManager?.showAssetOwners ?? false);
 
   const timelineMultiSelectManager = new AssetMultiSelectManager();
@@ -271,10 +270,24 @@
       case AlbumAssetSortBy.FileSize: {
         return filenameAssets.map(({ exifInfo }) => String(exifInfo?.fileSizeInByte ?? ''));
       }
-      case AlbumAssetSortBy.Priority: {
-        return filenameAssets.map(({ id }) => String(albumPriorities[id] ?? ''));
+      case AlbumAssetSortBy.Tag: {
+        return filenameAssets.map(({ tags }) => tags?.[0]?.name ?? 'Untagged');
       }
     }
+  });
+
+  const primarySortGroupDescriptions = $derived.by(() => {
+    if (sortCriteria[0]?.sortBy !== AlbumAssetSortBy.Tag) {
+      return undefined;
+    }
+    return Object.fromEntries(availableTags.map((tag) => [tag.name, tag.description ?? null]));
+  });
+
+  const primarySortGroupColors = $derived.by(() => {
+    if (sortCriteria[0]?.sortBy !== AlbumAssetSortBy.Tag) {
+      return undefined;
+    }
+    return Object.fromEntries(availableTags.map((tag) => [tag.name, tag.color ?? null]));
   });
 
   const containsEditors = $derived(album?.shared && album.albumUsers.some(({ role }) => role === AlbumUserRole.Editor));
@@ -322,17 +335,17 @@
       const { assets } = await searchAssets({
         metadataSearchDto: {
           albumIds: [albumId],
-          sort: sortCriteria.map(({ sortBy, sortOrder }) => ({
-            field:
-              sortBy === AlbumAssetSortBy.Priority
-                ? Field.AlbumPriority
-                : sortBy === AlbumAssetSortBy.FileSize
+          sort: sortCriteria
+            .filter(({ sortBy }) => sortBy !== AlbumAssetSortBy.Tag)
+            .map(({ sortBy, sortOrder }) => ({
+              field:
+                sortBy === AlbumAssetSortBy.FileSize
                   ? Field.FileSizeInByte
                   : sortBy === AlbumAssetSortBy.FileName
                     ? Field.OriginalFileName
                     : Field.FileCreatedAt,
-            order: sortOrder === SortOrder.Asc ? AssetOrder.Asc : AssetOrder.Desc,
-          })),
+              order: sortOrder === SortOrder.Asc ? AssetOrder.Asc : AssetOrder.Desc,
+            })),
           page: page ?? 1,
           size: 250,
           visibility: AssetVisibility.Timeline,
@@ -340,7 +353,16 @@
         },
       });
       if (request === filenameRequest) {
-        filenameAssets = reset ? assets.items : [...filenameAssets, ...assets.items];
+        const incoming = [...(reset ? [] : filenameAssets), ...assets.items];
+        if (sortCriteria[0]?.sortBy === AlbumAssetSortBy.Tag) {
+          const direction = sortCriteria[0].sortOrder === SortOrder.Desc ? -1 : 1;
+          incoming.sort(
+            (a, b) =>
+              direction *
+              String(a.tags?.[0]?.name ?? 'Untagged').localeCompare(String(b.tags?.[0]?.name ?? 'Untagged')),
+          );
+        }
+        filenameAssets = incoming;
         filenameNextPage = Number(assets.nextPage) || null;
       }
     } catch (error) {
@@ -352,40 +374,8 @@
     }
   };
 
-  const setAlbumPriority = (assetId: string, priority: number | null) => {
-    if (priority === null) {
-      const { [assetId]: _, ...remaining } = albumPriorities;
-      albumPriorities = remaining;
-    } else {
-      albumPriorities = { ...albumPriorities, [assetId]: priority };
-    }
-  };
-
-  const setSelectedAlbumPriority = async (priority: number | null) => {
-    const assetIds = assetMultiSelectManager.assets.map(({ id }) => id);
-    try {
-      await updateAlbumAssetPriority({
-        id: albumId,
-        updateAlbumAssetPriorityDto: { assetIds, priority },
-      });
-      for (const assetId of assetIds) {
-        setAlbumPriority(assetId, priority);
-      }
-      assetMultiSelectManager.clear();
-    } catch (error) {
-      handleError(error, $t('errors.unable_to_update_album_info'));
-    }
-  };
-
   $effect(() => {
-    const id = albumId;
-    void getAlbumAssetPriorities({ id }).then((items) => {
-      if (id === albumId) {
-        albumPriorities = Object.fromEntries(
-          items.flatMap(({ assetId, priority }) => (priority === null ? [] : [[assetId, priority]])),
-        );
-      }
-    });
+    void getAllTags().then((tags) => (availableTags = tags));
   });
 
   $effect(() => {
@@ -501,7 +491,7 @@
     <main class="relative h-dvh overflow-hidden px-2 pt-(--navbar-height) max-md:pt-(--navbar-height-md) md:px-6">
       {#if isAlternateSort}
         <section
-          class="h-full overflow-y-auto pt-8 md:pt-24"
+          class="h-full overflow-y-auto pt-8 md:pt-8"
           bind:clientHeight={filenameViewport.height}
           bind:clientWidth={filenameViewport.width}
           onscroll={(event) => (filenameScrollTop = event.currentTarget.scrollTop)}
@@ -531,9 +521,9 @@
               showArchiveIcon={true}
               displayAssetInfo={{ ...defaultAlbumAssetDisplayInfo, ...$albumAssetViewSettings.displayInfo }}
               {album}
-              {albumPriorities}
-              onAlbumPriorityChange={setAlbumPriority}
               {primarySortGroupKeys}
+              {primarySortGroupDescriptions}
+              {primarySortGroupColors}
               slidingWindowOffset={filenameGalleryElement?.offsetTop ?? 0}
               viewportScrollTop={filenameScrollTop}
               viewport={filenameViewport}
@@ -660,17 +650,7 @@
         <CreateSharedLink />
         <SelectAllAssets {timelineManager} assetInteraction={assetMultiSelectManager} />
         <ActionButton action={Actions.AddToAlbum} />
-        {#if isEditor}
-          <ButtonContextMenu icon={mdiNumeric} title={$t('album_priority')}>
-            {#each [1, 2, 3, 4, 5, 6, 7, 8, 9] as priority}
-              <MenuOption
-                text={`${$t('album_priority')} ${priority}`}
-                onClick={() => setSelectedAlbumPriority(priority)}
-              />
-            {/each}
-            <MenuOption text={$t('clear')} onClick={() => setSelectedAlbumPriority(null)} />
-          </ButtonContextMenu>
-        {/if}
+        {#if isEditor && availableTags.length > 0}<TagAction />{/if}
         {#if assetMultiSelectManager.isAllUserOwned}
           <FavoriteAction
             removeFavorite={assetMultiSelectManager.isAllFavorite}

@@ -51,9 +51,9 @@
     arrowNavigation?: boolean;
     allowDeletion?: boolean;
     album?: AlbumResponseDto;
-    albumPriorities?: Record<string, number>;
-    onAlbumPriorityChange?: (assetId: string, priority: number | null) => void;
     primarySortGroupKeys?: string[];
+    primarySortGroupDescriptions?: Record<string, string | null | undefined>;
+    primarySortGroupColors?: Record<string, string | null | undefined>;
     viewportScrollTop?: number;
   };
 
@@ -73,9 +73,9 @@
     arrowNavigation = true,
     allowDeletion = true,
     album,
-    albumPriorities = {},
-    onAlbumPriorityChange,
     primarySortGroupKeys,
+    primarySortGroupDescriptions,
+    primarySortGroupColors,
     viewportScrollTop,
   }: Props = $props();
 
@@ -89,10 +89,36 @@
   });
   const geometry = $derived(
     primarySortGroupKeys?.length === assets.length
-      ? getGroupedJustifiedLayoutFromAssets(assets, primarySortGroupKeys, layoutOptions)
+      ? getGroupedJustifiedLayoutFromAssets(
+          assets,
+          primarySortGroupKeys,
+          layoutOptions,
+          primarySortGroupDescriptions ? 0 : 32,
+          primarySortGroupDescriptions ? (groupIndex) => (groupIndex === 0 ? 64 : 96) : 0,
+        )
       : getJustifiedLayoutFromAssets(assets, layoutOptions),
   );
   const dividerTops = $derived('dividerTops' in geometry ? (geometry.dividerTops as number[]) : []);
+  const sanitizeDescription = (value: string) =>
+    value
+      .replaceAll(/<\/?(?:script|iframe|object|embed|style)[^>]*>/gi, '')
+      .replaceAll(/\son\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+      .replaceAll(/javascript\s*:/gi, '');
+  const dividerLabels = $derived.by(() => {
+    if (!primarySortGroupKeys || !primarySortGroupDescriptions) {
+      return [] as Array<{ top: number; key: string; description?: string | null }>;
+    }
+    const labels: Array<{ top: number; key: string; description?: string | null }> = [];
+    let groupIndex = 0;
+    for (let index = 0; index < primarySortGroupKeys.length; index++) {
+      if (index > 0 && primarySortGroupKeys[index] === primarySortGroupKeys[index - 1]) continue;
+      const top = dividerTops[groupIndex] - (groupIndex === 0 ? 32 : 16);
+      groupIndex++;
+      const key = primarySortGroupKeys[index];
+      labels.push({ top, key, description: primarySortGroupDescriptions[key] });
+    }
+    return labels.filter(({ top }) => top !== undefined);
+  });
 
   const getStyle = (index: number) => {
     return `top: ${geometry.getTop(index)}px; left: ${geometry.getLeft(index)}px; width: ${geometry.getWidth(index)}px; height: ${geometry.getHeight(index)}px;`;
@@ -365,8 +391,19 @@
     style:height={geometry.containerHeight + 'px'}
     style:width={geometry.containerWidth + 'px'}
   >
-    {#each dividerTops as top}
-      <hr class="absolute m-0 w-full border-0 border-t border-gray-300 dark:border-gray-600" style:top={top + 'px'} />
+    {#each dividerLabels as label (label.top + label.key)}
+      <div
+        class="absolute inset-x-0 z-10 border-t border-gray-300 bg-white/90 px-2 py-2 text-xs leading-5 text-gray-500 dark:border-gray-600 dark:bg-immich-dark-gray/90"
+        style:top={`${label.top}px`}
+      >
+        <div class="max-w-[90%] truncate">
+          {#if primarySortGroupColors?.[label.key]}
+            <span class="me-1 inline-block size-2.5 rounded-full" style:background-color={primarySortGroupColors[label.key]}></span>
+          {/if}
+          <a class="font-semibold underline hover:text-primary" href={Route.tagName(label.key)}>{label.key}</a>
+        </div>
+        {#if label.description}<div class="mt-1 max-w-[90%] truncate text-xs leading-5 text-gray-600 dark:text-gray-300">{@html sanitizeDescription(label.description)}</div>{/if}
+      </div>
     {/each}
     {#each assets as asset, index (asset.id + '-' + index)}
       {#if isInOrNearViewport(index)}
@@ -391,11 +428,6 @@
             thumbnailWidth={geometry.getWidth(index)}
             thumbnailHeight={geometry.getHeight(index)}
           />
-          {#if displayAssetInfo?.priority && albumPriorities[asset.id]}
-            <div class="absolute top-2 left-2 rounded-full bg-black/75 px-2 py-0.5 text-sm font-bold text-white">
-              {albumPriorities[asset.id]}
-            </div>
-          {/if}
           {#if displayAssetInfo && !isTimelineAsset(asset)}
             <GalleryAssetInfo {asset} settings={displayAssetInfo} />
           {:else if showAssetName && !isTimelineAsset(asset)}
@@ -418,8 +450,6 @@
       <AssetViewer
         cursor={assetCursor}
         {album}
-        albumPriority={albumPriorities[assetCursor.current.id] ?? null}
-        {onAlbumPriorityChange}
         onAction={handleAction}
         onRandom={handleRandom}
         onAssetChange={updateCurrentAsset}

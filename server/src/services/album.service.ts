@@ -1,7 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   AddUsersDto,
-  AlbumAssetPriorityDto,
   AlbumResponseDto,
   AlbumsAddAssetsDto,
   AlbumsAddAssetsResponseDto,
@@ -9,7 +8,6 @@ import {
   CreateAlbumDto,
   GetAlbumsDto,
   mapAlbum,
-  UpdateAlbumAssetPriorityDto,
   UpdateAlbumDto,
   UpdateAlbumUserDto,
 } from 'src/dtos/album.dto';
@@ -25,16 +23,6 @@ import { getPreferences } from 'src/utils/preferences';
 
 @Injectable()
 export class AlbumService extends BaseService {
-  async getAssetPriorities(auth: AuthDto, id: string): Promise<AlbumAssetPriorityDto[]> {
-    await this.requireAccess({ auth, permission: Permission.AlbumRead, ids: [id] });
-    return this.albumRepository.getAssetPriorities(id);
-  }
-
-  async updateAssetPriorities(auth: AuthDto, id: string, dto: UpdateAlbumAssetPriorityDto): Promise<void> {
-    await this.requireAccess({ auth, permission: Permission.AlbumAssetCreate, ids: [id] });
-    await this.albumRepository.updateAssetPriorities(id, dto.assetIds, dto.priority);
-  }
-
   async getStatistics(auth: AuthDto): Promise<AlbumStatisticsResponseDto> {
     const [owned, shared, notShared] = await Promise.all([
       this.albumRepository.getAll(auth.user.id, { isOwned: true }),

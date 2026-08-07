@@ -1,5 +1,6 @@
 <script lang="ts">
   import { handleCreateTag } from '$lib/services/tag.service';
+  import RichTextEditor from '$lib/components/shared-components/RichTextEditor.svelte';
   import type { TreeNode } from '$lib/utils/tree-utils';
   import { Field, FormModal, Input, Text } from '@immich/ui';
   import { mdiTag } from '@mdi/js';
@@ -13,9 +14,10 @@
   const { onClose, baseTag }: Props = $props();
 
   let tagValue = $state(baseTag?.path ? `${baseTag.path}/` : '');
+  let description = $state('');
 
   const onSubmit = async () => {
-    const success = await handleCreateTag(tagValue);
+    const success = await handleCreateTag(tagValue, description);
     if (success) {
       onClose();
     }
@@ -27,4 +29,5 @@
   <Field label={$t('tag')} required>
     <Input autofocus bind:value={tagValue} />
   </Field>
+  <RichTextEditor label={$t('description')} bind:value={description} />
 </FormModal>

@@ -5,17 +5,29 @@ import { asDateTimeString } from 'src/utils/date';
 import { hexColor } from 'src/validation';
 import z from 'zod';
 
+const richTextDescription = z
+  .string()
+  .max(2000)
+  .transform((value) =>
+    value
+      .replaceAll(/<\/?(?:script|iframe|object|embed|style)[^>]*>/gi, '')
+      .replaceAll(/\son\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+      .replaceAll(/javascript\s*:/gi, ''),
+  );
+
 const TagCreateSchema = z
   .object({
     name: z.string().describe('Tag name'),
     parentId: z.uuidv4().nullish().describe('Parent tag ID'),
     color: hexColor.nullable().optional().describe('Tag color (hex)'),
+    description: richTextDescription.nullable().optional().describe('Optional rich-text tag description'),
   })
   .meta({ id: 'TagCreateDto' });
 
 const TagUpdateSchema = z
   .object({
     color: hexColor.nullable().optional().describe('Tag color (hex)'),
+    description: richTextDescription.nullable().optional().describe('Optional rich-text tag description'),
   })
   .meta({ id: 'TagUpdateDto' });
 
@@ -49,6 +61,8 @@ export const TagResponseSchema = z
     // TODO: use `isoDatetimeToDate` when using `ZodSerializerDto` on the controllers.
     updatedAt: z.string().meta({ format: 'date-time' }).describe('Last update date'),
     color: z.string().optional().describe('Tag color (hex)'),
+    description: z.string().nullable().optional().describe('Optional tag description'),
+    assetCount: z.int().min(0).optional().describe('Number of assets tagged'),
   })
   .meta({ id: 'TagResponseDto' });
 
@@ -68,5 +82,7 @@ export function mapTag(entity: MaybeDehydrated<Tag>): TagResponseDto {
     createdAt: asDateTimeString(entity.createdAt),
     updatedAt: asDateTimeString(entity.updatedAt),
     color: entity.color ?? undefined,
+    description: (entity as MaybeDehydrated<Tag> & { description?: string | null }).description ?? undefined,
+    assetCount: Number((entity as MaybeDehydrated<Tag> & { assetCount?: number }).assetCount ?? 0),
   };
 }

@@ -50,7 +50,7 @@
 
   const handleNavigation = (tag: string) => navigateToView(joinPaths(data.path, tag));
 
-  const getLink = (path: string) => Route.tags({ path });
+  const getLink = (path: string) => (path ? Route.tagName(path) : Route.tags());
 
   const navigateToView = (path: string) => goto(getLink(path));
 
@@ -76,7 +76,7 @@
 
 <OnEvents onTagCreate={onRefresh} onTagUpdate={onRefresh} {onTagDelete} />
 
-<UserPageLayout title={data.meta.title} actions={[Create, Update, Delete]}>
+<UserPageLayout title={data.meta.title} descriptionHtml={tag.description} actions={[Create, Update, Delete]}>
   {#snippet sidebar()}
     <Sidebar>
       <SkipLink target={`#${headerId}`} text={$t('skip_to_tags')} breakpoint="md" />
@@ -89,7 +89,7 @@
     </Sidebar>
   {/snippet}
 
-  <Breadcrumbs node={tag} icon={mdiTagMultiple} title={$t('tags')} {getLink} />
+  <Breadcrumbs node={tag} icon={mdiTagMultiple} title={$t('tags')} {getLink} showParent={false} />
 
   <section class="mt-2 h-[calc(100%-(--spacing(20)))] immich-scrollbar overflow-auto">
     {#if tag.hasAssets}

@@ -221,7 +221,9 @@ export const getAssetActions = ($t: MessageFormatter, asset: AssetResponseDto & 
   const Tag: ActionItem = {
     title: $t('add_tag'),
     icon: mdiTagPlusOutline,
-    $if: () => authManager.authenticated && authManager.preferences.tags.enabled,
+    // Tags are a core asset feature; keep the detail-view action discoverable even
+    // when an older user preference payload predates the tags setting.
+    $if: () => authManager.authenticated,
     onAction: () => modalManager.show(AssetTagModal, { assetIds: [asset.id] }),
     shortcuts: { key: 't' },
   };

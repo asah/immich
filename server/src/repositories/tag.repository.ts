@@ -18,17 +18,17 @@ export class TagRepository {
   }
 
   @GenerateSql({ params: [DummyValue.UUID] })
-  get(id: string) {
-    return this.db.selectFrom('tag').select(columns.tag).where('id', '=', id).executeTakeFirst();
+  get(id: string): Promise<any> {
+    return this.db.selectFrom('tag').select([...columns.tag, sql<string | null>`tag.description`.as('description'), sql<number>`(select count(*) from tag_asset where tag_asset."tagId" = tag.id)`.as('assetCount')]).where('id', '=', id).executeTakeFirst();
   }
 
   @GenerateSql({ params: [DummyValue.UUID, DummyValue.STRING] })
-  getByValue(userId: string, value: string) {
+  getByValue(userId: string, value: string): Promise<any> {
     return this.db
       .selectFrom('tag')
-      .select(columns.tag)
-      .where('userId', '=', userId)
+      .select([...columns.tag, sql<string | null>`tag.description`.as('description'), sql<number>`(select count(*) from tag_asset where tag_asset."tagId" = tag.id)`.as('assetCount')])
       .where('value', '=', value)
+      .orderBy('createdAt', 'asc')
       .executeTakeFirst();
   }
 
@@ -69,18 +69,18 @@ export class TagRepository {
   }
 
   @GenerateSql({ params: [DummyValue.UUID] })
-  getAll(userId: string) {
-    return this.db.selectFrom('tag').select(columns.tag).where('userId', '=', userId).orderBy('value').execute();
+  getAll(_userId?: string): Promise<any[]> {
+    return this.db.selectFrom('tag').select([...columns.tag, sql<string | null>`tag.description`.as('description'), sql<number>`(select count(*) from tag_asset where tag_asset."tagId" = tag.id)`.as('assetCount')]).orderBy('value').execute();
   }
 
   @GenerateSql({ params: [{ userId: DummyValue.UUID, color: DummyValue.STRING, value: DummyValue.STRING }] })
-  create(tag: Insertable<TagTable>) {
-    return this.db.insertInto('tag').values(tag).returningAll().executeTakeFirstOrThrow();
+  create(tag: Insertable<TagTable> & { description?: string | null }): Promise<any> {
+    return this.db.insertInto('tag').values(tag as Insertable<TagTable>).returningAll().executeTakeFirstOrThrow();
   }
 
   @GenerateSql({ params: [DummyValue.UUID, { color: DummyValue.STRING }] })
-  update(id: string, dto: Updateable<TagTable>) {
-    return this.db.updateTable('tag').set(dto).where('id', '=', id).returningAll().executeTakeFirstOrThrow();
+  update(id: string, dto: Updateable<TagTable> & { description?: string | null }): Promise<any> {
+    return this.db.updateTable('tag').set(dto as Updateable<TagTable>).where('id', '=', id).returningAll().executeTakeFirstOrThrow();
   }
 
   @GenerateSql({ params: [DummyValue.UUID] })

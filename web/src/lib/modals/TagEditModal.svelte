@@ -1,5 +1,6 @@
 <script lang="ts">
   import SettingInputField from '$lib/components/shared-components/settings/SettingInputField.svelte';
+  import RichTextEditor from '$lib/components/shared-components/RichTextEditor.svelte';
   import { SettingInputFieldType } from '$lib/constants';
   import { handleUpdateTag } from '$lib/services/tag.service';
   import type { TreeNode } from '$lib/utils/tree-utils';
@@ -15,9 +16,10 @@
   const { tag, onClose }: Props = $props();
 
   let tagColor = $state(tag.color ?? '');
+  let description = $state(tag.description ?? '');
 
   const onSubmit = async () => {
-    const success = await handleUpdateTag(tag, { color: tagColor });
+    const success = await handleUpdateTag(tag, { color: tagColor, description: description || null });
     if (success) {
       onClose();
     }
@@ -26,4 +28,5 @@
 
 <FormModal title={$t('edit_tag')} size="small" icon={mdiTag} {onClose} {onSubmit}>
   <SettingInputField inputType={SettingInputFieldType.COLOR} label={$t('color')} bind:value={tagColor} />
+  <RichTextEditor label={$t('description')} bind:value={description} />
 </FormModal>

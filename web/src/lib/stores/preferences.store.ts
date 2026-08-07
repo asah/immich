@@ -89,7 +89,7 @@ export enum AlbumAssetSortBy {
   DateTaken = 'dateTaken',
   FileName = 'fileName',
   FileSize = 'fileSize',
-  Priority = 'priority',
+  Tag = 'tag',
 }
 
 export interface AlbumAssetViewSettings {
@@ -115,7 +115,6 @@ export interface AlbumAssetDisplayInfo {
   cameraSettings: boolean;
   lens: boolean;
   lensSettings: boolean;
-  priority: boolean;
 }
 
 export const defaultAlbumAssetDisplayInfo: AlbumAssetDisplayInfo = {
@@ -128,7 +127,6 @@ export const defaultAlbumAssetDisplayInfo: AlbumAssetDisplayInfo = {
   cameraSettings: false,
   lens: false,
   lensSettings: false,
-  priority: true,
 };
 
 export const albumAssetViewSettings = persistedObject<AlbumAssetViewSettings>('album-asset-view-settings', {

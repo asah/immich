@@ -31,8 +31,8 @@ const getDefaultPreferences = (): UserPreferences => {
       enabled: false,
     },
     tags: {
-      enabled: false,
-      sidebarWeb: false,
+      enabled: true,
+      sidebarWeb: true,
     },
     emailNotifications: {
       enabled: true,

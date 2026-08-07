@@ -286,24 +286,6 @@ export class AlbumRepository {
       .then((results) => new Set(results.map(({ assetId }) => assetId)));
   }
 
-  async getAssetPriorities(albumId: string): Promise<Array<{ assetId: string; priority: number | null }>> {
-    return this.db
-      .selectFrom('album_asset')
-      .select(['assetId', 'priority'])
-      .where('albumId', '=', albumId)
-      .where('priority', 'is not', null)
-      .execute();
-  }
-
-  async updateAssetPriorities(albumId: string, assetIds: string[], priority: number | null): Promise<void> {
-    await this.db
-      .updateTable('album_asset')
-      .set({ priority })
-      .where('albumId', '=', albumId)
-      .where('assetId', 'in', assetIds)
-      .execute();
-  }
-
   @GenerateSql({ params: [DummyValue.UUID, [DummyValue.UUID]] })
   async addAssetIds(albumId: string, assetIds: string[]): Promise<void> {
     if (assetIds.length === 0) {

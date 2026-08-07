@@ -61,6 +61,7 @@ export const Route = {
 
   // stories
   stories: () => '/stories',
+  tag: ({ id, slug }: { id: string; slug?: string }) => `/tags/${id}${slug ? `/${encodeURIComponent(slug)}` : ''}`,
   newStory: (params?: { albumId?: string }) => '/stories/new' + asQueryString(params),
   viewStory: ({ id }: { id: string }) => `/stories/${id}`,
   viewStoryPlayer: (
@@ -140,6 +141,7 @@ export const Route = {
 
   // tags
   tags: (params?: { path?: string }) => '/tags' + asQueryString(params),
+  tagName: (name: string) => `/tag/${encodeURIComponent(name)}`,
 
   // users
   users: () => '/admin/users',

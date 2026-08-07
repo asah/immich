@@ -22,12 +22,11 @@ import { upsertTags } from 'src/utils/tag';
 @Injectable()
 export class TagService extends BaseService {
   async getAll(auth: AuthDto) {
-    const tags = await this.tagRepository.getAll(auth.user.id);
+    const tags = await this.tagRepository.getAll();
     return tags.map((tag) => mapTag(tag));
   }
 
   async get(auth: AuthDto, id: string): Promise<TagResponseDto> {
-    await this.requireAccess({ auth, permission: Permission.TagRead, ids: [id] });
     const tag = await this.findOrFail(id);
     return mapTag(tag);
   }
@@ -50,7 +49,13 @@ export class TagService extends BaseService {
     }
 
     const { color } = dto;
-    const tag = await this.tagRepository.create({ userId, value, color, parentId: parent?.id });
+    const tag = await this.tagRepository.create({
+      userId,
+      value,
+      color,
+      parentId: parent?.id,
+      description: dto.description,
+    });
 
     return mapTag(tag);
   }
@@ -58,8 +63,8 @@ export class TagService extends BaseService {
   async update(auth: AuthDto, id: string, dto: TagUpdateDto): Promise<TagResponseDto> {
     await this.requireAccess({ auth, permission: Permission.TagUpdate, ids: [id] });
 
-    const { color } = dto;
-    const tag = await this.tagRepository.update(id, { color });
+    const { color, description } = dto;
+    const tag = await this.tagRepository.update(id, { color, description });
     return mapTag(tag);
   }
 
@@ -77,10 +82,12 @@ export class TagService extends BaseService {
   }
 
   async bulkTagAssets(auth: AuthDto, dto: TagBulkAssetsDto): Promise<TagBulkAssetsResponseDto> {
-    const [tagIds, assetIds] = await Promise.all([
-      this.checkAccess({ auth, permission: Permission.TagAsset, ids: dto.tagIds }),
-      this.checkAccess({ auth, permission: Permission.AssetUpdate, ids: dto.assetIds }),
-    ]);
+    const assetIds = await this.checkAccess({ auth, permission: Permission.AssetUpdate, ids: dto.assetIds });
+    const tagIds: string[] = [];
+    for (const tagId of dto.tagIds) {
+      await this.findOrFail(tagId);
+      tagIds.push(tagId);
+    }
 
     const items: Insertable<TagAssetTable>[] = [];
     for (const tagId of tagIds) {
@@ -99,7 +106,7 @@ export class TagService extends BaseService {
   }
 
   async addAssets(auth: AuthDto, id: string, dto: BulkIdsDto): Promise<BulkIdResponseDto[]> {
-    await this.requireAccess({ auth, permission: Permission.TagAsset, ids: [id] });
+    await this.findOrFail(id);
 
     const results = await addAssets(
       auth,
@@ -120,7 +127,7 @@ export class TagService extends BaseService {
   }
 
   async removeAssets(auth: AuthDto, id: string, dto: BulkIdsDto): Promise<BulkIdResponseDto[]> {
-    await this.requireAccess({ auth, permission: Permission.TagAsset, ids: [id] });
+    await this.findOrFail(id);
 
     const results = await removeAssets(
       auth,

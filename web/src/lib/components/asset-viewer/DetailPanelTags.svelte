@@ -49,7 +49,7 @@
           shape="round"
           translations={{ close: $t('remove_tag') }}
         >
-          <Link href={Route.tags({ path: tag.value })} underline={false} class="px-2 font-light">
+          <Link href={Route.tagName(tag.value)} underline={false} class="px-2 font-light">
             {tag.value}
           </Link>
         </Badge>

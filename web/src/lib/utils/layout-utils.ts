@@ -138,6 +138,7 @@ export function getGroupedJustifiedLayoutFromAssets(
   groupKeys: string[],
   options: CommonLayoutOptions,
   dividerHeight = 32,
+  headerHeight: number | ((groupIndex: number) => number) = 0,
 ): GroupedJustifiedLayout {
   if (assets.length === 0) {
     return {
@@ -156,13 +157,18 @@ export function getGroupedJustifiedLayoutFromAssets(
   const dividerTops: number[] = [];
   let groupStart = 0;
   let topOffset = 0;
+  let groupNumber = 0;
 
   for (let index = 1; index <= assets.length; index++) {
     if (index < assets.length && groupKeys[index] === groupKeys[groupStart]) {
       continue;
     }
 
-    if (groupStart > 0) {
+    const currentHeaderHeight = typeof headerHeight === 'function' ? headerHeight(groupNumber) : headerHeight;
+    if (currentHeaderHeight > 0) {
+      dividerTops.push(topOffset + currentHeaderHeight / 2);
+      topOffset += currentHeaderHeight;
+    } else if (groupStart > 0) {
       dividerTops.push(topOffset + dividerHeight / 2);
       topOffset += dividerHeight;
     }
@@ -174,6 +180,7 @@ export function getGroupedJustifiedLayoutFromAssets(
     }
     topOffset += groupLayout.containerHeight;
     groupStart = index;
+    groupNumber++;
   }
 
   return {
