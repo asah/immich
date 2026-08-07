@@ -397,7 +397,7 @@
   >
     {#each dividerLabels as label (label.top + label.key)}
       <div
-        class="absolute inset-x-0 z-10 border-t border-gray-300 bg-white/90 px-2 text-xs text-gray-500 dark:border-gray-600 dark:bg-immich-dark-gray/90"
+        class="absolute inset-x-0 z-10 border-t border-gray-300 bg-white/90 px-2 py-2 text-xs leading-5 text-gray-500 dark:border-gray-600 dark:bg-immich-dark-gray/90"
         style:top={`${label.top + groupHeaderOffset}px`}
       >
         <div class="max-w-[90%] truncate">
@@ -406,7 +406,7 @@
           {/if}
           <a class="font-semibold underline hover:text-primary" href={Route.tags({ path: label.key })}>{label.key}</a>
         </div>
-        {#if label.description}<div class="max-w-[90%] truncate text-xs text-gray-600 dark:text-gray-300">{@html sanitizeDescription(label.description)}</div>{/if}
+        {#if label.description}<div class="mt-1 max-w-[90%] truncate text-xs leading-5 text-gray-600 dark:text-gray-300">{@html sanitizeDescription(label.description)}</div>{/if}
       </div>
     {/each}
     {#each assets as asset, index (asset.id + '-' + index)}
