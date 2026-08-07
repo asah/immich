@@ -1,7 +1,7 @@
 <script lang="ts">
   import { searchStore } from '$lib/stores/search.svelte';
   import { Icon, IconButton, Text } from '@immich/ui';
-  import { mdiClose, mdiFolderOutline, mdiImageAlbum, mdiMagnify } from '@mdi/js';
+  import { mdiClose, mdiFolderOutline, mdiImageAlbum, mdiMagnify, mdiTagMultipleOutline } from '@mdi/js';
   import type { AutocompleteResult } from './SearchBar.svelte';
   import { t } from 'svelte-i18n';
   import { fly } from 'svelte/transition';
@@ -140,7 +140,7 @@
             role="option"
             tabindex="-1"
             aria-selected={selectedIndex === index}
-            aria-label={result.label}
+            aria-label={`${result.label}${result.assetCount === undefined ? '' : ` (${result.assetCount} photos/videos)`}`}
             onclick={() => handleSelectResult(result)}
           >
             {#if result.thumbnailUrl}
@@ -159,10 +159,17 @@
               <span class="flex size-9 shrink-0 items-center justify-center" aria-hidden="true">
                 <Icon icon={mdiFolderOutline} size="1.5em" />
               </span>
+            {:else if result.type === 'tag'}
+              <span class="flex size-9 shrink-0 items-center justify-center" aria-hidden="true">
+                <Icon icon={mdiTagMultipleOutline} size="1.5em" />
+              </span>
             {:else}
               <span class="size-9 shrink-0" aria-hidden="true"></span>
             {/if}
-            <span class="min-w-0 truncate">{result.label}</span>
+            <span class="min-w-0 truncate">
+              {result.label}
+              {#if result.assetCount !== undefined}<span class="ms-1 text-xs text-gray-500">({result.assetCount} photos/videos)</span>{/if}
+            </span>
           </button>
         {/each}
       {:else}

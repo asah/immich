@@ -887,6 +887,8 @@ export type TagResponseDto = {
     value: string;
     /** Optional tag description */
     description?: string | null;
+    /** Number of assets tagged */
+    assetCount?: number;
 };
 export type AssetResponseDto = {
     /** Base64 encoded SHA1 hash */

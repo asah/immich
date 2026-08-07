@@ -19,14 +19,14 @@ export class TagRepository {
 
   @GenerateSql({ params: [DummyValue.UUID] })
   get(id: string): Promise<any> {
-    return this.db.selectFrom('tag').select([...columns.tag, sql<string | null>`tag.description`.as('description')]).where('id', '=', id).executeTakeFirst();
+    return this.db.selectFrom('tag').select([...columns.tag, sql<string | null>`tag.description`.as('description'), sql<number>`(select count(*) from tag_asset where tag_asset."tagId" = tag.id)`.as('assetCount')]).where('id', '=', id).executeTakeFirst();
   }
 
   @GenerateSql({ params: [DummyValue.UUID, DummyValue.STRING] })
   getByValue(userId: string, value: string): Promise<any> {
     return this.db
       .selectFrom('tag')
-      .select([...columns.tag, sql<string | null>`tag.description`.as('description')])
+      .select([...columns.tag, sql<string | null>`tag.description`.as('description'), sql<number>`(select count(*) from tag_asset where tag_asset."tagId" = tag.id)`.as('assetCount')])
       .where('value', '=', value)
       .orderBy('createdAt', 'asc')
       .executeTakeFirst();
@@ -70,7 +70,7 @@ export class TagRepository {
 
   @GenerateSql({ params: [DummyValue.UUID] })
   getAll(_userId?: string): Promise<any[]> {
-    return this.db.selectFrom('tag').select([...columns.tag, sql<string | null>`tag.description`.as('description')]).orderBy('value').execute();
+    return this.db.selectFrom('tag').select([...columns.tag, sql<string | null>`tag.description`.as('description'), sql<number>`(select count(*) from tag_asset where tag_asset."tagId" = tag.id)`.as('assetCount')]).orderBy('value').execute();
   }
 
   @GenerateSql({ params: [{ userId: DummyValue.UUID, color: DummyValue.STRING, value: DummyValue.STRING }] })

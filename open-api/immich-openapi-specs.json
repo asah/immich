@@ -34775,6 +34775,12 @@
       },
       "TagResponseDto": {
         "properties": {
+          "assetCount": {
+            "description": "Number of assets tagged",
+            "maximum": 9007199254740991,
+            "minimum": 0,
+            "type": "integer"
+          },
           "color": {
             "description": "Tag color (hex)",
             "type": "string"

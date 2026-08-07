@@ -52,6 +52,7 @@ export const TagResponseSchema = z
     updatedAt: z.string().meta({ format: 'date-time' }).describe('Last update date'),
     color: z.string().optional().describe('Tag color (hex)'),
     description: z.string().nullable().optional().describe('Optional tag description'),
+    assetCount: z.int().min(0).optional().describe('Number of assets tagged'),
   })
   .meta({ id: 'TagResponseDto' });
 
@@ -72,5 +73,6 @@ export function mapTag(entity: MaybeDehydrated<Tag>): TagResponseDto {
     updatedAt: asDateTimeString(entity.updatedAt),
     color: entity.color ?? undefined,
     description: (entity as MaybeDehydrated<Tag> & { description?: string | null }).description ?? undefined,
+    assetCount: Number((entity as MaybeDehydrated<Tag> & { assetCount?: number }).assetCount ?? 0),
   };
 }

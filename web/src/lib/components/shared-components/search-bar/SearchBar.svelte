@@ -49,9 +49,9 @@
   let autocompleteRequest = 0;
 
   export type AutocompleteResult =
-    | { type: 'album'; id: string; label: string; thumbnailUrl?: string }
-    | { type: 'photo'; id: string; label: string; thumbnailUrl?: string }
-    | { type: 'tag'; id: string; label: string; thumbnailUrl?: string };
+    | { type: 'album'; id: string; label: string; thumbnailUrl?: string; assetCount?: number }
+    | { type: 'photo'; id: string; label: string; thumbnailUrl?: string; assetCount?: number }
+    | { type: 'tag'; id: string; label: string; thumbnailUrl?: string; assetCount?: number };
 
   const listboxId = generateId();
   const searchTypeId = generateId();
@@ -236,7 +236,7 @@
 
     autocompleteResults = [
       ...albums.map((album) => toAlbumAutocompleteResult(album)),
-      ...tags.map((tag) => ({ type: 'tag' as const, id: tag.id, label: `#${tag.name}` })),
+      ...tags.map((tag) => ({ type: 'tag' as const, id: tag.id, label: `#${tag.name}`, assetCount: tag.assetCount })),
       ...photos.map((photo) => toPhotoAutocompleteResult(photo)),
     ].slice(0, 10);
   };
@@ -245,6 +245,7 @@
     type: 'album',
     id: album.id,
     label: album.albumName,
+    assetCount: album.assetCount,
     thumbnailUrl: album.albumThumbnailAssetId
       ? getAssetMediaUrl({ id: album.albumThumbnailAssetId, size: AssetMediaSize.Thumbnail })
       : undefined,
