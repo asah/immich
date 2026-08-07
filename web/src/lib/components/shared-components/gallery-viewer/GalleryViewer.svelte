@@ -107,7 +107,7 @@
     let groupIndex = 0;
     if (primarySortGroupKeys.length > 0) {
       const key = primarySortGroupKeys[0];
-      labels.push({ top: 0, key, description: primarySortGroupDescriptions[key] });
+      labels.push({ top: -8, key, description: primarySortGroupDescriptions[key] });
     }
     for (let index = 1; index < primarySortGroupKeys.length; index++) {
       if (primarySortGroupKeys[index] !== primarySortGroupKeys[index - 1]) {
