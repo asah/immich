@@ -16,6 +16,7 @@
     hideNavbar?: boolean;
     title?: string | undefined;
     description?: string | undefined;
+    descriptionHtml?: string | undefined;
     scrollbar?: boolean;
     use?: ActionArray;
     actions?: Array<HeaderButtonActionItem | MenuItemType>;
@@ -28,6 +29,7 @@
     hideNavbar = false,
     title = undefined,
     description = undefined,
+    descriptionHtml = undefined,
     scrollbar = true,
     use = [],
     actions = [],
@@ -77,6 +79,9 @@
           {/if}
           {#if description}
             <p class="text-sm text-gray-400 dark:text-gray-600">{description}</p>
+          {/if}
+          {#if descriptionHtml}
+            <p class="max-w-[40rem] text-sm text-gray-400 dark:text-gray-600">{@html descriptionHtml}</p>
           {/if}
         </div>
 

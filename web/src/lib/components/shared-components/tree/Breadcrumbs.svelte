@@ -9,9 +9,10 @@
     getLink: (path: string) => string;
     title: string;
     icon: string;
+    showParent?: boolean;
   }
 
-  const { node, getLink, title, icon }: Props = $props();
+  const { node, getLink, title, icon, showParent = true }: Props = $props();
 
   const rootLink = getLink('');
   const isRoot = $derived(node.parent === null);
@@ -20,7 +21,7 @@
 </script>
 
 <nav class="flex items-center py-2">
-  {#if parentLink}
+  {#if parentLink && showParent}
     <div>
       <IconButton
         shape="round"

@@ -94,7 +94,7 @@
           primarySortGroupKeys,
           layoutOptions,
           primarySortGroupDescriptions ? 0 : 32,
-          primarySortGroupDescriptions ? 96 : 0,
+          primarySortGroupDescriptions ? (groupIndex) => (groupIndex === 0 ? 64 : 96) : 0,
         )
       : getJustifiedLayoutFromAssets(assets, layoutOptions),
   );
@@ -112,7 +112,8 @@
     let groupIndex = 0;
     for (let index = 0; index < primarySortGroupKeys.length; index++) {
       if (index > 0 && primarySortGroupKeys[index] === primarySortGroupKeys[index - 1]) continue;
-      const top = dividerTops[groupIndex++] - 48;
+      const top = dividerTops[groupIndex] - (groupIndex === 0 ? 32 : 48);
+      groupIndex++;
       const key = primarySortGroupKeys[index];
       labels.push({ top, key, description: primarySortGroupDescriptions[key] });
     }
@@ -399,7 +400,7 @@
           {#if primarySortGroupColors?.[label.key]}
             <span class="me-1 inline-block size-2.5 rounded-full" style:background-color={primarySortGroupColors[label.key]}></span>
           {/if}
-          <a class="font-semibold underline hover:text-primary" href={Route.tags({ path: label.key })}>{label.key}</a>
+          <a class="font-semibold underline hover:text-primary" href={Route.tagName(label.key)}>{label.key}</a>
         </div>
         {#if label.description}<div class="mt-1 max-w-[90%] truncate text-xs leading-5 text-gray-600 dark:text-gray-300">{@html sanitizeDescription(label.description)}</div>{/if}
       </div>

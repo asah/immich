@@ -13,7 +13,7 @@
   const tag = data.tag!;
 </script>
 
-<UserPageLayout title={tag.name} description={tag.description ?? undefined}>
+<UserPageLayout title={tag.name} descriptionHtml={tag.description ?? undefined}>
   <Timeline
     enableRouting={true}
     options={{ tagId: tag.id, visibility: AssetVisibility.Timeline, withPartners: true, withStacked: true }}
