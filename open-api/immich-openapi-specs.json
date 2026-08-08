@@ -34769,6 +34769,7 @@
           }
         },
         "required": [
+          "color",
           "name"
         ],
         "type": "object"
@@ -34849,6 +34850,9 @@
             "type": "string"
           }
         },
+        "required": [
+          "color"
+        ],
         "type": "object"
       },
       "TagUpsertDto": {
