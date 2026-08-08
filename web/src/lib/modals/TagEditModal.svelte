@@ -16,12 +16,12 @@
 
   const { tag, onClose }: Props = $props();
 
-  let tagColor = $state(tag.color ?? '');
+  let tagColor = $state(tag.color ?? '#64748b');
   let name = $state(tag.value.split('/').at(-1) ?? tag.value);
   let description = $state(tag.description ?? '');
 
   const onSubmit = async () => {
-    const success = await handleUpdateTag(tag, { name, color: tagColor, description: description || null });
+    const success = await handleUpdateTag(tag, { name, color: tagColor || null, description: description || null });
     if (success) {
       onClose();
     }

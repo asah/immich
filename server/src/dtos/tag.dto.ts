@@ -14,12 +14,13 @@ const richTextDescription = z
       .replaceAll(/\son\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
       .replaceAll(/javascript\s*:/gi, ''),
   );
+const optionalHexColor = z.preprocess((value) => (value === '' ? null : value), hexColor.nullable().optional());
 
 const TagCreateSchema = z
   .object({
     name: z.string().describe('Tag name'),
     parentId: z.uuidv4().nullish().describe('Parent tag ID'),
-    color: hexColor.nullable().optional().describe('Tag color (hex)'),
+    color: optionalHexColor.describe('Tag color (hex)'),
     description: richTextDescription.nullable().optional().describe('Optional rich-text tag description'),
   })
   .meta({ id: 'TagCreateDto' });
@@ -27,7 +28,7 @@ const TagCreateSchema = z
 const TagUpdateSchema = z
   .object({
     name: z.string().trim().min(1).max(200).optional().describe('New tag name'),
-    color: hexColor.nullable().optional().describe('Tag color (hex)'),
+    color: optionalHexColor.describe('Tag color (hex)'),
     description: richTextDescription.nullable().optional().describe('Optional rich-text tag description'),
   })
   .meta({ id: 'TagUpdateDto' });
