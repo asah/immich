@@ -34841,6 +34841,12 @@
             "maxLength": 2000,
             "nullable": true,
             "type": "string"
+          },
+          "name": {
+            "description": "New tag name",
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
           }
         },
         "type": "object"

@@ -63,8 +63,23 @@ export class TagService extends BaseService {
   async update(auth: AuthDto, id: string, dto: TagUpdateDto): Promise<TagResponseDto> {
     await this.requireAccess({ auth, permission: Permission.TagUpdate, ids: [id] });
 
-    const { color, description } = dto;
-    const tag = await this.tagRepository.update(id, { color, description });
+    const { color, description, name } = dto;
+    const current = await this.tagRepository.get(id);
+    if (!current) {
+      throw new BadRequestException('Tag not found');
+    }
+    let tag = current;
+    if (name && name !== current.value.split('/').at(-1)) {
+      const parentPath = current.value.includes('/') ? current.value.slice(0, current.value.lastIndexOf('/')) : '';
+      const value = parentPath ? `${parentPath}/${name}` : name;
+      if (await this.tagRepository.getByValue(auth.user.id, value)) {
+        throw new BadRequestException('A tag with that name already exists');
+      }
+      tag = await this.tagRepository.rename(id, value);
+    }
+    if (color !== undefined || description !== undefined) {
+      tag = await this.tagRepository.update(id, { color, description });
+    }
     return mapTag(tag);
   }
 

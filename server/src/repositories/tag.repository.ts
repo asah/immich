@@ -83,6 +83,23 @@ export class TagRepository {
     return this.db.updateTable('tag').set(dto as Updateable<TagTable>).where('id', '=', id).returningAll().executeTakeFirstOrThrow();
   }
 
+  async rename(id: string, value: string): Promise<any> {
+    await this.db.transaction().execute(async (tx) => {
+      const current = await tx.selectFrom('tag').select('value').where('id', '=', id).executeTakeFirstOrThrow();
+      await tx
+        .updateTable('tag')
+        .set({ value })
+        .where('id', '=', id)
+        .execute();
+      await tx
+        .updateTable('tag')
+        .set({ value: sql<string>`replace(value, ${current.value + '/'}, ${value + '/'})` })
+        .where('value', 'like', `${current.value}/%`)
+        .execute();
+    });
+    return this.get(id);
+  }
+
   @GenerateSql({ params: [DummyValue.UUID] })
   async delete(id: string) {
     await this.db.deleteFrom('tag').where('id', '=', id).execute();

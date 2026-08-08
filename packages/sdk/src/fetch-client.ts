@@ -3734,6 +3734,8 @@ export type TagBulkAssetsResponseDto = {
     count: number;
 };
 export type TagUpdateDto = {
+    /** New tag name */
+    name?: string;
     /** Tag color (hex) */
     color?: string | null;
     /** Optional tag description */

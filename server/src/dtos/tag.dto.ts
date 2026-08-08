@@ -26,6 +26,7 @@ const TagCreateSchema = z
 
 const TagUpdateSchema = z
   .object({
+    name: z.string().trim().min(1).max(200).optional().describe('New tag name'),
     color: hexColor.nullable().optional().describe('Tag color (hex)'),
     description: richTextDescription.nullable().optional().describe('Optional rich-text tag description'),
   })
