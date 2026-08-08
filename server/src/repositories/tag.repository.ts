@@ -91,11 +91,22 @@ export class TagRepository {
         .set({ value })
         .where('id', '=', id)
         .execute();
-      await tx
-        .updateTable('tag')
-        .set({ value: sql<string>`replace(value, ${current.value + '/'}, ${value + '/'})` })
-        .where('value', 'like', `${current.value}/%`)
+      const descendants = await tx
+        .selectFrom('tag')
+        .select(['id', 'value'])
+        .where('id', '!=', id)
         .execute();
+      const prefix = `${current.value}/`;
+      for (const descendant of descendants) {
+        if (!descendant.value.startsWith(prefix)) {
+          continue;
+        }
+        await tx
+          .updateTable('tag')
+          .set({ value: `${value}/${descendant.value.slice(prefix.length)}` })
+          .where('id', '=', descendant.id)
+          .execute();
+      }
     });
     return this.get(id);
   }
