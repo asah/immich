@@ -6,6 +6,7 @@
   import EmptyPlaceholder from '$lib/components/shared-components/EmptyPlaceholder.svelte';
   import ChangeDate from '$lib/components/timeline/actions/ChangeDateAction.svelte';
   import ChangeLocation from '$lib/components/timeline/actions/ChangeLocationAction.svelte';
+  import ChangeLens from '$lib/components/timeline/actions/ChangeLensAction.svelte';
   import DeleteAssets from '$lib/components/timeline/actions/DeleteAssetsAction.svelte';
   import DownloadAction from '$lib/components/timeline/actions/DownloadAction.svelte';
   import SelectAllAssets from '$lib/components/timeline/actions/SelectAllAction.svelte';
@@ -83,6 +84,7 @@
       <DownloadAction menuItem />
       <ChangeDate menuItem />
       <ChangeLocation menuItem />
+      <ChangeLens menuItem />
       <DeleteAssets menuItem force onAssetDelete={(assetIds) => timelineManager.removeAssets(assetIds)} />
     </ButtonContextMenu>
   </AssetSelectControlBar>

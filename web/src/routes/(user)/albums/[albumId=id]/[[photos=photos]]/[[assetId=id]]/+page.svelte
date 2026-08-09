@@ -16,6 +16,7 @@
   import ChangeDate from '$lib/components/timeline/actions/ChangeDateAction.svelte';
   import ChangeDescription from '$lib/components/timeline/actions/ChangeDescriptionAction.svelte';
   import ChangeLocation from '$lib/components/timeline/actions/ChangeLocationAction.svelte';
+  import ChangeLens from '$lib/components/timeline/actions/ChangeLensAction.svelte';
   import CreateSharedLink from '$lib/components/timeline/actions/CreateSharedLinkAction.svelte';
   import DeleteAssets from '$lib/components/timeline/actions/DeleteAssetsAction.svelte';
   import DownloadAction from '$lib/components/timeline/actions/DownloadAction.svelte';
@@ -183,6 +184,14 @@
   const handleSetVisibility = (assetIds: string[]) => {
     timelineManager.removeAssets(assetIds);
     assetMultiSelectManager.clear();
+  };
+
+  const handleFavoriteAssets = (assetIds: string[], isFavorite: boolean) => {
+    timelineManager?.update(assetIds, (asset) => (asset.isFavorite = isFavorite));
+
+    if (filenameAssets.length > 0) {
+      filenameAssets = filenameAssets.map((asset) => (assetIds.includes(asset.id) ? { ...asset, isFavorite } : asset));
+    }
   };
 
   const handleRemoveAssets = async (assetIds: string[]) => {
@@ -652,9 +661,7 @@
         <ActionButton action={Actions.AddToAlbum} />
         {#if isEditor && availableTags.length > 0}<TagAction />{/if}
         {#if assetMultiSelectManager.isAllUserOwned}
-          <FavoriteAction
-            removeFavorite={assetMultiSelectManager.isAllFavorite}
-            onFavorite={(ids, isFavorite) => timelineManager.update(ids, (asset) => (asset.isFavorite = isFavorite))}
+          <FavoriteAction removeFavorite={assetMultiSelectManager.isAllFavorite} onFavorite={handleFavoriteAssets}
           ></FavoriteAction>
         {/if}
         <ButtonContextMenu icon={mdiDotsVertical} title={$t('menu')} offset={{ x: 175, y: 25 }}>
@@ -663,6 +670,7 @@
             <ChangeDate menuItem />
             <ChangeDescription menuItem />
             <ChangeLocation menuItem />
+            <ChangeLens menuItem />
             <ArchiveAction
               menuItem
               unarchive={assetMultiSelectManager.isAllArchived}

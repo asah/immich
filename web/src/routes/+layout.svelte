@@ -167,7 +167,7 @@
 
   let showNavigationLoadingBar = $state(false);
 
-  toastManager.setOptions({ class: 'top-16 fixed' });
+  toastManager.setOptions({ class: 'fixed !top-auto !right-4 bottom-4' });
 
   onMount(() => {
     const element = document.querySelector('#stencil');
