@@ -9,6 +9,7 @@
   import { Icon } from '@immich/ui';
   import {
     mdiAlertCircle,
+    mdiCheckAll,
     mdiCheckCircle,
     mdiCircleOutline,
     mdiClose,
@@ -53,7 +54,7 @@
         {#if uploadAsset.isTrashed}
           <Icon icon={mdiTrashCan} size="24" class="text-gray-500" title={$t('asset_skipped_in_trash')} />
         {:else}
-          <Icon icon={mdiAlertCircle} size="24" class="text-warning" title={$t('asset_skipped')} />
+          <Icon icon={mdiCheckAll} size="24" class="text-success" title={$t('asset_skipped')} />
         {/if}
       {:else if uploadAsset.state === UploadState.DONE}
         <Icon icon={mdiCheckCircle} size="24" class="text-success" title={$t('asset_uploaded')} />

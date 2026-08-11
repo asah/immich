@@ -60,7 +60,6 @@ class ActivityAccess {
       .innerJoin('album_user as albumUsers', 'albumUsers.albumId', 'album.id')
       .innerJoin('user', (join) => join.onRef('user.id', '=', 'albumUsers.userId').on('user.deletedAt', 'is', null))
       .where('album.id', 'in', [...albumIds])
-      .where('album.isActivityEnabled', '=', true)
       .where((eb) => eb('user.id', '=', userId))
       .where('album.deletedAt', 'is', null)
       .execute()

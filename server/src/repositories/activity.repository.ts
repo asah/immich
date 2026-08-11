@@ -14,6 +14,7 @@ export interface ActivitySearch {
   assetId?: string | null;
   userId?: string;
   isLiked?: boolean;
+  parentActivityId?: string | null;
 }
 
 @Injectable()
@@ -22,7 +23,7 @@ export class ActivityRepository {
 
   @GenerateSql({ params: [{ albumId: DummyValue.UUID }] })
   search(options: ActivitySearch) {
-    const { userId, assetId, albumId, isLiked } = options;
+    const { userId, assetId, albumId, isLiked, parentActivityId } = options;
 
     return this.db
       .selectFrom('activity')
@@ -41,6 +42,8 @@ export class ActivityRepository {
       .$if(!!assetId, (qb) => qb.where('activity.assetId', '=', assetId!))
       .$if(!!albumId, (qb) => qb.where('activity.albumId', '=', albumId!))
       .$if(isLiked !== undefined, (qb) => qb.where('activity.isLiked', '=', isLiked!))
+      .$if(parentActivityId === null, (qb) => qb.where('activity.parentActivityId', 'is', null))
+      .$if(!!parentActivityId, (qb) => qb.where('activity.parentActivityId', '=', parentActivityId!))
       .where('asset.deletedAt', 'is', null)
       .orderBy('activity.createdAt', 'asc')
       .execute();
@@ -61,9 +64,60 @@ export class ActivityRepository {
       .executeTakeFirstOrThrow();
   }
 
+  async updateReaction(id: string, reactionKey: string) {
+    return this.db
+      .updateTable('activity')
+      .set({ reactionKey })
+      .where('id', '=', asUuid(id))
+      .returningAll()
+      .executeTakeFirstOrThrow();
+  }
+
+  async getById(id: string) {
+    return this.db.selectFrom('activity').selectAll().where('id', '=', asUuid(id)).executeTakeFirst();
+  }
+
+  async getAssetsInAlbum(albumId: string, assetIds: string[]) {
+    if (assetIds.length === 0) {
+      return [];
+    }
+
+    return this.db
+      .selectFrom('album_asset')
+      .select('assetId')
+      .where('albumId', '=', asUuid(albumId))
+      .where('assetId', 'in', assetIds)
+      .execute();
+  }
+
   @GenerateSql({ params: [DummyValue.UUID] })
   async delete(id: string) {
     await this.db.deleteFrom('activity').where('id', '=', asUuid(id)).execute();
+  }
+
+  async getAssetIds(activityIds: string[]) {
+    if (activityIds.length === 0) {
+      return [];
+    }
+
+    return this.db
+      .selectFrom('activity_asset')
+      .select(['activityId', 'assetId'])
+      .where('activityId', 'in', activityIds)
+      .orderBy('position', 'asc')
+      .execute();
+  }
+
+  async addAssets(activityId: string, assetIds: string[]) {
+    if (assetIds.length === 0) {
+      return;
+    }
+
+    await this.db
+      .insertInto('activity_asset')
+      .values(assetIds.map((assetId, position) => ({ activityId, assetId, position })))
+      .onConflict((oc) => oc.columns(['activityId', 'assetId']).doNothing())
+      .execute();
   }
 
   @GenerateSql({ params: [{ albumId: DummyValue.UUID, assetId: DummyValue.UUID }] })

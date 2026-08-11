@@ -92,7 +92,6 @@
     mdiLink,
     mdiPlus,
     mdiPresentationPlay,
-    mdiBookOpenPageVariantOutline,
   } from '@mdi/js';
   import { onDestroy, untrack } from 'svelte';
   import { t } from 'svelte-i18n';
@@ -302,12 +301,6 @@
   const containsEditors = $derived(album?.shared && album.albumUsers.some(({ role }) => role === AlbumUserRole.Editor));
   const albumUsers = $derived(showAlbumUsers && containsEditors ? album.albumUsers.map(({ user }) => user) : []);
 
-  $effect(() => {
-    if (!album.isActivityEnabled && activityManager.commentCount === 0) {
-      assetViewerManager.closeActivityPanel();
-    }
-  });
-
   const options = $derived.by(() => {
     if (viewMode === AlbumPageViewMode.SELECT_ASSETS) {
       return {
@@ -319,7 +312,7 @@
     return { albumId, order: album.order };
   });
 
-  const isShared = $derived(viewMode === AlbumPageViewMode.SELECT_ASSETS ? false : album.albumUsers.length > 1);
+  const isShared = $derived(viewMode === AlbumPageViewMode.SELECT_ASSETS ? false : album.albumUsers.length > 0);
 
   $effect(() => {
     if (assetViewerManager.isViewing || !isShared) {
@@ -399,11 +392,7 @@
     }
   });
 
-  let showActivityStatus = $derived(
-    album.albumUsers.length > 1 &&
-      !assetViewerManager.isViewing &&
-      (album.isActivityEnabled || activityManager.commentCount > 0),
-  );
+  let showActivityStatus = $derived(album.albumUsers.length > 0 && !assetViewerManager.isViewing);
   const isEditor = $derived(
     album.albumUsers.find(({ user: { id } }) => id === authManager.user.id)?.role === AlbumUserRole.Editor || isOwned,
   );
@@ -642,11 +631,12 @@
       {#if showActivityStatus}
         <div class="absolute inset-e-0 bottom-0 z-2 me-12 mb-6">
           <ActivityStatus
-            disabled={!album.isActivityEnabled}
+            disabled={false}
             isLiked={activityManager.isLiked}
             numberOfComments={activityManager.commentCount}
             numberOfLikes={undefined}
             onFavorite={handleFavorite}
+            onReaction={(key) => activityManager.toggleLike(key)}
           />
         </div>
       {/if}
@@ -724,18 +714,6 @@
             {/if}
 
             <ActionButton action={Share} />
-
-            {#if album.assetCount > 0}
-              <IconButton
-                shape="round"
-                variant="ghost"
-                color="secondary"
-                aria-label={$t('create_story_from_album')}
-                title={$t('create_story_from_album')}
-                onclick={() => goto(Route.newStory({ albumId: album.id }))}
-                icon={mdiBookOpenPageVariantOutline}
-              />
-            {/if}
 
             {#if featureFlagsManager.value.map}
               <AlbumMap {album} />
@@ -828,7 +806,7 @@
       {/if}
     {/if}
   </div>
-  {#if album.albumUsers.length > 1 && album && assetViewerManager.isShowActivityPanel && authManager.authenticated && !assetViewerManager.isViewing}
+  {#if album.albumUsers.length > 0 && album && assetViewerManager.isShowActivityPanel && authManager.authenticated && !assetViewerManager.isViewing}
     <div class="flex">
       <div
         transition:fly={{ duration: 150 }}
@@ -836,7 +814,7 @@
         class="z-2 w-90 overflow-y-auto transition-all md:w-115 dark:border-l dark:border-s-immich-dark-gray"
         translate="yes"
       >
-        <ActivityViewer disabled={!album.isActivityEnabled} albumUsers={album.albumUsers} albumId={album.id} />
+        <ActivityViewer disabled={false} albumUsers={album.albumUsers} albumId={album.id} />
       </div>
     </div>
   {/if}

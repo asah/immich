@@ -83,7 +83,7 @@ class ActivityManager {
     }
 
     const activity = await createActivity({ activityCreateDto: dto });
-    this.#activities = [...this.#activities, activity];
+    this.#activities = [...this.#activities.filter(({ id }) => id !== activity.id), activity];
 
     if (activity.type === ReactionType.Comment) {
       this.#commentCount++;
@@ -111,28 +111,34 @@ class ActivityManager {
       this.#likeCount--;
     }
 
-    this.#activities = index
-      ? this.#activities.splice(index, 1)
-      : this.#activities.filter(({ id }) => id !== activity.id);
+    this.#activities = this.#activities.filter(({ id }) => id !== activity.id);
 
     await deleteActivity({ id: activity.id });
     this.#invalidateCache(this.#albumId, this.#assetId);
     handlePromiseError(this.refreshActivities(this.#albumId, this.#assetId));
   }
 
-  async toggleLike() {
+  async toggleLike(reactionKey = 'like') {
     if (!this.#albumId) {
       return;
     }
 
-    if (this.#isLiked) {
+    if (this.#isLiked && this.#isLiked.reactionKey === reactionKey) {
       await this.deleteActivity(this.#isLiked);
       this.#isLiked = null;
+    } else if (this.#isLiked) {
+      this.#isLiked = (await this.addActivity({
+        albumId: this.#albumId,
+        assetId: this.#assetId,
+        type: ReactionType.Like,
+        reactionKey,
+      }))!;
     } else {
       this.#isLiked = (await this.addActivity({
         albumId: this.#albumId,
         assetId: this.#assetId,
         type: ReactionType.Like,
+        reactionKey,
       }))!;
     }
   }

@@ -37,6 +37,18 @@
             }
           },
           {
+            "name": "parentActivityId",
+            "required": false,
+            "in": "query",
+            "description": "Filter reactions on a comment",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+              "nullable": true
+            }
+          },
+          {
             "name": "type",
             "required": false,
             "in": "query",
@@ -18475,8 +18487,35 @@
             "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
             "type": "string"
           },
+          "assetIds": {
+            "description": "Photo attachments referenced by this activity",
+            "items": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+              "type": "string"
+            },
+            "maxItems": 4,
+            "type": "array"
+          },
           "comment": {
             "description": "Comment text (required if type is comment)",
+            "type": "string"
+          },
+          "commentDocument": {
+            "description": "Rich comment document",
+            "maxLength": 10000,
+            "type": "string"
+          },
+          "parentActivityId": {
+            "description": "Comment activity receiving a reaction",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+            "type": "string"
+          },
+          "reactionKey": {
+            "description": "Reaction key",
+            "maxLength": 64,
+            "minLength": 1,
             "type": "string"
           },
           "type": {
@@ -18498,8 +18537,24 @@
             "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
             "type": "string"
           },
+          "assetIds": {
+            "default": [],
+            "description": "Photo attachments referenced by this activity",
+            "items": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+              "type": "string"
+            },
+            "type": "array"
+          },
           "comment": {
             "description": "Comment text (for comment activities)",
+            "nullable": true,
+            "type": "string"
+          },
+          "commentDocument": {
+            "description": "Sanitized rich comment document",
+            "maxLength": 10000,
             "nullable": true,
             "type": "string"
           },
@@ -18514,6 +18569,18 @@
             "description": "Activity ID",
             "format": "uuid",
             "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+            "type": "string"
+          },
+          "parentActivityId": {
+            "description": "Comment activity receiving a reaction",
+            "format": "uuid",
+            "nullable": true,
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+            "type": "string"
+          },
+          "reactionKey": {
+            "description": "Reaction key",
+            "nullable": true,
             "type": "string"
           },
           "type": {

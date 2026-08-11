@@ -1,11 +1,9 @@
 import {
-  Check,
   Column,
   CreateDateColumn,
   ForeignKeyColumn,
   ForeignKeyConstraint,
   Generated,
-  Index,
   PrimaryGeneratedColumn,
   Table,
   Timestamp,
@@ -19,16 +17,6 @@ import { UserTable } from 'src/schema/tables/user.table';
 
 @Table('activity')
 @UpdatedAtTrigger('activity_updatedAt')
-@Index({
-  name: 'activity_like_idx',
-  columns: ['assetId', 'userId', 'albumId'],
-  unique: true,
-  where: '("isLiked" = true)',
-})
-@Check({
-  name: 'activity_like_check',
-  expression: `(comment IS NULL AND "isLiked" = true) OR (comment IS NOT NULL AND "isLiked" = false)`,
-})
 @ForeignKeyConstraint({
   columns: ['albumId', 'assetId'],
   referenceTable: () => AlbumAssetTable,
@@ -57,6 +45,15 @@ export class ActivityTable {
 
   @Column({ type: 'text', default: null })
   comment!: string | null;
+
+  @Column({ type: 'jsonb', nullable: true })
+  commentDocument!: unknown | null;
+
+  @Column({ type: 'character varying', nullable: true })
+  reactionKey!: string | null;
+
+  @Column({ type: 'uuid', nullable: true, index: true })
+  parentActivityId!: string | null;
 
   @Column({ type: 'boolean', default: false })
   isLiked!: Generated<boolean>;

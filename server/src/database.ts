@@ -68,6 +68,9 @@ export type Activity = {
   user: ShallowDehydrateObject<User>;
   assetId: string | null;
   comment: string | null;
+  commentDocument: unknown | null;
+  reactionKey: string | null;
+  parentActivityId: string | null;
   isLiked: boolean;
   updateId: string;
 };

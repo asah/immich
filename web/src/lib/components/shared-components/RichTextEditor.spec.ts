@@ -16,7 +16,10 @@ describe('RichTextEditor', () => {
     const user = userEvent.setup();
     Object.defineProperty(document, 'execCommand', { configurable: true, value: vi.fn().mockReturnValue(true) });
     const execCommand = vi.mocked(document.execCommand);
-    Object.defineProperty(window, 'prompt', { configurable: true, value: vi.fn().mockReturnValue('https://example.com') });
+    Object.defineProperty(window, 'prompt', {
+      configurable: true,
+      value: vi.fn().mockReturnValue('https://example.com'),
+    });
     render(RichTextEditor, { props: { value: 'link me' } });
     const editor = screen.getByRole('textbox');
     editor.focus();
@@ -29,5 +32,17 @@ describe('RichTextEditor', () => {
     await user.click(screen.getByRole('button', { name: 'Link' }));
     expect(execCommand).toHaveBeenCalledWith('createLink', false, 'https://example.com');
     execCommand.mockRestore();
+  });
+
+  it('keeps editor keystrokes away from global shortcuts', async () => {
+    const user = userEvent.setup();
+    const globalKeydown = vi.fn();
+    document.addEventListener('keydown', globalKeydown);
+    render(RichTextEditor, { props: { value: '' } });
+
+    await user.type(screen.getByRole('textbox'), 'a');
+
+    expect(globalKeydown).not.toHaveBeenCalled();
+    document.removeEventListener('keydown', globalKeydown);
   });
 });

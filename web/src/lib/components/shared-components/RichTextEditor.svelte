@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ReactionPicker from '$lib/components/asset-viewer/ReactionPicker.svelte';
   import { Button, Field } from '@immich/ui';
   import { mdiFormatBold, mdiFormatItalic, mdiFormatUnderline, mdiLink, mdiPalette } from '@mdi/js';
   import { Icon } from '@immich/ui';
@@ -49,8 +50,22 @@
     if (url) command('createLink', url);
   };
 
+  const insertEmoji = (emoji: string) => {
+    editor?.focus();
+    restoreSelection();
+    document.execCommand('insertText', false, emoji);
+    value = editor?.innerHTML ?? '';
+    saveSelection();
+  };
+
   onMount(() => {
     if (editor) {
+      editor.innerHTML = value;
+    }
+  });
+
+  $effect(() => {
+    if (editor && editor.innerHTML !== value && document.activeElement !== editor) {
       editor.innerHTML = value;
     }
   });
@@ -59,16 +74,49 @@
 <Field {label}>
   <div class="overflow-hidden rounded-lg border border-gray-300 dark:border-gray-600">
     <div class="flex flex-wrap gap-1 border-b border-gray-200 bg-gray-50 p-1 dark:border-gray-700 dark:bg-gray-800">
-      <Button size="small" variant="ghost" aria-label="Bold" onmousedown={preserveSelection} onclick={() => command('bold')}><Icon icon={mdiFormatBold} /></Button>
-      <Button size="small" variant="ghost" aria-label="Italic" onmousedown={preserveSelection} onclick={() => command('italic')}><Icon icon={mdiFormatItalic} /></Button>
-      <Button size="small" variant="ghost" aria-label="Underline" onmousedown={preserveSelection} onclick={() => command('underline')}><Icon icon={mdiFormatUnderline} /></Button>
-      <Button size="small" variant="ghost" aria-label="Link" onmousedown={preserveSelection} onclick={addLink}><Icon icon={mdiLink} /></Button>
+      <Button
+        size="small"
+        variant="ghost"
+        aria-label="Bold"
+        onmousedown={preserveSelection}
+        onclick={() => command('bold')}><Icon icon={mdiFormatBold} /></Button
+      >
+      <Button
+        size="small"
+        variant="ghost"
+        aria-label="Italic"
+        onmousedown={preserveSelection}
+        onclick={() => command('italic')}><Icon icon={mdiFormatItalic} /></Button
+      >
+      <Button
+        size="small"
+        variant="ghost"
+        aria-label="Underline"
+        onmousedown={preserveSelection}
+        onclick={() => command('underline')}><Icon icon={mdiFormatUnderline} /></Button
+      >
+      <Button size="small" variant="ghost" aria-label="Link" onmousedown={preserveSelection} onclick={addLink}
+        ><Icon icon={mdiLink} /></Button
+      >
+      <ReactionPicker compact buttonLabel="Add emoji" onSelect={({ emoji }) => insertEmoji(emoji)} />
       <label class="flex items-center px-2" title="Text color">
         <Icon icon={mdiPalette} size="18" />
-        <input aria-label="Text color" type="color" bind:value={color} onmousedown={saveSelection} onchange={() => command('foreColor', color)} />
+        <input
+          aria-label="Text color"
+          type="color"
+          bind:value={color}
+          onmousedown={saveSelection}
+          onchange={() => command('foreColor', color)}
+        />
       </label>
       <label class="flex items-center px-2" title="Background color">
-        <input aria-label="Background color" type="color" value="#fff59d" onmousedown={saveSelection} onchange={(event) => command('hiliteColor', event.currentTarget.value)} />
+        <input
+          aria-label="Background color"
+          type="color"
+          value="#fff59d"
+          onmousedown={saveSelection}
+          onchange={(event) => command('hiliteColor', event.currentTarget.value)}
+        />
       </label>
     </div>
     <div
@@ -80,8 +128,13 @@
       aria-multiline="true"
       oninput={() => (value = editor?.innerHTML ?? '')}
       onblur={() => (value = editor?.innerHTML ?? '')}
+      onkeydown={(event) => event.stopPropagation()}
+      onkeypress={(event) => event.stopPropagation()}
+      onkeyup={(event) => {
+        event.stopPropagation();
+        saveSelection();
+      }}
       onmouseup={saveSelection}
-      onkeyup={saveSelection}
     ></div>
   </div>
 </Field>

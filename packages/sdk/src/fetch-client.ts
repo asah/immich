@@ -32,6 +32,14 @@ export type ActivityResponseDto = {
     assetId: string | null;
     /** Comment text (for comment activities) */
     comment?: string | null;
+    /** Sanitized rich comment document */
+    commentDocument?: unknown;
+    /** Reaction key */
+    reactionKey?: string | null;
+    /** Comment activity receiving a reaction */
+    parentActivityId?: string | null;
+    /** Photo attachments referenced by this activity */
+    assetIds: string[];
     /** Creation date */
     createdAt: string;
     /** Activity ID */
@@ -46,6 +54,14 @@ export type ActivityCreateDto = {
     assetId?: string;
     /** Comment text (required if type is comment) */
     comment?: string;
+    /** Rich comment document */
+    commentDocument?: unknown;
+    /** Reaction key */
+    reactionKey?: string;
+    /** Comment activity receiving a reaction */
+    parentActivityId?: string;
+    /** Photo attachments referenced by this activity */
+    assetIds?: string[];
     "type": ReactionType;
 };
 export type ActivityStatisticsResponseDto = {
@@ -4396,12 +4412,13 @@ export type SyncUserV1 = {
 /**
  * List all activities
  */
-export function getActivities({ albumId, assetId, level, $type, userId }: {
+export function getActivities({ albumId, assetId, level, $type, userId, parentActivityId }: {
     albumId: string;
     assetId?: string;
     level?: ReactionLevel;
     $type?: ReactionType;
     userId?: string;
+    parentActivityId?: string;
 }, opts?: Oazapfts.RequestOpts) {
     return oazapfts.ok(oazapfts.fetchJson<{
         status: 200;
@@ -4411,7 +4428,8 @@ export function getActivities({ albumId, assetId, level, $type, userId }: {
         assetId,
         level,
         "type": $type,
-        userId
+        userId,
+        parentActivityId
     }))}`, {
         ...opts
     }));

@@ -135,7 +135,7 @@
   };
 
   const handleFavorite = async () => {
-    if (!album || !album.isActivityEnabled) {
+    if (!album) {
       return;
     }
 
@@ -374,13 +374,11 @@
   let isFullScreen = $derived(!!fullscreenElement);
 
   $effect(() => {
-    if (album && !album.isActivityEnabled && activityManager.commentCount === 0) {
-      assetViewerManager.closeActivityPanel();
-    }
-  });
-  $effect(() => {
-    if (album && isShared && asset.id) {
+    if (album && asset.id) {
       handlePromiseError(activityManager.init(album.id, asset.id));
+      if (new URLSearchParams(window.location.search).has('comment')) {
+        assetViewerManager.isShowActivityPanel = true;
+      }
     }
   });
 
@@ -447,12 +445,7 @@
     return 'PhotoViewer';
   });
 
-  const showActivityStatus = $derived(
-    $slideshowState === SlideshowState.None &&
-      isShared &&
-      ((album && album.isActivityEnabled) || activityManager.commentCount > 0) &&
-      !activityManager.isLoading,
-  );
+  const showActivityStatus = $derived($slideshowState === SlideshowState.None && !!album && !activityManager.isLoading);
 
   const showOcrButton = $derived(
     $slideshowState === SlideshowState.None &&
@@ -593,11 +586,12 @@
     {#if showActivityStatus}
       <div class="absolute inset-e-0 bottom-0 me-8 mb-20">
         <ActivityStatus
-          disabled={!album?.isActivityEnabled}
+          disabled={false}
           isLiked={activityManager.isLiked}
           numberOfComments={activityManager.commentCount}
           numberOfLikes={activityManager.likeCount}
           onFavorite={handleFavorite}
+          onReaction={(key) => activityManager.toggleLike(key)}
         />
       </div>
     {/if}
@@ -673,7 +667,7 @@
     </div>
   {/if}
 
-  {#if isShared && album && assetViewerManager.isShowActivityPanel && authManager.authenticated}
+  {#if album && assetViewerManager.isShowActivityPanel && authManager.authenticated}
     <div
       transition:fly={{ duration: 150 }}
       id="activity-panel"
@@ -681,7 +675,7 @@
       translate="yes"
     >
       <ActivityViewer
-        disabled={!album.isActivityEnabled}
+        disabled={false}
         assetType={asset.type}
         albumUsers={album.albumUsers}
         albumId={album.id}

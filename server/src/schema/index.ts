@@ -30,6 +30,7 @@ import {
   user_metadata_audit,
 } from 'src/schema/functions';
 import { ActivityTable } from 'src/schema/tables/activity.table';
+import { ActivityAssetTable } from 'src/schema/tables/activity-asset.table';
 import { AiCredentialTable } from 'src/schema/tables/ai-credential.table';
 import { AiProviderTable } from 'src/schema/tables/ai-provider.table';
 import { AlbumAssetAuditTable } from 'src/schema/tables/album-asset-audit.table';
@@ -110,6 +111,7 @@ export class ImmichDatabase {
     AiCredentialTable,
     AiProviderTable,
     ActivityTable,
+    ActivityAssetTable,
     AlbumAssetTable,
     AlbumAssetAuditTable,
     AlbumAuditTable,
@@ -222,6 +224,7 @@ export interface DB {
   kysely_migrations: { timestamp: string; name: string };
 
   activity: ActivityTable;
+  activity_asset: ActivityAssetTable;
 
   ai_credential: AiCredentialTable;
   ai_provider: AiProviderTable;
