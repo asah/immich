@@ -30,6 +30,7 @@
   import { modalManager } from '@immich/ui';
   import { debounce } from 'lodash-es';
   import { t } from 'svelte-i18n';
+  import type { ClassValue } from 'svelte/elements';
 
   const {
     TIMELINE: { INTERSECTION_EXPAND_TOP, INTERSECTION_EXPAND_BOTTOM },
@@ -55,6 +56,7 @@
     primarySortGroupDescriptions?: Record<string, string | null | undefined>;
     primarySortGroupColors?: Record<string, string | null | undefined>;
     viewportScrollTop?: number;
+    imageClass?: ClassValue;
   };
 
   let {
@@ -77,6 +79,7 @@
     primarySortGroupDescriptions,
     primarySortGroupColors,
     viewportScrollTop,
+    imageClass = '',
   }: Props = $props();
 
   const navigationAssets = $derived(viewerAssets ?? assets);
@@ -398,11 +401,18 @@
       >
         <div class="max-w-[90%] truncate">
           {#if primarySortGroupColors?.[label.key]}
-            <span class="me-1 inline-block size-2.5 rounded-full" style:background-color={primarySortGroupColors[label.key]}></span>
+            <span
+              class="me-1 inline-block size-2.5 rounded-full"
+              style:background-color={primarySortGroupColors[label.key]}
+            ></span>
           {/if}
           <a class="font-semibold underline hover:text-primary" href={Route.tagName(label.key)}>{label.key}</a>
         </div>
-        {#if label.description}<div class="mt-1 max-w-[90%] truncate text-xs leading-5 text-gray-600 dark:text-gray-300">{@html sanitizeDescription(label.description)}</div>{/if}
+        {#if label.description}<div
+            class="mt-1 max-w-[90%] truncate text-xs leading-5 text-gray-600 dark:text-gray-300"
+          >
+            {@html sanitizeDescription(label.description)}
+          </div>{/if}
       </div>
     {/each}
     {#each assets as asset, index (asset.id + '-' + index)}
@@ -427,6 +437,7 @@
             selectionCandidate={assetInteraction.hasSelectionCandidate(currentAsset.id)}
             thumbnailWidth={geometry.getWidth(index)}
             thumbnailHeight={geometry.getHeight(index)}
+            {imageClass}
           />
           {#if displayAssetInfo && !isTimelineAsset(asset)}
             <GalleryAssetInfo {asset} settings={displayAssetInfo} />

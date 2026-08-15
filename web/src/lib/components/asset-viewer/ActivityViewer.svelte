@@ -11,6 +11,7 @@
   import { getAssetMediaUrl } from '$lib/utils';
   import { getAssetType } from '$lib/utils/asset-utils';
   import { handleError } from '$lib/utils/handle-error';
+  import { reactionEmoji } from '$lib/utils/reaction-emoji';
   import { isTenMinutesApart } from '$lib/utils/timesince';
   import {
     searchAssets,
@@ -141,33 +142,6 @@
       reactionKey,
       parentActivityId: reaction.id,
     });
-  };
-
-  const reactionEmoji: Record<string, string> = {
-    heart: '❤️',
-    laugh: '😂',
-    wow: '😮',
-    sad: '😢',
-    celebrate: '🎉',
-    like: '👍',
-    dislike: '👎',
-    angry: '😡',
-    love: '🥰',
-    fire: '🔥',
-    clap: '👏',
-    thanks: '🙏',
-    party: '🥳',
-    thinking: '🤔',
-    support: '💪',
-    rocket: '🚀',
-    eyes: '👀',
-    sparkles: '✨',
-    smile: '😊',
-    wink: '😉',
-    kiss: '😘',
-    confused: '😕',
-    cry: '😭',
-    poop: '💩',
   };
 
   const searchForAssets = async () => {
@@ -367,17 +341,11 @@
             <div class="relative">
               <div class="mt-3 flex items-center gap-4 py-3 ps-3 text-sm">
                 <div class="text-primary text-xl">
-                  {reaction.reactionKey === 'heart'
-                    ? '❤️'
-                    : reaction.reactionKey === 'laugh'
-                      ? '😂'
-                      : reaction.reactionKey === 'celebrate'
-                        ? '🎉'
-                        : '👍'}
+                  {reactionEmoji[reaction.reactionKey ?? 'like'] ?? '😀'}
                 </div>
 
                 <div class="w-full" title={`${reaction.user.name} (${reaction.user.email})`}>
-                  {$t('user_liked', {
+                  {$t('user_reacted', {
                     values: {
                       user: reaction.user.name,
                       type: assetType ? getAssetType(assetType).toLowerCase() : null,
@@ -389,7 +357,7 @@
                     <img
                       class="size-19 rounded-lg object-cover"
                       src={getAssetMediaUrl({ id: reaction.assetId })}
-                      alt="Profile picture of {reaction.user.name}, who liked this asset"
+                      alt="Profile picture of {reaction.user.name}, who reacted to this asset"
                     />
                   </a>
                 {/if}

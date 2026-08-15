@@ -121,7 +121,7 @@
     </div>
     <div
       bind:this={editor}
-      class="min-h-24 p-3 outline-none"
+      class="min-h-24 p-3 text-immich-fg outline-none dark:text-immich-dark-fg"
       contenteditable="true"
       role="textbox"
       tabindex="0"

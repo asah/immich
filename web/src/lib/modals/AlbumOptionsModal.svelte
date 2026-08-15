@@ -11,6 +11,7 @@
   } from '$lib/services/album.service';
   import {
     AlbumAssetSortBy,
+    AlbumAssetImageBorder,
     albumAssetViewSettings,
     defaultAlbumAssetDisplayInfo,
     SortOrder,
@@ -93,6 +94,12 @@
     { label: $t('file_name_text'), value: AlbumAssetSortBy.FileName },
     { label: $t('file_size'), value: AlbumAssetSortBy.FileSize },
     { label: 'Tag', value: AlbumAssetSortBy.Tag },
+  ]);
+
+  const imageBorderOptions = $derived([
+    { label: $t('image_border_none'), value: AlbumAssetImageBorder.None },
+    { label: $t('image_border_thin'), value: AlbumAssetImageBorder.Thin },
+    { label: $t('image_border_thick'), value: AlbumAssetImageBorder.Thick },
   ]);
 
   const saveSortCriteria = async (criteria: AlbumAssetSortCriterion[]) => {
@@ -206,6 +213,21 @@
               checked={$albumAssetViewSettings.showSortDividers}
               onCheckedChange={(showSortDividers) =>
                 ($albumAssetViewSettings = { ...$albumAssetViewSettings, showSortDividers })}
+            />
+          </Field>
+          <Field
+            label={$t('album_image_border')}
+            description={$t('album_image_border_description')}
+            disabled={readOnly}
+          >
+            <Select
+              value={$albumAssetViewSettings.imageBorder}
+              options={imageBorderOptions}
+              onChange={(imageBorder) =>
+                ($albumAssetViewSettings = {
+                  ...$albumAssetViewSettings,
+                  imageBorder: imageBorder as AlbumAssetImageBorder,
+                })}
             />
           </Field>
           <div>

@@ -48,6 +48,7 @@
   import { getAssetBulkActions } from '$lib/services/asset.service';
   import { SlideshowNavigation, SlideshowState, slideshowStore } from '$lib/stores/slideshow.store';
   import {
+    AlbumAssetImageBorder,
     AlbumAssetSortBy,
     albumAssetViewSettings,
     defaultAlbumAssetDisplayInfo,
@@ -120,6 +121,18 @@
   let showAlbumUsers = $derived(timelineManager?.showAssetOwners ?? false);
 
   const timelineMultiSelectManager = new AssetMultiSelectManager();
+
+  const albumImageBorderClass = $derived.by(() => {
+    switch ($albumAssetViewSettings.imageBorder) {
+      case AlbumAssetImageBorder.None:
+        return '';
+      case AlbumAssetImageBorder.Thin:
+        return 'border-2 border-white';
+      case AlbumAssetImageBorder.Thick:
+      default:
+        return 'border-4 border-white';
+    }
+  });
 
   const handleFavorite = async () => {
     try {
@@ -525,6 +538,7 @@
               slidingWindowOffset={filenameGalleryElement?.offsetTop ?? 0}
               viewportScrollTop={filenameScrollTop}
               viewport={filenameViewport}
+              imageClass={albumImageBorderClass}
             />
           </div>
         </section>
@@ -543,6 +557,7 @@
           {onSelect}
           onEscape={handleEscape}
           withStacked={true}
+          imageClass={albumImageBorderClass}
         >
           {#if viewMode !== AlbumPageViewMode.SELECT_ASSETS}
             {#if viewMode !== AlbumPageViewMode.SELECT_THUMBNAIL}

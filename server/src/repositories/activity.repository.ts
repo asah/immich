@@ -144,6 +144,7 @@ export class ActivityRepository {
           eb('asset.id', 'is', null),
         ]),
       )
+      .where('activity.parentActivityId', 'is', null)
       .executeTakeFirstOrThrow();
 
     return result;

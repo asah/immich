@@ -97,7 +97,14 @@ export interface AlbumAssetViewSettings {
   sortOrder: SortOrder;
   sortCriteria?: AlbumAssetSortCriterion[];
   showSortDividers: boolean;
+  imageBorder: AlbumAssetImageBorder;
   displayInfo: AlbumAssetDisplayInfo;
+}
+
+export enum AlbumAssetImageBorder {
+  None = 'none',
+  Thin = 'thin',
+  Thick = 'thick',
 }
 
 export interface AlbumAssetSortCriterion {
@@ -134,6 +141,7 @@ export const albumAssetViewSettings = persistedObject<AlbumAssetViewSettings>('a
   sortOrder: SortOrder.Desc,
   sortCriteria: [{ sortBy: AlbumAssetSortBy.DateTaken, sortOrder: SortOrder.Desc }],
   showSortDividers: true,
+  imageBorder: AlbumAssetImageBorder.Thick,
   displayInfo: defaultAlbumAssetDisplayInfo,
 });
 

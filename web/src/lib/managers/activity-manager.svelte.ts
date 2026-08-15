@@ -89,7 +89,7 @@ class ActivityManager {
       this.#commentCount++;
     }
 
-    if (activity.type === ReactionType.Like) {
+    if (activity.type === ReactionType.Like && !activity.parentActivityId) {
       this.#likeCount++;
     }
 
@@ -107,7 +107,7 @@ class ActivityManager {
       this.#commentCount--;
     }
 
-    if (activity.type === ReactionType.Like) {
+    if (activity.type === ReactionType.Like && !activity.parentActivityId) {
       this.#likeCount--;
     }
 

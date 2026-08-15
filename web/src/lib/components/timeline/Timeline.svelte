@@ -27,6 +27,7 @@
   import { DateTime } from 'luxon';
   import { onDestroy, onMount, tick, type Snippet } from 'svelte';
   import type { UpdatePayload } from 'vite';
+  import type { ClassValue } from 'svelte/elements';
 
   interface Props {
     isSelectionMode?: boolean;
@@ -50,6 +51,7 @@
     children?: Snippet;
     empty?: Snippet;
     customThumbnailLayout?: Snippet<[TimelineAsset]>;
+    imageClass?: ClassValue;
     onThumbnailClick?: (
       asset: TimelineAsset,
       timelineManager: TimelineManager,
@@ -82,6 +84,7 @@
     children,
     empty,
     customThumbnailLayout,
+    imageClass = '',
     onThumbnailClick,
   }: Props = $props();
 
@@ -664,6 +667,7 @@
                 {showArchiveIcon}
                 {asset}
                 {albumUsers}
+                {imageClass}
                 {groupIndex}
                 onClick={(asset) => {
                   if (typeof onThumbnailClick === 'function') {

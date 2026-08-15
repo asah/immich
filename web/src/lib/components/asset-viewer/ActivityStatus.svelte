@@ -2,6 +2,7 @@
   import { assetViewerManager } from '$lib/managers/asset-viewer-manager.svelte';
   import { activityManager } from '$lib/managers/activity-manager.svelte';
   import { locale } from '$lib/stores/preferences.store';
+  import { reactionEmoji } from '$lib/utils/reaction-emoji';
   import type { ActivityResponseDto } from '@immich/sdk';
   import { Button } from '@immich/ui';
   import { mdiCommentOutline } from '@mdi/js';
@@ -17,33 +18,6 @@
   }
 
   let { isLiked, numberOfComments, numberOfLikes, disabled, onFavorite, onReaction }: Props = $props();
-  const reactionEmoji: Record<string, string> = {
-    heart: '❤️',
-    laugh: '😂',
-    wow: '😮',
-    sad: '😢',
-    celebrate: '🎉',
-    like: '👍',
-    dislike: '👎',
-    angry: '😡',
-    love: '🥰',
-    fire: '🔥',
-    clap: '👏',
-    thanks: '🙏',
-    party: '🥳',
-    thinking: '🤔',
-    support: '💪',
-    rocket: '🚀',
-    eyes: '👀',
-    sparkles: '✨',
-    smile: '😊',
-    wink: '😉',
-    kiss: '😘',
-    confused: '😕',
-    cry: '😭',
-    poop: '💩',
-  };
-
   const reactionCounts = $derived(
     activityManager.activities
       .filter(({ type, parentActivityId }) => type === 'like' && !parentActivityId)
@@ -72,11 +46,7 @@
   {/each}
   {#if onReaction}
     <div class:opacity-50={disabled} class:pointer-events-none={disabled}>
-      <ReactionPicker
-        count={0}
-        selectedEmoji={reactionEmoji[isLiked?.reactionKey ?? ''] ?? '😀'}
-        onSelect={({ key }) => onReaction?.(key)}
-      />
+      <ReactionPicker count={0} selectedEmoji="＋" onSelect={({ key }) => onReaction?.(key)} />
     </div>
   {:else}
     <Button

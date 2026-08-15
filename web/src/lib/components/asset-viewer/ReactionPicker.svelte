@@ -48,11 +48,16 @@
   let open = $state(false);
   let popupStyle = $state('');
 
+  const popupWidth = 256;
+  const popupEdgeOffset = 8;
+
   const togglePicker = (event: MouseEvent) => {
     open = !open;
     if (open) {
       const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-      popupStyle = `left: ${rect.left}px; bottom: ${window.innerHeight - rect.top + 8}px;`;
+      const maxLeft = Math.max(popupEdgeOffset, window.innerWidth - popupWidth - popupEdgeOffset);
+      const left = Math.min(Math.max(popupEdgeOffset, rect.left), maxLeft);
+      popupStyle = `left: ${left}px; bottom: ${window.innerHeight - rect.top + 8}px;`;
     }
   };
 </script>
@@ -63,7 +68,7 @@
   </Button>
   {#if open}
     <div
-      class="fixed z-[100] w-64 rounded-xl border border-gray-300 bg-white p-2 shadow-xl dark:border-gray-700 dark:bg-gray-900"
+      class="fixed z-[100] w-64 max-w-[calc(100vw-1rem)] rounded-xl border border-gray-300 bg-white p-2 shadow-xl dark:border-gray-700 dark:bg-gray-900"
       style={popupStyle}
     >
       <div class="grid grid-cols-6 gap-1" aria-label="Popular reactions">
