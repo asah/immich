@@ -29,6 +29,8 @@
     slideshowRepeat,
     slideshowState,
     slideshowShowMetadataOverlay,
+    slideshowShowDescription,
+    slideshowShowReactions,
     slideshowMetadataOverlayMode,
   } = slideshowStore;
 
@@ -47,6 +49,8 @@
   let tempSlideshowAutoplay = $state($slideshowAutoplay);
   let tempSlideshowRepeat = $state($slideshowRepeat);
   let tempSlideshowShowMetadataOverlay = $state($slideshowShowMetadataOverlay);
+  let tempSlideshowShowDescription = $state($slideshowShowDescription);
+  let tempSlideshowShowReactions = $state($slideshowShowReactions);
   let tempSlideshowMetadataOverlayMode = $state($slideshowMetadataOverlayMode);
 
   const navigationOptions: Record<SlideshowNavigation, RenderedOption> = {
@@ -91,6 +95,8 @@
     $slideshowRepeat = tempSlideshowRepeat;
     $slideshowState = SlideshowState.PlaySlideshow;
     $slideshowShowMetadataOverlay = tempSlideshowShowMetadataOverlay;
+    $slideshowShowDescription = tempSlideshowShowDescription;
+    $slideshowShowReactions = tempSlideshowShowReactions;
     $slideshowMetadataOverlayMode = tempSlideshowMetadataOverlayMode;
     onClose();
   };
@@ -134,6 +140,14 @@
 
     <Field label={$t('show_slideshow_metadata_overlay')}>
       <Switch bind:checked={tempSlideshowShowMetadataOverlay} />
+    </Field>
+
+    <Field label={$t('description')}>
+      <Switch bind:checked={tempSlideshowShowDescription} disabled={!tempSlideshowShowMetadataOverlay} />
+    </Field>
+
+    <Field label={$t('reactions')}>
+      <Switch bind:checked={tempSlideshowShowReactions} disabled={!tempSlideshowShowMetadataOverlay} />
     </Field>
 
     <SettingDropdown

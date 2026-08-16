@@ -117,6 +117,7 @@ export interface AlbumAssetDisplayInfo {
   date: boolean;
   time: boolean;
   filename: boolean;
+  description: boolean;
   fileSize: boolean;
   camera: boolean;
   cameraSettings: boolean;
@@ -129,6 +130,7 @@ export const defaultAlbumAssetDisplayInfo: AlbumAssetDisplayInfo = {
   date: false,
   time: false,
   filename: false,
+  description: false,
   fileSize: false,
   camera: false,
   cameraSettings: false,

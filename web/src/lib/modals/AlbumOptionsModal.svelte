@@ -127,6 +127,7 @@
     { key: 'date', label: $t('date_taken') },
     { key: 'time', label: $t('time') },
     { key: 'filename', label: $t('file_name_text') },
+    { key: 'description', label: $t('description') },
     { key: 'fileSize', label: $t('file_size') },
     { key: 'camera', label: $t('camera_make_model') },
     { key: 'cameraSettings', label: $t('camera_settings') },

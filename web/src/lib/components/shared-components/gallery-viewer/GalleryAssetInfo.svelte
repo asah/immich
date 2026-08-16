@@ -48,6 +48,7 @@
       settings.location ? [exif?.city, exif?.state, exif?.country].filter(Boolean).join(', ') : '',
       dateAndTime,
       settings.filename ? asset.originalFileName : '',
+      settings.description ? exif?.description?.trim() || '' : '',
       camera,
       lens,
     ].filter(Boolean);

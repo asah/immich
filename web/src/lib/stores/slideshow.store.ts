@@ -47,6 +47,8 @@ function createSlideshowStore() {
   const slideshowAutoplay = persisted<boolean>('slideshow-autoplay', true, {});
   const slideshowRepeat = persisted<boolean>('slideshow-repeat', false);
   const slideshowShowMetadataOverlay = persisted<boolean>('slideshow-show-metadata-overlay', false);
+  const slideshowShowDescription = persisted<boolean>('slideshow-show-description', true);
+  const slideshowShowReactions = persisted<boolean>('slideshow-show-reactions', true);
   const slideshowMetadataOverlayMode = persisted<SlideshowMetadataOverlayMode>(
     'slideshow-metadata-overlay-mode',
     SlideshowMetadataOverlayMode.Full,
@@ -88,6 +90,8 @@ function createSlideshowStore() {
     slideshowAutoplay,
     slideshowRepeat,
     slideshowShowMetadataOverlay,
+    slideshowShowDescription,
+    slideshowShowReactions,
     slideshowMetadataOverlayMode,
   };
 }

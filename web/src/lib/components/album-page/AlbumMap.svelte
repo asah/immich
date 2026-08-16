@@ -20,8 +20,8 @@
   let returnToMap = $state(false);
   let mapMarkers: MapMarkerResponseDto[] = $state([]);
 
-  onMount(async () => {
-    mapMarkers = await loadMapMarkers();
+  onMount(() => {
+    void refreshMapMarkers();
   });
 
   onDestroy(() => {
@@ -50,7 +50,14 @@
     }
   };
 
+  const refreshMapMarkers = async () => {
+    mapMarkers = await loadMapMarkers();
+  };
+
   const onClick = async () => {
+    // The button can be used before the background preload finishes. Fetching here
+    // ensures the modal always receives the album's current markers and bounds.
+    await refreshMapMarkers();
     const assetIds = await modalManager.show(MapModal, { mapMarkers });
     if (assetIds) {
       await navigate({ targetRoute: 'current', assetId: assetIds[0] });

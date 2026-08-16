@@ -146,7 +146,8 @@
     const asset =
       $slideshowNavigation === SlideshowNavigation.Shuffle
         ? await timelineManager.getRandomAsset()
-        : timelineManager.months[0]?.timelineDays[0]?.viewerAssets[0]?.asset;
+        : (timelineManager.months[0]?.timelineDays[0]?.viewerAssets[0]?.asset ??
+          (await timelineManager.getRandomAsset()));
     if (asset) {
       handlePromiseError(
         assetViewerManager.setAssetId(asset.id).then(() => ($slideshowState = SlideshowState.PlaySlideshow)),
