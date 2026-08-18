@@ -27,3 +27,6 @@ vite.config.js.timestamp-*
 .devcontainer/.env*
 *.tsbuildinfo
 *.tsbuildInfo
+.devcontainer/server/container-compose-overrides.yml.backup
+.devcontainer/server/container-compose-overrides.yml.pre-codex-volume
+.env
