@@ -2,7 +2,9 @@ import { MediaQuery } from 'svelte/reactivity';
 
 const pointerCoarse = new MediaQuery('pointer:coarse');
 const maxMd = new MediaQuery('max-width: 767px');
-const sidebar = new MediaQuery(`min-width: 850px`);
+// Keep this in sync with the `sidebar` Tailwind breakpoint in app.css. Below this
+// width the sidebar overlays page content and must remain toggleable from the menu.
+const sidebar = new MediaQuery('min-width: 1100px');
 const reducedMotion = new MediaQuery('prefers-reduced-motion: reduce');
 
 export const mediaQueryManager = {
