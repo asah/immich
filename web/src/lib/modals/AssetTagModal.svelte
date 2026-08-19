@@ -1,12 +1,12 @@
 <script lang="ts">
   import { eventManager } from '$lib/managers/event-manager.svelte';
-  import { tagAssets } from '$lib/utils/asset-utils';
-  import { getAllTags, upsertTags, type TagResponseDto } from '@immich/sdk';
-  import { FormModal } from '@immich/ui';
+  import { removeTag, tagAssets } from '$lib/utils/asset-utils';
+  import { getAllTags, getAssetInfo, upsertTags, type TagResponseDto } from '@immich/sdk';
+  import { Checkbox, FormModal, Label, Text } from '@immich/ui';
   import { mdiTag } from '@mdi/js';
   import { onMount } from 'svelte';
   import { t } from 'svelte-i18n';
-  import { SvelteSet } from 'svelte/reactivity';
+  import { SvelteMap, SvelteSet } from 'svelte/reactivity';
   import Combobox, { type ComboBoxOption } from '../components/shared-components/Combobox.svelte';
   import TagPill from '../components/shared-components/TagPill.svelte';
 
@@ -20,20 +20,43 @@
   let allTags: TagResponseDto[] = $state([]);
   let tagMap = $derived(Object.fromEntries(allTags.map((tag) => [tag.id, tag])));
   let selectedIds = new SvelteSet<string>();
-  let disabled = $derived(selectedIds.size === 0);
+  let tagCounts = new SvelteMap<string, number>();
+  let tagChanges = new SvelteMap<string, boolean>();
+  let existingTags = $derived(allTags.filter((tag) => tagCounts.has(tag.id)));
+  let disabled = $derived(selectedIds.size === 0 && tagChanges.size === 0);
   let allowCreate: boolean = $state(true);
 
   onMount(async () => {
     allTags = await getAllTags();
+    const selectedAssets = await Promise.all(assetIds.map((id) => getAssetInfo({ id })));
+
+    for (const asset of selectedAssets) {
+      for (const tag of asset.tags || []) {
+        const tagId = typeof tag === 'string' ? tag : tag.id;
+        tagCounts.set(tagId, (tagCounts.get(tagId) || 0) + 1);
+      }
+    }
   });
 
   const onSubmit = async () => {
-    if (selectedIds.size === 0) {
+    if (disabled) {
       return;
     }
 
-    const updatedIds = await tagAssets({ tagIds: [...selectedIds], assetIds, showNotification: false });
-    eventManager.emit('AssetsTag', updatedIds);
+    const tagIdsToAdd = [
+      ...selectedIds,
+      ...[...tagChanges.entries()].filter(([, shouldApply]) => shouldApply).map(([tagId]) => tagId),
+    ];
+    const tagIdsToRemove = [...tagChanges.entries()].filter(([, shouldApply]) => !shouldApply).map(([tagId]) => tagId);
+
+    if (tagIdsToAdd.length > 0) {
+      await tagAssets({ tagIds: tagIdsToAdd, assetIds, showNotification: false });
+    }
+    if (tagIdsToRemove.length > 0) {
+      await removeTag({ tagIds: tagIdsToRemove, assetIds, showNotification: false });
+    }
+
+    eventManager.emit('AssetsTag', assetIds);
     onClose(true);
   };
 
@@ -43,7 +66,11 @@
     }
 
     if (option.id) {
-      selectedIds.add(option.value);
+      if (tagCounts.has(option.value)) {
+        updateTagState(option.value, true);
+      } else {
+        selectedIds.add(option.value);
+      }
     } else {
       const [newTag] = await upsertTags({ tagUpsertDto: { tags: [option.label] } });
       allTags.push(newTag);
@@ -53,6 +80,30 @@
 
   const handleRemove = (tag: string) => {
     selectedIds.delete(tag);
+  };
+
+  const getTagState = (tagId: string): boolean | 'indeterminate' => {
+    const changedState = tagChanges.get(tagId);
+    if (changedState !== undefined) {
+      return changedState;
+    }
+
+    const count = tagCounts.get(tagId) || 0;
+    return count === assetIds.length ? true : count === 0 ? false : 'indeterminate';
+  };
+
+  const updateTagState = (tagId: string, shouldApply: boolean) => {
+    const originalState = getTagStateWithoutChange(tagId);
+    if (originalState === shouldApply) {
+      tagChanges.delete(tagId);
+    } else {
+      tagChanges.set(tagId, shouldApply);
+    }
+  };
+
+  const getTagStateWithoutChange = (tagId: string): boolean | 'indeterminate' => {
+    const count = tagCounts.get(tagId) || 0;
+    return count === assetIds.length ? true : count === 0 ? false : 'indeterminate';
   };
 </script>
 
@@ -77,6 +128,27 @@
       forceFocus
     />
   </div>
+
+  {#if existingTags.length > 0}
+    <section class="flex flex-col gap-2 pt-2" aria-label={$t('tags')}>
+      <Text color="muted" size="small">{$t('tags')}</Text>
+      <div class="flex max-h-48 flex-col gap-2 overflow-y-auto">
+        {#each existingTags as tag (tag.id)}
+          {@const id = `tag-checkbox-${tag.id}`}
+          <div class="flex items-center gap-2">
+            <Checkbox
+              {id}
+              size="tiny"
+              checked={getTagState(tag.id) === true}
+              indeterminate={getTagState(tag.id) === 'indeterminate'}
+              onCheckedChange={(checked) => updateTagState(tag.id, checked === true)}
+            />
+            <Label for={id} label={tag.value} class="text-sm font-normal" />
+          </div>
+        {/each}
+      </div>
+    </section>
+  {/if}
 
   <section class="flex flex-wrap gap-1 pt-2">
     {#each selectedIds as tagId (tagId)}

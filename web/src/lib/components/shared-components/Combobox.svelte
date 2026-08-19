@@ -127,7 +127,6 @@
   const activate = () => {
     isActive = true;
     searchQuery = '';
-    openDropdown();
   };
 
   const deactivate = () => {
@@ -159,10 +158,15 @@
   };
 
   const onInput: FormEventHandler<HTMLInputElement> = (event) => {
-    openDropdown();
     searchQuery = event.currentTarget.value;
     selectedIndex = defaultFirstOption ? 0 : undefined;
-    optionRefs[0]?.scrollIntoView({ block: 'nearest' });
+
+    if (searchQuery === '') {
+      closeDropdown();
+    } else {
+      openDropdown();
+      optionRefs[0]?.scrollIntoView({ block: 'nearest' });
+    }
   };
 
   let handleSelect = (option: ComboBoxOption) => {
