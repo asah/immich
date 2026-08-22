@@ -9,6 +9,7 @@
   import Portal from '$lib/elements/Portal.svelte';
   import type { AssetMultiSelectManager } from '$lib/managers/asset-multi-select-manager.svelte';
   import { assetViewerManager } from '$lib/managers/asset-viewer-manager.svelte';
+  import { authManager } from '$lib/managers/auth-manager.svelte';
   import { featureFlagsManager } from '$lib/managers/feature-flags-manager.svelte';
   import type { TimelineAsset, Viewport } from '$lib/managers/timeline-manager/types';
   import AssetDeleteConfirmModal from '$lib/modals/AssetDeleteConfirmModal.svelte';
@@ -22,13 +23,14 @@
   import { archiveAssets, getNextAsset, getPreviousAsset, navigateToAsset } from '$lib/utils/asset-utils';
   import { moveFocus } from '$lib/utils/focus-util';
   import { handleError } from '$lib/utils/handle-error';
+  import { PersistedLocalStorage } from '$lib/utils/persisted';
   import { getGroupedJustifiedLayoutFromAssets, getJustifiedLayoutFromAssets } from '$lib/utils/layout-utils';
   import { navigate } from '$lib/utils/navigation';
   import { isTimelineAsset, toTimelineAsset } from '$lib/utils/timeline-util';
   import { TUNABLES } from '$lib/utils/tunables';
   import { AssetVisibility, type AlbumResponseDto, type AssetResponseDto } from '@immich/sdk';
   import { Icon, modalManager } from '@immich/ui';
-  import { mdiLink } from '@mdi/js';
+  import { mdiChevronDown, mdiLink } from '@mdi/js';
   import { debounce } from 'lodash-es';
   import { t } from 'svelte-i18n';
   import type { ClassValue } from 'svelte/elements';
@@ -36,6 +38,7 @@
   const {
     TIMELINE: { INTERSECTION_EXPAND_TOP, INTERSECTION_EXPAND_BOTTOM },
   } = TUNABLES;
+  const collapsedAlbumSections = new PersistedLocalStorage<Record<string, string[]>>('album-collapsed-sections', {});
 
   type Props = {
     assets: AssetResponseDto[];
@@ -86,6 +89,12 @@
   }: Props = $props();
 
   const navigationAssets = $derived(viewerAssets ?? assets);
+  const sectionPersistenceKey = $derived(
+    album ? `${authManager.authenticated ? authManager.user.id : 'anonymous'}:${album.id}` : undefined,
+  );
+  const collapsedSectionKeys = $derived(
+    new Set(sectionPersistenceKey ? collapsedAlbumSections.current[sectionPersistenceKey] : []),
+  );
 
   const layoutOptions = $derived({
     spacing: 2,
@@ -119,6 +128,7 @@
           layoutOptions,
           primarySortGroupDescriptions ? 0 : 32,
           sectionHeaderHeight,
+          (key) => collapsedSectionKeys.has(key),
         )
       : getJustifiedLayoutFromAssets(assets, layoutOptions),
   );
@@ -154,6 +164,18 @@
   const getSectionHref = (assetId: string) =>
     album ? `${Route.viewAlbum({ id: album.id })}?at=${assetId}` : undefined;
   const copySectionLink = (href: string) => void copyToClipboard(new URL(href, window.location.href).toString());
+  const isSectionCollapsed = (key: string) => collapsedSectionKeys.has(key);
+  const isAssetInCollapsedSection = (index: number) =>
+    !!primarySortGroupKeys && isSectionCollapsed(primarySortGroupKeys[index]);
+  const toggleSection = (key: string) => {
+    if (!sectionPersistenceKey) {
+      return;
+    }
+
+    const collapsed = new Set(collapsedAlbumSections.current[sectionPersistenceKey] ?? []);
+    collapsed.has(key) ? collapsed.delete(key) : collapsed.add(key);
+    collapsedAlbumSections.current = { ...collapsedAlbumSections.current, [sectionPersistenceKey]: [...collapsed] };
+  };
 
   const getStyle = (index: number) => {
     return `top: ${geometry.getTop(index)}px; left: ${geometry.getLeft(index)}px; width: ${geometry.getWidth(index)}px; height: ${geometry.getHeight(index)}px;`;
@@ -431,10 +453,20 @@
       {@const sectionHref = getSectionHref(label.assetId)}
       <div
         data-section-bar={label.assetId}
+        data-collapsed={isSectionCollapsed(label.key)}
         class="absolute inset-x-0 z-10 border-t border-gray-300 bg-white/90 px-2 py-2 font-sans text-sm leading-5 text-gray-500 dark:border-gray-600 dark:bg-immich-dark-gray/90"
         style:top={`${label.top}px`}
       >
         <div class="flex max-w-[90%] items-center gap-1 truncate">
+          <button
+            class="shrink-0 rounded p-1 hover:bg-gray-200 dark:hover:bg-gray-700"
+            type="button"
+            aria-label={`${isSectionCollapsed(label.key) ? 'Expand' : 'Collapse'} section ${label.key}`}
+            aria-expanded={!isSectionCollapsed(label.key)}
+            onclick={() => toggleSection(label.key)}
+          >
+            <Icon class={isSectionCollapsed(label.key) ? 'rotate-180' : ''} icon={mdiChevronDown} size="20" />
+          </button>
           {#if primarySortGroupColors?.[label.key]}
             <span
               class="me-1 inline-block size-2.5 rounded-full"
@@ -455,16 +487,12 @@
             >
               <Icon icon={mdiLink} size="16" />
             </button>
-            <span class="rounded-full bg-gray-200 px-2 py-0.5 text-[0.65rem] font-medium dark:bg-gray-700"
-              >{$t('album')}</span
-            >
           {:else}
             <span class="truncate text-xl font-semibold text-primary md:text-2xl">{label.key}</span>
           {/if}
           <span class="shrink-0 text-gray-400">{$t('items_count', { values: { count: label.count } })}</span>
-          <a
-            class="shrink-0 rounded-full border border-gray-300 px-2 py-0.5 text-[0.65rem] font-medium hover:text-primary dark:border-gray-600"
-            href={Route.tagName(label.key)}>{$t('all_photos')}</a
+          <a class="shrink-0 text-sm text-primary underline hover:text-primary/80" href={Route.tagName(label.key)}
+            >{$t('all_photos')}</a
           >
         </div>
         {#if label.description}<div
@@ -475,7 +503,7 @@
       </div>
     {/each}
     {#each assets as asset, index (asset.id + '-' + index)}
-      {#if isInOrNearViewport(index)}
+      {#if !isAssetInCollapsedSection(index) && isInOrNearViewport(index)}
         {@const currentAsset = toTimelineAsset(asset)}
         <div class="absolute" style:overflow="clip" style={getStyle(index)}>
           <Thumbnail

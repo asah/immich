@@ -139,6 +139,7 @@ export function getGroupedJustifiedLayoutFromAssets(
   options: CommonLayoutOptions,
   dividerHeight = 32,
   headerHeight: number | ((groupIndex: number) => number) = 0,
+  isGroupCollapsed: (groupKey: string) => boolean = () => false,
 ): GroupedJustifiedLayout {
   if (assets.length === 0) {
     return {
@@ -153,7 +154,7 @@ export function getGroupedJustifiedLayoutFromAssets(
     };
   }
 
-  const positions: CommonPosition[] = [];
+  const positions: Array<CommonPosition | undefined> = [];
   const dividerTops: number[] = [];
   let groupStart = 0;
   let topOffset = 0;
@@ -173,10 +174,19 @@ export function getGroupedJustifiedLayoutFromAssets(
       topOffset += dividerHeight;
     }
 
+    if (isGroupCollapsed(groupKeys[groupStart])) {
+      for (let collapsedIndex = groupStart; collapsedIndex < index; collapsedIndex++) {
+        positions[collapsedIndex] = undefined;
+      }
+      groupStart = index;
+      groupNumber++;
+      continue;
+    }
+
     const groupLayout = getJustifiedLayoutFromAssets(assets.slice(groupStart, index), options);
     for (let groupIndex = 0; groupIndex < index - groupStart; groupIndex++) {
       const position = groupLayout.getPosition(groupIndex);
-      positions.push({ ...position, top: position.top + topOffset });
+      positions[groupStart + groupIndex] = { ...position, top: position.top + topOffset };
     }
     topOffset += groupLayout.containerHeight;
     groupStart = index;
@@ -187,10 +197,10 @@ export function getGroupedJustifiedLayoutFromAssets(
     containerWidth: options.rowWidth,
     containerHeight: topOffset,
     dividerTops,
-    getTop: (index) => positions[index]?.top,
-    getLeft: (index) => positions[index]?.left,
-    getWidth: (index) => positions[index]?.width,
-    getHeight: (index) => positions[index]?.height,
-    getPosition: (index) => positions[index],
+    getTop: (index) => positions[index]?.top ?? 0,
+    getLeft: (index) => positions[index]?.left ?? 0,
+    getWidth: (index) => positions[index]?.width ?? 0,
+    getHeight: (index) => positions[index]?.height ?? 0,
+    getPosition: (index) => positions[index] ?? { top: 0, left: 0, width: 0, height: 0 },
   };
 }

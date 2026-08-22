@@ -27,4 +27,18 @@ describe('getGroupedJustifiedLayoutFromAssets', () => {
     expect(grouped.dividerTops).toEqual([44]);
     expect(grouped.getTop(0)).toBe(88);
   });
+
+  it('omits collapsed group photos while retaining their header space', () => {
+    const assets = [
+      { width: 100, height: 100 },
+      { width: 100, height: 100 },
+    ] as AssetResponseDto[];
+    const options = { rowHeight: 100, rowWidth: 300, spacing: 2, heightTolerance: 0.5 };
+
+    const grouped = getGroupedJustifiedLayoutFromAssets(assets, ['a', 'b'], options, 0, 56, (key) => key === 'a');
+
+    expect(grouped.getTop(0)).toBe(0);
+    expect(grouped.getTop(1)).toBe(112);
+    expect(grouped.containerHeight).toBeGreaterThan(grouped.getTop(1));
+  });
 });

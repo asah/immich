@@ -8,6 +8,7 @@ import GalleryViewer from './GalleryViewer.svelte';
 describe('GalleryViewer section links', () => {
   beforeEach(() => {
     vi.stubGlobal('IntersectionObserver', getIntersectionObserverMock());
+    localStorage.clear();
   });
 
   test('links an album tag section to its in-album position and offers the library-wide tag view', () => {
@@ -26,6 +27,7 @@ describe('GalleryViewer section links', () => {
       '/albums/album-id?at=section-asset',
     );
     expect(screen.getByRole('link', { name: 'all_photos' })).toHaveAttribute('href', '/tag/Beach');
+    expect(screen.queryByText('album')).not.toBeInTheDocument();
     expect(screen.getByLabelText('Beach')).toHaveAttribute('data-section-anchor', 'section-asset');
     expect(screen.getByText('items_count')).toBeInTheDocument();
   });
@@ -42,6 +44,26 @@ describe('GalleryViewer section links', () => {
     });
 
     expect(container.querySelector('[data-section-bar="section-asset"]')).toHaveStyle({ top: '0px' });
+  });
+
+  test('collapses a section and persists its folded state for the album', async () => {
+    const asset = assetFactory.build({ id: 'section-asset' });
+    const { container } = render(GalleryViewer, {
+      assets: [asset],
+      assetInteraction: new AssetMultiSelectManager(),
+      viewport: { width: 1000, height: 800 },
+      album: { id: 'album-id' } as never,
+      primarySortGroupKeys: ['Beach'],
+      primarySortGroupDescriptions: { Beach: null },
+    });
+
+    const toggle = screen.getByRole('button', { name: 'Collapse section Beach' });
+    await toggle.click();
+
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(container.querySelector('[data-section-bar="section-asset"]')).toHaveAttribute('data-collapsed', 'true');
+    expect(localStorage.getItem('album-collapsed-sections')).toContain('anonymous:album-id');
+    expect(localStorage.getItem('album-collapsed-sections')).toContain('Beach');
   });
 
   test('uses the configured album row height for the justified layout', () => {
