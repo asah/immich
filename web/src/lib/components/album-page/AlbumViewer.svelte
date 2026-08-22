@@ -11,9 +11,10 @@
   import { TimelineManager } from '$lib/managers/timeline-manager/timeline-manager.svelte';
   import { handleDownloadAlbum } from '$lib/services/album.service';
   import { getGlobalActions } from '$lib/services/app.service';
+  import { openSlideshowAtAsset } from '$lib/services/slideshow.service';
   import { dragAndDropFilesStore } from '$lib/stores/drag-and-drop-files.store';
   import { mediaQueryManager } from '$lib/stores/media-query-manager.svelte';
-  import { SlideshowNavigation, SlideshowState, slideshowStore } from '$lib/stores/slideshow.store';
+  import { SlideshowNavigation, slideshowStore } from '$lib/stores/slideshow.store';
   import { handlePromiseError } from '$lib/utils';
   import { fileUploadHandler, openFileUploadDialog } from '$lib/utils/file-uploader';
   import type { AlbumResponseDto, SharedLinkResponseDto } from '@immich/sdk';
@@ -32,7 +33,7 @@
 
   const album = sharedLink.album as AlbumResponseDto;
 
-  let { slideshowState, slideshowNavigation } = slideshowStore;
+  let { slideshowNavigation } = slideshowStore;
 
   const options = $derived({ albumId: album.id, order: album.order });
   let timelineManager = $state<TimelineManager>() as TimelineManager;
@@ -52,11 +53,11 @@
         ? await timelineManager.getRandomAsset()
         : (timelineManager.months[0]?.timelineDays[0]?.viewerAssets[0]?.asset ??
           (await timelineManager.getRandomAsset()));
-    if (asset) {
-      handlePromiseError(
-        assetViewerManager.setAssetId(asset.id).then(() => ($slideshowState = SlideshowState.PlaySlideshow)),
-      );
+    if (!asset) {
+      return;
     }
+
+    await openSlideshowAtAsset(asset.id);
   };
 
   const { Cast } = $derived(getGlobalActions($t));

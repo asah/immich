@@ -1,5 +1,6 @@
-import { updateAsset } from '@immich/sdk';
+import { AssetTypeEnum, updateAsset } from '@immich/sdk';
 import { fireEvent, waitFor } from '@testing-library/svelte';
+import { get } from 'svelte/store';
 import { getAnimateMock } from '$lib/__mocks__/animate.mock';
 import { getResizeObserverMock } from '$lib/__mocks__/resize-observer.mock';
 import { authManager } from '$lib/managers/auth-manager.svelte';
@@ -75,5 +76,17 @@ describe('AssetViewer', () => {
       expect(updateAsset).toHaveBeenCalledWith({ id: asset.id, updateAssetDto: { isFavorite: true } }),
     );
     await waitFor(() => expect(getByLabelText('unfavorite')).toBeInTheDocument());
+  });
+
+  it('continues the slideshow when fullscreen is unavailable', async () => {
+    const requestFullscreen = vi.fn().mockRejectedValue(new Error('Fullscreen denied'));
+    Object.defineProperty(HTMLElement.prototype, 'requestFullscreen', { configurable: true, value: requestFullscreen });
+    const asset = assetFactory.build({ type: AssetTypeEnum.Image, isTrashed: false });
+
+    renderWithTooltips(AssetViewer, { cursor: { current: asset }, showNavigation: false });
+    slideshowStore.slideshowState.set(SlideshowState.PlaySlideshow);
+
+    await waitFor(() => expect(requestFullscreen).toHaveBeenCalledOnce());
+    expect(get(slideshowStore.slideshowState)).toBe(SlideshowState.PlaySlideshow);
   });
 });

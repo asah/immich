@@ -301,7 +301,6 @@
       await assetViewerHtmlElement?.requestFullscreen?.();
     } catch (error) {
       handleError(error, $t('errors.unable_to_enter_fullscreen'));
-      $slideshowState = SlideshowState.StopSlideshow;
     }
   };
 

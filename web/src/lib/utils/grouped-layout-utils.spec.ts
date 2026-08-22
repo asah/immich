@@ -17,4 +17,14 @@ describe('getGroupedJustifiedLayoutFromAssets', () => {
     expect(grouped.getTop(2)).toBe(ungroupedFirst.containerHeight + 32);
     expect(grouped.containerHeight).toBeGreaterThan(grouped.getTop(2));
   });
+
+  it('reserves the complete section-header height before the first photo row', () => {
+    const assets = [{ width: 100, height: 100 }] as AssetResponseDto[];
+    const options = { rowHeight: 100, rowWidth: 300, spacing: 2, heightTolerance: 0.5 };
+
+    const grouped = getGroupedJustifiedLayoutFromAssets(assets, ['a'], options, 0, 88);
+
+    expect(grouped.dividerTops).toEqual([44]);
+    expect(grouped.getTop(0)).toBe(88);
+  });
 });

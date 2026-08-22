@@ -1,5 +1,6 @@
 <script lang="ts">
   import { goto, invalidate, onNavigate } from '$app/navigation';
+  import { page } from '$app/state';
   import { scrollMemoryClearer } from '$lib/actions/scroll-memory';
   import AlbumMap from '$lib/components/album-page/AlbumMap.svelte';
   import AlbumSummary from '$lib/components/album-page/AlbumSummary.svelte';
@@ -45,10 +46,10 @@
     handleDownloadAlbum,
   } from '$lib/services/album.service';
   import { getGlobalActions } from '$lib/services/app.service';
+  import { openSlideshowAtAsset } from '$lib/services/slideshow.service';
   import { getAssetBulkActions } from '$lib/services/asset.service';
-  import { SlideshowNavigation, SlideshowState, slideshowStore } from '$lib/stores/slideshow.store';
+  import { SlideshowNavigation, slideshowStore } from '$lib/stores/slideshow.store';
   import {
-    AlbumAssetImageBorder,
     AlbumAssetSortBy,
     albumAssetViewSettings,
     defaultAlbumAssetDisplayInfo,
@@ -93,6 +94,7 @@
     mdiLink,
     mdiPlus,
     mdiPresentationPlay,
+    mdiUpload,
   } from '@mdi/js';
   import { onDestroy, untrack } from 'svelte';
   import { t } from 'svelte-i18n';
@@ -106,7 +108,7 @@
   }
 
   let { data = $bindable() }: Props = $props();
-  let { slideshowState, slideshowNavigation } = slideshowStore;
+  let { slideshowNavigation } = slideshowStore;
   let oldAt: AssetGridRouteSearchParams | null | undefined = $state();
   let viewMode: AlbumPageViewMode = $state(AlbumPageViewMode.VIEW);
   let timelineManager = $state<TimelineManager>() as TimelineManager;
@@ -116,23 +118,13 @@
   let filenameAssets: AssetResponseDto[] = $state([]);
   let filenameNextPage = $state<number | null>(null);
   let filenameLoading = $state(false);
+  let showAlbumOptions = $state(false);
+  let albumOptionsReadOnly = $state(false);
   let filenameRequest = 0;
   let availableTags: TagResponseDto[] = $state([]);
   let showAlbumUsers = $derived(timelineManager?.showAssetOwners ?? false);
 
   const timelineMultiSelectManager = new AssetMultiSelectManager();
-
-  const albumImageBorderClass = $derived.by(() => {
-    switch ($albumAssetViewSettings.imageBorder) {
-      case AlbumAssetImageBorder.None:
-        return '';
-      case AlbumAssetImageBorder.Thin:
-        return 'border-2 border-white';
-      case AlbumAssetImageBorder.Thick:
-      default:
-        return 'border-4 border-white';
-    }
-  });
 
   const handleFavorite = async () => {
     try {
@@ -148,11 +140,11 @@
         ? await timelineManager.getRandomAsset()
         : (timelineManager.months[0]?.timelineDays[0]?.viewerAssets[0]?.asset ??
           (await timelineManager.getRandomAsset()));
-    if (asset) {
-      handlePromiseError(
-        assetViewerManager.setAssetId(asset.id).then(() => ($slideshowState = SlideshowState.PlaySlideshow)),
-      );
+    if (!asset) {
+      return;
     }
+
+    await openSlideshowAtAsset(asset.id);
   };
 
   const handleEscape = async () => {
@@ -246,6 +238,7 @@
           albumThumbnailAssetId: assetId,
         },
       });
+      album = response;
       eventManager.emit('AlbumUpdate', response);
       toastManager.primary($t('album_cover_updated'));
     } catch (error) {
@@ -473,6 +466,33 @@
     await invalidate('album:data');
   };
 
+  const getAlbumSectionLink = (
+    timelineDay: import('$lib/managers/timeline-manager/timeline-day.svelte').TimelineDay,
+  ) => {
+    const asset = timelineDay.getFirstAsset();
+    return asset ? `${Route.viewAlbum({ id: album.id })}?at=${asset.id}` : undefined;
+  };
+
+  const onAssetsTag = async () => {
+    if (isAlternateSort) {
+      await Promise.all([loadFilenameAssets(true), getAllTags().then((tags) => (availableTags = tags))]);
+      return;
+    }
+
+    await timelineManager?.reload();
+  };
+
+  $effect(() => {
+    const assetId = page.url.searchParams.get('at');
+    if (!isAlternateSort || !assetId || filenameAssets.length === 0 || !filenameGalleryElement) {
+      return;
+    }
+
+    filenameGalleryElement
+      .querySelector<HTMLElement>(`[data-section-anchor="${assetId}"]`)
+      ?.scrollIntoView({ block: 'start' });
+  });
+
   const { Cast } = $derived(getGlobalActions($t));
   const { Share } = $derived(getAlbumActions($t, album));
   const { AddAssets, Upload } = $derived(getAlbumAssetsActions($t, album, timelineMultiSelectManager.assets));
@@ -495,6 +515,7 @@
   {onAlbumUserUpdate}
   onAlbumUserDelete={refreshAlbum}
   {onAlbumUpdate}
+  {onAssetsTag}
 />
 <CommandPaletteDefaultProvider name={$t('album')} actions={[AddAssets, Upload, Close]} />
 
@@ -511,6 +532,7 @@
           <AlbumTitle
             id={album.id}
             albumName={album.albumName}
+            albumThumbnailAssetId={album.albumThumbnailAssetId}
             {isOwned}
             onUpdate={(albumName) => (album = { ...album, albumName })}
           />
@@ -539,7 +561,7 @@
               slidingWindowOffset={filenameGalleryElement?.offsetTop ?? 0}
               viewportScrollTop={filenameScrollTop}
               viewport={filenameViewport}
-              imageClass={albumImageBorderClass}
+              rowHeight={$albumAssetViewSettings.rowHeight}
             />
           </div>
         </section>
@@ -556,9 +578,10 @@
           {singleSelect}
           {showArchiveIcon}
           {onSelect}
+          sectionLink={getAlbumSectionLink}
           onEscape={handleEscape}
           withStacked={true}
-          imageClass={albumImageBorderClass}
+          rowHeight={$albumAssetViewSettings.rowHeight}
         >
           {#if viewMode !== AlbumPageViewMode.SELECT_ASSETS}
             {#if viewMode !== AlbumPageViewMode.SELECT_THUMBNAIL}
@@ -567,6 +590,7 @@
                 <AlbumTitle
                   id={album.id}
                   albumName={album.albumName}
+                  albumThumbnailAssetId={album.albumThumbnailAssetId}
                   {isOwned}
                   onUpdate={(albumName) => (album = { ...album, albumName })}
                 />
@@ -581,7 +605,10 @@
                     <button
                       class="flex gap-x-1"
                       type="button"
-                      onclick={() => modalManager.show(AlbumOptionsModal, { album, readOnly: !isOwned })}
+                      onclick={() => {
+                        albumOptionsReadOnly = !isOwned;
+                        showAlbumOptions = true;
+                      }}
                     >
                       <!-- owner & users with write access (collaborators) -->
                       {#each album.albumUsers.filter(({ role }) => role === AlbumUserRole.Editor || role === AlbumUserRole.Owner) as { user } (user.id)}
@@ -715,6 +742,14 @@
                 variant="ghost"
                 shape="round"
                 color="secondary"
+                aria-label={$t('select_from_computer')}
+                onclick={() => Upload.onAction(Upload)}
+                icon={mdiUpload}
+              />
+              <IconButton
+                variant="ghost"
+                shape="round"
+                color="secondary"
                 aria-label={$t('add_photos')}
                 onclick={async () => {
                   timelineManager.suspendTransitions = true;
@@ -777,7 +812,10 @@
                   <MenuOption
                     icon={mdiCogOutline}
                     text={$t('options')}
-                    onClick={() => modalManager.show(AlbumOptionsModal, { album })}
+                    onClick={() => {
+                      albumOptionsReadOnly = false;
+                      showAlbumOptions = true;
+                    }}
                   />
                 {/if}
 
@@ -833,6 +871,9 @@
         <ActivityViewer disabled={false} albumUsers={album.albumUsers} albumId={album.id} />
       </div>
     </div>
+  {/if}
+  {#if showAlbumOptions}
+    <AlbumOptionsModal {album} readOnly={albumOptionsReadOnly} inline onClose={() => (showAlbumOptions = false)} />
   {/if}
 </div>
 

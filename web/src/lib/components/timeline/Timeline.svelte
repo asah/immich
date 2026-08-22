@@ -52,6 +52,8 @@
     empty?: Snippet;
     customThumbnailLayout?: Snippet<[TimelineAsset]>;
     imageClass?: ClassValue;
+    rowHeight?: number;
+    sectionLink?: (timelineDay: TimelineDay) => string | undefined;
     onThumbnailClick?: (
       asset: TimelineAsset,
       timelineManager: TimelineManager,
@@ -85,6 +87,8 @@
     empty,
     customThumbnailLayout,
     imageClass = '',
+    rowHeight,
+    sectionLink,
     onThumbnailClick,
   }: Props = $props();
 
@@ -111,12 +115,12 @@
   $effect(() => {
     const layoutOptions = maxMd
       ? {
-          rowHeight: 100,
-          headerHeight: 32,
+          rowHeight: rowHeight ?? 100,
+          headerHeight: sectionLink ? 72 : 32,
         }
       : {
-          rowHeight: 235,
-          headerHeight: 48,
+          rowHeight: rowHeight ?? 235,
+          headerHeight: sectionLink ? 88 : 48,
         };
     timelineManager.setLayoutOptions(layoutOptions);
   });
@@ -656,6 +660,7 @@
             {timelineMonth}
             manager={timelineManager}
             onTimelineDaySelect={handleGroupSelect}
+            {sectionLink}
           >
             {#snippet thumbnail({ asset, position, timelineDay, groupIndex })}
               {@const isAssetSelectionCandidate = assetInteraction.hasSelectionCandidate(asset.id)}

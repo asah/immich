@@ -93,6 +93,17 @@ describe('TimelineManager', () => {
     it('calculates timeline height', () => {
       expect(timelineManager.totalViewerHeight).toBe(8337);
     });
+
+    it('reloads time buckets when the data changes without changing timeline options', async () => {
+      sdkMock.getTimeBuckets.mockResolvedValue([{ count: 2, timeBucket: '2024-04-01' }]);
+
+      await timelineManager.reload();
+
+      expect(sdkMock.getTimeBuckets).toHaveBeenCalledTimes(2);
+      expect(timelineManager.months).toHaveLength(1);
+      expect(timelineManager.months[0].yearMonth).toEqual({ year: 2024, month: 4 });
+      expect(timelineManager.months[0].assetsCount).toBe(2);
+    });
   });
 
   describe('loadTimelineMonth', () => {

@@ -97,14 +97,9 @@ export interface AlbumAssetViewSettings {
   sortOrder: SortOrder;
   sortCriteria?: AlbumAssetSortCriterion[];
   showSortDividers: boolean;
-  imageBorder: AlbumAssetImageBorder;
+  /** Preferred justified-grid row height on album pages. Undefined preserves the responsive default. */
+  rowHeight?: number;
   displayInfo: AlbumAssetDisplayInfo;
-}
-
-export enum AlbumAssetImageBorder {
-  None = 'none',
-  Thin = 'thin',
-  Thick = 'thick',
 }
 
 export interface AlbumAssetSortCriterion {
@@ -143,7 +138,6 @@ export const albumAssetViewSettings = persistedObject<AlbumAssetViewSettings>('a
   sortOrder: SortOrder.Desc,
   sortCriteria: [{ sortBy: AlbumAssetSortBy.DateTaken, sortOrder: SortOrder.Desc }],
   showSortDividers: true,
-  imageBorder: AlbumAssetImageBorder.Thick,
   displayInfo: defaultAlbumAssetDisplayInfo,
 });
 

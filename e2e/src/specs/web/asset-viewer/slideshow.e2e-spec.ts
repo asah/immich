@@ -26,6 +26,17 @@ test.describe('Slideshow', () => {
     await expect(page.getByRole('button', { name: 'Exit Slideshow' })).toBeVisible();
   });
 
+  test('opens from an album', async ({ context, page }) => {
+    const album = await utils.createAlbum(admin.accessToken, { albumName: 'Slideshow album', assetIds: [asset.id] });
+
+    await utils.setAuthCookies(context, admin.accessToken);
+    await page.goto(`/albums/${album.id}`);
+    await page.getByRole('button', { name: 'Slideshow' }).click();
+
+    await expect(page).toHaveURL(new RegExp(`/albums/${album.id}/photos/${asset.id}$`));
+    await expect(page.getByRole('button', { name: 'Exit Slideshow' })).toBeVisible();
+  });
+
   test('exit slideshow with button', async ({ context, page }) => {
     await utils.setAuthCookies(context, admin.accessToken);
     await openSlideshow(page);

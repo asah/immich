@@ -11,7 +11,6 @@
   } from '$lib/services/album.service';
   import {
     AlbumAssetSortBy,
-    AlbumAssetImageBorder,
     albumAssetViewSettings,
     defaultAlbumAssetDisplayInfo,
     SortOrder,
@@ -31,6 +30,7 @@
     Checkbox,
     Field,
     HStack,
+    IconButton,
     Label,
     Modal,
     ModalBody,
@@ -42,14 +42,17 @@
   } from '@immich/ui';
   import { onMount } from 'svelte';
   import { t } from 'svelte-i18n';
+  import { fly } from 'svelte/transition';
+  import { mdiClose } from '@mdi/js';
 
   type Props = {
     album: AlbumResponseDto;
     readOnly?: boolean;
+    inline?: boolean;
     onClose: () => void;
   };
 
-  let { album, readOnly = false, onClose }: Props = $props();
+  let { album, readOnly = false, inline = false, onClose }: Props = $props();
 
   const handleRoleSelect = async (user: UserResponseDto, role: AlbumUserRole | 'none') => {
     if (role === 'none') {
@@ -94,12 +97,6 @@
     { label: $t('file_name_text'), value: AlbumAssetSortBy.FileName },
     { label: $t('file_size'), value: AlbumAssetSortBy.FileSize },
     { label: 'Tag', value: AlbumAssetSortBy.Tag },
-  ]);
-
-  const imageBorderOptions = $derived([
-    { label: $t('image_border_none'), value: AlbumAssetImageBorder.None },
-    { label: $t('image_border_thin'), value: AlbumAssetImageBorder.Thin },
-    { label: $t('image_border_thick'), value: AlbumAssetImageBorder.Thick },
   ]);
 
   const saveSortCriteria = async (criteria: AlbumAssetSortCriterion[]) => {
@@ -153,157 +150,176 @@
   onAlbumUpdate={(newAlbum) => (album = newAlbum)}
 />
 
-<Modal title={readOnly ? $t('album') : $t('options')} {onClose} size="small">
-  <ModalBody>
-    <Stack gap={6}>
-      <div>
-        <Text size="medium" fontWeight="semi-bold">{$t('settings')}</Text>
-        <div class="mt-2 grid gap-y-3 ps-2">
-          <Field label={$t('display_order')} disabled={readOnly}>
-            <div class="flex flex-col gap-2">
-              {#each sortCriteria as criterion, index (`${index}-${criterion.sortBy}`)}
-                <div class="flex items-center gap-2">
-                  <span class="w-4 text-sm text-gray-500">{index + 1}.</span>
-                  <div class="min-w-0 flex-1">
-                    <Select
-                      value={criterion.sortBy}
-                      options={sortByOptions.filter(
-                        ({ value }) =>
-                          value === criterion.sortBy || !sortCriteria.some(({ sortBy }) => sortBy === value),
-                      )}
-                      onChange={(sortBy) => updateSortCriterion(index, { sortBy: sortBy as AlbumAssetSortBy })}
-                    />
-                  </div>
-                  <div class="w-32">
-                    <Select
-                      value={criterion.sortOrder}
-                      options={[
-                        { label: $t('ascending'), value: SortOrder.Asc },
-                        { label: $t('descending'), value: SortOrder.Desc },
-                      ]}
-                      onChange={(sortOrder) => updateSortCriterion(index, { sortOrder: sortOrder as SortOrder })}
-                    />
-                  </div>
-                  {#if sortCriteria.length > 1}
-                    <button
-                      type="button"
-                      class="px-1 text-lg text-gray-500 hover:text-red-500"
-                      aria-label={$t('remove')}
-                      onclick={() => saveSortCriteria(sortCriteria.filter((_, at) => at !== index))}>×</button
-                    >
-                  {/if}
+{#snippet optionsContent()}
+  <Stack gap={6}>
+    <div>
+      <Text size="medium" fontWeight="semi-bold">{$t('settings')}</Text>
+      <div class="mt-2 grid gap-y-3 ps-2">
+        <Field label={$t('display_order')} disabled={readOnly}>
+          <div class="flex flex-col gap-2">
+            {#each sortCriteria as criterion, index (`${index}-${criterion.sortBy}`)}
+              <div class="flex items-center gap-2">
+                <span class="w-4 text-sm text-gray-500">{index + 1}.</span>
+                <div class="min-w-0 flex-1">
+                  <Select
+                    value={criterion.sortBy}
+                    options={sortByOptions.filter(
+                      ({ value }) => value === criterion.sortBy || !sortCriteria.some(({ sortBy }) => sortBy === value),
+                    )}
+                    onChange={(sortBy) => updateSortCriterion(index, { sortBy: sortBy as AlbumAssetSortBy })}
+                  />
                 </div>
-              {/each}
-              {#if sortCriteria.length < 4 && sortCriteria.length < sortByOptions.length}
-                <button
-                  type="button"
-                  class="self-start text-sm font-medium text-primary hover:underline"
-                  onclick={() => {
-                    const next = sortByOptions.find(
-                      ({ value }) => !sortCriteria.some(({ sortBy }) => sortBy === value),
-                    );
-                    if (next)
-                      void saveSortCriteria([...sortCriteria, { sortBy: next.value, sortOrder: SortOrder.Asc }]);
-                  }}>+ {$t('add_sort_criterion')}</button
-                >
-              {/if}
-            </div>
-          </Field>
-          <Field label={$t('album_sort_dividers')} description={$t('album_sort_dividers_description')}>
-            <Switch
-              checked={$albumAssetViewSettings.showSortDividers}
-              onCheckedChange={(showSortDividers) =>
-                ($albumAssetViewSettings = { ...$albumAssetViewSettings, showSortDividers })}
-            />
-          </Field>
-          <Field
-            label={$t('album_image_border')}
-            description={$t('album_image_border_description')}
-            disabled={readOnly}
-          >
-            <Select
-              value={$albumAssetViewSettings.imageBorder}
-              options={imageBorderOptions}
-              onChange={(imageBorder) =>
+                <div class="w-32">
+                  <Select
+                    value={criterion.sortOrder}
+                    options={[
+                      { label: $t('ascending'), value: SortOrder.Asc },
+                      { label: $t('descending'), value: SortOrder.Desc },
+                    ]}
+                    onChange={(sortOrder) => updateSortCriterion(index, { sortOrder: sortOrder as SortOrder })}
+                  />
+                </div>
+                {#if sortCriteria.length > 1}
+                  <button
+                    type="button"
+                    class="px-1 text-lg text-gray-500 hover:text-red-500"
+                    aria-label={$t('remove')}
+                    onclick={() => saveSortCriteria(sortCriteria.filter((_, at) => at !== index))}>×</button
+                  >
+                {/if}
+              </div>
+            {/each}
+            {#if sortCriteria.length < 4 && sortCriteria.length < sortByOptions.length}
+              <button
+                type="button"
+                class="self-start text-sm font-medium text-primary hover:underline"
+                onclick={() => {
+                  const next = sortByOptions.find(({ value }) => !sortCriteria.some(({ sortBy }) => sortBy === value));
+                  if (next) void saveSortCriteria([...sortCriteria, { sortBy: next.value, sortOrder: SortOrder.Asc }]);
+                }}>+ {$t('add_sort_criterion')}</button
+              >
+            {/if}
+          </div>
+        </Field>
+        <Field label={$t('album_sort_dividers')} description={$t('album_sort_dividers_description')}>
+          <Switch
+            checked={$albumAssetViewSettings.showSortDividers}
+            onCheckedChange={(showSortDividers) =>
+              ($albumAssetViewSettings = { ...$albumAssetViewSettings, showSortDividers })}
+          />
+        </Field>
+        <Field label="Image row height" description="Adjust the height of photo rows in this album view.">
+          <div class="flex items-center gap-3">
+            <input
+              class="w-full accent-immich-primary"
+              type="range"
+              min="100"
+              max="400"
+              step="5"
+              value={$albumAssetViewSettings.rowHeight ?? 235}
+              aria-label="Image row height"
+              oninput={(event) =>
                 ($albumAssetViewSettings = {
                   ...$albumAssetViewSettings,
-                  imageBorder: imageBorder as AlbumAssetImageBorder,
+                  rowHeight: Number(event.currentTarget.value),
                 })}
             />
-          </Field>
-          <div>
-            <Text size="small" fontWeight="medium">{$t('display_file_info')}:</Text>
-            <div class="grid grid-cols-2 gap-x-4 gap-y-2 pt-1">
-              {#each displayInfoOptions as option (option.key)}
-                <div class="flex items-center gap-2 text-sm">
-                  <Checkbox
-                    id={`album-display-info-${option.key}`}
-                    size="tiny"
-                    checked={$albumAssetViewSettings.displayInfo?.[option.key] ?? false}
-                    onCheckedChange={(checked) => setDisplayInfo(option.key, checked)}
-                  />
-                  <Label label={option.label} for={`album-display-info-${option.key}`} />
-                </div>
-              {/each}
-            </div>
+            <output class="w-12 text-right text-sm tabular-nums">{$albumAssetViewSettings.rowHeight ?? 235}px</output>
           </div>
-          <Field label={$t('comments_and_likes')} description={$t('let_others_respond')} disabled={readOnly}>
-            <Switch
-              checked={album.isActivityEnabled}
-              onCheckedChange={(checked) => handleUpdateAlbum(album, { isActivityEnabled: checked })}
-            />
-          </Field>
-        </div>
-      </div>
-
-      <div>
-        <HStack fullWidth class="mb-2 justify-between">
-          <Text size="medium" fontWeight="semi-bold">{$t('people')}</Text>
-          {#if !readOnly}
-            <HeaderActionButton action={AddUsers} />
-          {/if}
-        </HStack>
-        <div class="ps-2">
-          {#each album.albumUsers as { user, role } (user.id)}
-            <div class="flex items-center justify-between gap-4 py-2">
-              <div class="flex flex-row items-center gap-2">
-                <div>
-                  <UserAvatar {user} size="md" />
-                </div>
-                <Text size="small">{user.name}</Text>
-              </div>
-              <Field class="w-32" disabled={readOnly || role === AlbumUserRole.Owner}>
-                <Select
-                  value={role}
-                  options={[
-                    { label: $t('role_editor'), value: AlbumUserRole.Editor },
-                    { label: $t('role_viewer'), value: AlbumUserRole.Viewer },
-                    { label: $t('owner'), value: AlbumUserRole.Owner, disabled: true },
-                    { label: $t('remove_user'), value: 'none' },
-                  ] as SelectOption<AlbumUserRole | 'none'>[]}
-                  onChange={(value) => handleRoleSelect(user, value)}
+        </Field>
+        <div>
+          <Text size="small" fontWeight="medium">{$t('display_file_info')}:</Text>
+          <div class="grid grid-cols-2 gap-x-4 gap-y-2 pt-1">
+            {#each displayInfoOptions as option (option.key)}
+              <div class="flex items-center gap-2 text-sm">
+                <Checkbox
+                  id={`album-display-info-${option.key}`}
+                  size="tiny"
+                  checked={$albumAssetViewSettings.displayInfo?.[option.key] ?? false}
+                  onCheckedChange={(checked) => setDisplayInfo(option.key, checked)}
                 />
-              </Field>
-            </div>
-          {/each}
-        </div>
-      </div>
-      {#if !readOnly}
-        <div class="mb-4">
-          <HStack class="mb-2 justify-between">
-            <Text size="medium" fontWeight="semi-bold">{$t('shared_links')}</Text>
-            <HeaderActionButton action={CreateSharedLink} />
-          </HStack>
-
-          <div class="ps-2">
-            <Stack gap={4}>
-              {#each sharedLinks as sharedLink (sharedLink.id)}
-                <AlbumSharedLink {album} {sharedLink} />
-              {/each}
-            </Stack>
+                <Label label={option.label} for={`album-display-info-${option.key}`} />
+              </div>
+            {/each}
           </div>
         </div>
-      {/if}
-    </Stack>
-  </ModalBody>
-</Modal>
+        <Field label={$t('comments_and_likes')} description={$t('let_others_respond')} disabled={readOnly}>
+          <Switch
+            checked={album.isActivityEnabled}
+            onCheckedChange={(checked) => handleUpdateAlbum(album, { isActivityEnabled: checked })}
+          />
+        </Field>
+      </div>
+    </div>
+
+    <div>
+      <HStack fullWidth class="mb-2 justify-between">
+        <Text size="medium" fontWeight="semi-bold">{$t('people')}</Text>
+        {#if !readOnly}
+          <HeaderActionButton action={AddUsers} />
+        {/if}
+      </HStack>
+      <div class="ps-2">
+        {#each album.albumUsers as { user, role } (user.id)}
+          <div class="flex items-center justify-between gap-4 py-2">
+            <div class="flex flex-row items-center gap-2">
+              <div>
+                <UserAvatar {user} size="md" />
+              </div>
+              <Text size="small">{user.name}</Text>
+            </div>
+            <Field class="w-32" disabled={readOnly || role === AlbumUserRole.Owner}>
+              <Select
+                value={role}
+                options={[
+                  { label: $t('role_editor'), value: AlbumUserRole.Editor },
+                  { label: $t('role_viewer'), value: AlbumUserRole.Viewer },
+                  { label: $t('owner'), value: AlbumUserRole.Owner, disabled: true },
+                  { label: $t('remove_user'), value: 'none' },
+                ] as SelectOption<AlbumUserRole | 'none'>[]}
+                onChange={(value) => handleRoleSelect(user, value)}
+              />
+            </Field>
+          </div>
+        {/each}
+      </div>
+    </div>
+    {#if !readOnly}
+      <div class="mb-4">
+        <HStack class="mb-2 justify-between">
+          <Text size="medium" fontWeight="semi-bold">{$t('shared_links')}</Text>
+          <HeaderActionButton action={CreateSharedLink} />
+        </HStack>
+
+        <div class="ps-2">
+          <Stack gap={4}>
+            {#each sharedLinks as sharedLink (sharedLink.id)}
+              <AlbumSharedLink {album} {sharedLink} />
+            {/each}
+          </Stack>
+        </div>
+      </div>
+    {/if}
+  </Stack>
+{/snippet}
+
+{#if inline}
+  <aside
+    transition:fly={{ x: 360, duration: 180 }}
+    class="fixed top-(--navbar-height) inset-e-0 bottom-0 z-30 w-full overflow-y-auto border-s border-gray-200 bg-white p-5 shadow-2xl sm:w-105 dark:border-gray-700 dark:bg-immich-dark-gray"
+    data-testid="album-options-panel"
+    aria-label={readOnly ? $t('album') : $t('options')}
+  >
+    <div class="mb-5 flex items-center justify-between">
+      <Text size="large" fontWeight="semi-bold">{readOnly ? $t('album') : $t('options')}</Text>
+      <IconButton aria-label={$t('close')} icon={mdiClose} size="small" onclick={onClose} />
+    </div>
+    {@render optionsContent()}
+  </aside>
+{:else}
+  <Modal title={readOnly ? $t('album') : $t('options')} {onClose} size="small">
+    <ModalBody>
+      {@render optionsContent()}
+    </ModalBody>
+  </Modal>
+{/if}

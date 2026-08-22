@@ -281,6 +281,19 @@ export class TimelineManager extends VirtualScrollManager {
       return;
     }
 
+    await this.#resetTimeline(options);
+  }
+
+  /** Reloads time buckets and layout even when the timeline options have not changed. */
+  async reload() {
+    if (!this.initTask.executed) {
+      return;
+    }
+
+    await this.#resetTimeline(this.#options);
+  }
+
+  async #resetTimeline(options: TimelineManagerOptions) {
     this.suspendTransitions = true;
     try {
       await this.initTask.reset();

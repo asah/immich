@@ -17,7 +17,7 @@
   import { keyboardManager } from '$lib/stores/keyboard-manager.svelte';
   import { showDeleteModal } from '$lib/stores/preferences.store';
   import type { AlbumAssetDisplayInfo } from '$lib/stores/preferences.store';
-  import { handlePromiseError } from '$lib/utils';
+  import { copyToClipboard, handlePromiseError } from '$lib/utils';
   import { deleteAssets } from '$lib/utils/actions';
   import { archiveAssets, getNextAsset, getPreviousAsset, navigateToAsset } from '$lib/utils/asset-utils';
   import { moveFocus } from '$lib/utils/focus-util';
@@ -27,7 +27,8 @@
   import { isTimelineAsset, toTimelineAsset } from '$lib/utils/timeline-util';
   import { TUNABLES } from '$lib/utils/tunables';
   import { AssetVisibility, type AlbumResponseDto, type AssetResponseDto } from '@immich/sdk';
-  import { modalManager } from '@immich/ui';
+  import { Icon, modalManager } from '@immich/ui';
+  import { mdiLink } from '@mdi/js';
   import { debounce } from 'lodash-es';
   import { t } from 'svelte-i18n';
   import type { ClassValue } from 'svelte/elements';
@@ -57,6 +58,7 @@
     primarySortGroupColors?: Record<string, string | null | undefined>;
     viewportScrollTop?: number;
     imageClass?: ClassValue;
+    rowHeight?: number;
   };
 
   let {
@@ -80,6 +82,7 @@
     primarySortGroupColors,
     viewportScrollTop,
     imageClass = '',
+    rowHeight,
   }: Props = $props();
 
   const navigationAssets = $derived(viewerAssets ?? assets);
@@ -87,9 +90,27 @@
   const layoutOptions = $derived({
     spacing: 2,
     heightTolerance: 0.5,
-    rowHeight: Math.floor(viewport.width) < 850 ? 100 : 235,
+    rowHeight: rowHeight ?? (Math.floor(viewport.width) < 850 ? 100 : 235),
     rowWidth: Math.floor(viewport.width),
   });
+  const sectionGroups = $derived.by(() => {
+    if (!primarySortGroupKeys || !primarySortGroupDescriptions) {
+      return [] as Array<{ key: string; headerHeight: number }>;
+    }
+
+    return primarySortGroupKeys.reduce<Array<{ key: string; headerHeight: number }>>((groups, key) => {
+      if (groups.at(-1)?.key === key) {
+        return groups;
+      }
+      // A title and its controls need 56px; descriptions get an additional line and breathing room.
+      groups.push({ key, headerHeight: primarySortGroupDescriptions[key] ? 80 : 56 });
+      return groups;
+    }, []);
+  });
+  // Reserve exactly the rendered section-bar height before positioning the first photo row.
+  const sectionHeaderHeight = $derived(
+    primarySortGroupDescriptions ? (groupIndex: number) => sectionGroups[groupIndex]?.headerHeight ?? 56 : 0,
+  );
   const geometry = $derived(
     primarySortGroupKeys?.length === assets.length
       ? getGroupedJustifiedLayoutFromAssets(
@@ -97,7 +118,7 @@
           primarySortGroupKeys,
           layoutOptions,
           primarySortGroupDescriptions ? 0 : 32,
-          primarySortGroupDescriptions ? (groupIndex) => (groupIndex === 0 ? 64 : 96) : 0,
+          sectionHeaderHeight,
         )
       : getJustifiedLayoutFromAssets(assets, layoutOptions),
   );
@@ -109,19 +130,30 @@
       .replaceAll(/javascript\s*:/gi, '');
   const dividerLabels = $derived.by(() => {
     if (!primarySortGroupKeys || !primarySortGroupDescriptions) {
-      return [] as Array<{ top: number; key: string; description?: string | null }>;
+      return [] as Array<{ top: number; key: string; assetId: string; count: number; description?: string | null }>;
     }
-    const labels: Array<{ top: number; key: string; description?: string | null }> = [];
+    const labels: Array<{ top: number; key: string; assetId: string; count: number; description?: string | null }> = [];
     let groupIndex = 0;
     for (let index = 0; index < primarySortGroupKeys.length; index++) {
       if (index > 0 && primarySortGroupKeys[index] === primarySortGroupKeys[index - 1]) continue;
-      const top = dividerTops[groupIndex] - (groupIndex === 0 ? 32 : 16);
+      const top = dividerTops[groupIndex] - (sectionGroups[groupIndex]?.headerHeight ?? 56) / 2;
       groupIndex++;
       const key = primarySortGroupKeys[index];
-      labels.push({ top, key, description: primarySortGroupDescriptions[key] });
+      const assetId = assets[index]?.id;
+      let count = 1;
+      while (primarySortGroupKeys[index + count] === key) {
+        count++;
+      }
+      if (assetId) {
+        labels.push({ top, key, assetId, count, description: primarySortGroupDescriptions[key] });
+      }
     }
     return labels.filter(({ top }) => top !== undefined);
   });
+
+  const getSectionHref = (assetId: string) =>
+    album ? `${Route.viewAlbum({ id: album.id })}?at=${assetId}` : undefined;
+  const copySectionLink = (href: string) => void copyToClipboard(new URL(href, window.location.href).toString());
 
   const getStyle = (index: number) => {
     return `top: ${geometry.getTop(index)}px; left: ${geometry.getLeft(index)}px; width: ${geometry.getWidth(index)}px; height: ${geometry.getHeight(index)}px;`;
@@ -390,23 +422,50 @@
 
 {#if assets.length > 0}
   <div
+    data-row-height={layoutOptions.rowHeight}
     style:position="relative"
     style:height={geometry.containerHeight + 'px'}
     style:width={geometry.containerWidth + 'px'}
   >
     {#each dividerLabels as label (label.top + label.key)}
+      {@const sectionHref = getSectionHref(label.assetId)}
       <div
-        class="absolute inset-x-0 z-10 border-t border-gray-300 bg-white/90 px-2 py-2 text-xs leading-5 text-gray-500 dark:border-gray-600 dark:bg-immich-dark-gray/90"
+        data-section-bar={label.assetId}
+        class="absolute inset-x-0 z-10 border-t border-gray-300 bg-white/90 px-2 py-2 font-sans text-sm leading-5 text-gray-500 dark:border-gray-600 dark:bg-immich-dark-gray/90"
         style:top={`${label.top}px`}
       >
-        <div class="max-w-[90%] truncate">
+        <div class="flex max-w-[90%] items-center gap-1 truncate">
           {#if primarySortGroupColors?.[label.key]}
             <span
               class="me-1 inline-block size-2.5 rounded-full"
               style:background-color={primarySortGroupColors[label.key]}
             ></span>
           {/if}
-          <a class="font-semibold underline hover:text-primary" href={Route.tagName(label.key)}>{label.key}</a>
+          {#if sectionHref}
+            <a
+              class="truncate text-xl font-semibold text-primary underline hover:text-primary md:text-2xl"
+              href={sectionHref}>{label.key}</a
+            >
+            <button
+              class="shrink-0 hover:text-primary"
+              type="button"
+              aria-label={label.key}
+              data-section-anchor={label.assetId}
+              onclick={() => copySectionLink(sectionHref)}
+            >
+              <Icon icon={mdiLink} size="16" />
+            </button>
+            <span class="rounded-full bg-gray-200 px-2 py-0.5 text-[0.65rem] font-medium dark:bg-gray-700"
+              >{$t('album')}</span
+            >
+          {:else}
+            <span class="truncate text-xl font-semibold text-primary md:text-2xl">{label.key}</span>
+          {/if}
+          <span class="shrink-0 text-gray-400">{$t('items_count', { values: { count: label.count } })}</span>
+          <a
+            class="shrink-0 rounded-full border border-gray-300 px-2 py-0.5 text-[0.65rem] font-medium hover:text-primary dark:border-gray-600"
+            href={Route.tagName(label.key)}>{$t('all_photos')}</a
+          >
         </div>
         {#if label.description}<div
             class="mt-1 max-w-[90%] truncate text-xs leading-5 text-gray-600 dark:text-gray-300"

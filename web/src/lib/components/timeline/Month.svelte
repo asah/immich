@@ -7,10 +7,11 @@
   import { assetsSnapshot, filterIsInOrNearViewport } from '$lib/managers/timeline-manager/utils.svelte';
   import type { VirtualScrollManager } from '$lib/managers/VirtualScrollManager/VirtualScrollManager.svelte';
   import { uploadAssetsStore } from '$lib/stores/upload';
+  import { copyToClipboard } from '$lib/utils';
   import type { CommonPosition } from '$lib/utils/layout-utils';
   import { fromTimelinePlainDate, getDateLocaleString } from '$lib/utils/timeline-util';
   import { Icon } from '@immich/ui';
-  import { mdiCheckCircle, mdiCircleOutline } from '@mdi/js';
+  import { mdiCheckCircle, mdiCircleOutline, mdiLink } from '@mdi/js';
   import type { Snippet } from 'svelte';
 
   type Props = {
@@ -30,6 +31,7 @@
     timelineMonth: TimelineMonth;
     manager: VirtualScrollManager;
     onTimelineDaySelect: (timelineDay: TimelineDay, assets: TimelineAsset[]) => void;
+    sectionLink?: (timelineDay: TimelineDay) => string | undefined;
   };
   let {
     thumbnail: thumbnailWithGroup,
@@ -39,6 +41,7 @@
     timelineMonth,
     manager,
     onTimelineDaySelect,
+    sectionLink,
   }: Props = $props();
 
   let { isUploading } = uploadAssetsStore;
@@ -55,6 +58,9 @@
     });
     return getDateLocaleString(date);
   };
+
+  const getSectionHref = (timelineDay: TimelineDay) => sectionLink?.(timelineDay);
+  const copySectionLink = (href: string) => void copyToClipboard(new URL(href, window.location.href).toString());
 </script>
 
 {#each filterIsInOrNearViewport(timelineMonth.timelineDays) as timelineDay, groupIndex (timelineDay.day)}
@@ -74,7 +80,7 @@
   >
     <!-- Day title -->
     <div
-      class="flex h-6 place-items-center pt-7 pb-5 text-xs font-medium text-immich-fg max-md:pt-5 max-md:pb-3 md:text-sm dark:text-immich-dark-fg"
+      class="flex h-10 place-items-center pt-7 pb-5 font-sans text-xl font-semibold text-immich-fg max-md:pt-5 max-md:pb-3 md:text-2xl dark:text-immich-dark-fg"
       style:width={timelineDay.width + 'px'}
     >
       {#if !singleSelect}
@@ -93,9 +99,27 @@
         </div>
       {/if}
 
-      <span class="w-full truncate first-letter:capitalize" title={getTimelineDayFullDate(timelineDay)}>
-        {timelineDay.groupTitle}
-      </span>
+      {#if getSectionHref(timelineDay)}
+        <a
+          class="truncate first-letter:capitalize hover:text-primary hover:underline"
+          href={getSectionHref(timelineDay)}
+          title={getTimelineDayFullDate(timelineDay)}
+        >
+          {timelineDay.groupTitle}
+        </a>
+        <button
+          class="ms-1 shrink-0 hover:text-primary"
+          type="button"
+          aria-label={timelineDay.groupTitle}
+          onclick={() => copySectionLink(getSectionHref(timelineDay)!)}
+        >
+          <Icon icon={mdiLink} size="16" />
+        </button>
+      {:else}
+        <span class="w-full truncate first-letter:capitalize" title={getTimelineDayFullDate(timelineDay)}>
+          {timelineDay.groupTitle}
+        </span>
+      {/if}
     </div>
 
     <AssetLayout
