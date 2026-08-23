@@ -33,6 +33,7 @@
   import { mdiChevronDown, mdiLink } from '@mdi/js';
   import { debounce } from 'lodash-es';
   import { t } from 'svelte-i18n';
+  import type { Snippet } from 'svelte';
   import type { ClassValue } from 'svelte/elements';
 
   const {
@@ -50,6 +51,7 @@
     onEndReached?: (() => void) | undefined;
     showAssetName?: boolean;
     displayAssetInfo?: AlbumAssetDisplayInfo;
+    assetOverlay?: Snippet<[AssetResponseDto]>;
     onReload?: (() => void) | undefined;
     pageHeaderOffset?: number;
     slidingWindowOffset?: number;
@@ -74,6 +76,7 @@
     onEndReached = undefined,
     showAssetName = false,
     displayAssetInfo,
+    assetOverlay,
     onReload = undefined,
     slidingWindowOffset = 0,
     pageHeaderOffset = 0,
@@ -526,6 +529,7 @@
             thumbnailHeight={geometry.getHeight(index)}
             {imageClass}
           />
+          {@render assetOverlay?.(asset)}
           {#if displayAssetInfo && !isTimelineAsset(asset)}
             <GalleryAssetInfo {asset} settings={displayAssetInfo} />
           {:else if showAssetName && !isTimelineAsset(asset)}

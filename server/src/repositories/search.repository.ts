@@ -16,8 +16,8 @@ import {
   searchMetadataV3Examples,
   searchStatisticsV3Examples,
   withExifInner,
-  withTags,
   withSearchOrder,
+  withTags,
 } from 'src/utils/database';
 import { paginationHelper } from 'src/utils/pagination';
 import z from 'zod';
@@ -110,9 +110,9 @@ export interface SearchAlbumOptions {
 
 export interface SearchOrderOptions {
   orderDirection?: 'asc' | 'desc';
-  orderBy?: 'fileCreatedAt' | 'originalFileName' | 'fileSizeInByte';
+  orderBy?: 'fileCreatedAt' | 'originalFileName' | 'fileSizeInByte' | 'model' | 'lensModel';
   sort?: Array<{
-    field: 'fileCreatedAt' | 'originalFileName' | 'fileSizeInByte';
+    field: 'fileCreatedAt' | 'originalFileName' | 'fileSizeInByte' | 'model' | 'lensModel';
     order: 'asc' | 'desc';
   }>;
 }
@@ -231,8 +231,8 @@ export class SearchRepository {
     const criteria = options.sort?.length
       ? options.sort
       : [{ field: options.orderBy ?? 'fileCreatedAt', order: orderDirection }];
-    const hasFileSize = criteria.some(({ field }) => field === 'fileSizeInByte');
-    const searchOptions = hasFileSize ? { ...options, withExif: true } : options;
+    const hasExifSort = criteria.some(({ field }) => ['fileSizeInByte', 'model', 'lensModel'].includes(field));
+    const searchOptions = hasExifSort ? { ...options, withExif: true } : options;
     const orderExpressions = criteria.flatMap(({ field, order }) => {
       const direction = order.toLowerCase() as OrderByDirection;
       const column =
@@ -240,7 +240,11 @@ export class SearchRepository {
           ? 'asset.originalFileName'
           : field === 'fileSizeInByte'
             ? 'asset_exif.fileSizeInByte'
-            : 'asset.fileCreatedAt';
+            : field === 'model'
+              ? 'asset_exif.model'
+              : field === 'lensModel'
+                ? 'asset_exif.lensModel'
+                : 'asset.fileCreatedAt';
       return [sql`${sql.ref(column)} ${sql.raw(direction)}`];
     });
     if (orderExpressions.length === 0) {

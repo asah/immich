@@ -13,6 +13,7 @@
     AlbumAssetSortBy,
     albumAssetViewSettings,
     defaultAlbumAssetDisplayInfo,
+    locale,
     SortOrder,
     type AlbumAssetDisplayInfo,
     type AlbumAssetSortCriterion,
@@ -92,12 +93,22 @@
       ? [{ ...criteria[0], sortOrder: album.order === AssetOrder.Asc ? SortOrder.Asc : SortOrder.Desc }]
       : criteria;
   });
-  const sortByOptions = $derived([
-    { label: $t('date_taken'), value: AlbumAssetSortBy.DateTaken },
-    { label: $t('file_name_text'), value: AlbumAssetSortBy.FileName },
-    { label: $t('file_size'), value: AlbumAssetSortBy.FileSize },
-    { label: 'Tag', value: AlbumAssetSortBy.Tag },
-  ]);
+  const sortByOptions = $derived(
+    [
+      { label: $t('date_taken'), value: AlbumAssetSortBy.DateTaken },
+      { label: $t('file_name_text'), value: AlbumAssetSortBy.FileName },
+      { label: $t('file_size'), value: AlbumAssetSortBy.FileSize },
+      { label: 'Tag', value: AlbumAssetSortBy.Tag },
+      { label: $t('camera_make_model'), value: AlbumAssetSortBy.Camera },
+      { label: $t('lens_name'), value: AlbumAssetSortBy.Lens },
+      { label: 'Engagement', value: AlbumAssetSortBy.Engagement },
+      { label: $t('location'), value: AlbumAssetSortBy.Location },
+      { label: $t('time'), value: AlbumAssetSortBy.Time },
+      { label: $t('description'), value: AlbumAssetSortBy.Description },
+      { label: $t('camera_settings'), value: AlbumAssetSortBy.CameraSettings },
+      { label: $t('lens_settings'), value: AlbumAssetSortBy.LensSettings },
+    ].sort((a, b) => a.label.localeCompare(b.label, $locale)),
+  );
 
   const saveSortCriteria = async (criteria: AlbumAssetSortCriterion[]) => {
     const [primary] = criteria;
@@ -155,7 +166,8 @@
     <div>
       <Text size="medium" fontWeight="semi-bold">{$t('settings')}</Text>
       <div class="mt-2 grid gap-y-3 ps-2">
-        <Field label={$t('display_order')} disabled={readOnly}>
+        <div>
+          <Text size="small" fontWeight="medium">{$t('display_order')}</Text>
           <div class="flex flex-col gap-2">
             {#each sortCriteria as criterion, index (`${index}-${criterion.sortBy}`)}
               <div class="flex items-center gap-2">
@@ -184,6 +196,7 @@
                     type="button"
                     class="px-1 text-lg text-gray-500 hover:text-red-500"
                     aria-label={$t('remove')}
+                    disabled={readOnly}
                     onclick={() => saveSortCriteria(sortCriteria.filter((_, at) => at !== index))}>×</button
                   >
                 {/if}
@@ -193,6 +206,7 @@
               <button
                 type="button"
                 class="self-start text-sm font-medium text-primary hover:underline"
+                disabled={readOnly}
                 onclick={() => {
                   const next = sortByOptions.find(({ value }) => !sortCriteria.some(({ sortBy }) => sortBy === value));
                   if (next) void saveSortCriteria([...sortCriteria, { sortBy: next.value, sortOrder: SortOrder.Asc }]);
@@ -200,7 +214,7 @@
               >
             {/if}
           </div>
-        </Field>
+        </div>
         <Field label={$t('album_sort_dividers')} description={$t('album_sort_dividers_description')}>
           <Switch
             checked={$albumAssetViewSettings.showSortDividers}

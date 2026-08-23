@@ -79,13 +79,13 @@ const MetadataSearchSchema = RandomSearchSchema.extend({
   checksum: z.string().optional().describe('Filter by file checksum'),
   originalFileName: z.string().trim().optional().describe('Filter by original file name'),
   orderBy: z
-    .enum(['fileCreatedAt', 'originalFileName', 'fileSizeInByte'])
+    .enum(['fileCreatedAt', 'originalFileName', 'fileSizeInByte', 'model', 'lensModel'])
     .optional()
     .describe('Property to use when sorting search results'),
   sort: z
     .array(
       z.object({
-        field: z.enum(['fileCreatedAt', 'originalFileName', 'fileSizeInByte']),
+        field: z.enum(['fileCreatedAt', 'originalFileName', 'fileSizeInByte', 'model', 'lensModel']),
         order: AssetOrderSchema,
       }),
     )

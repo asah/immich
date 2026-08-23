@@ -3648,6 +3648,43 @@
         "x-immich-state": "Stable"
       }
     },
+    "/assets/location-suggestions": {
+      "get": {
+        "operationId": "getLocationSuggestions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/LocationSuggestionResponseDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "summary": "Get conservative location suggestions",
+        "tags": [
+          "Assets"
+        ],
+        "x-immich-permission": "asset.read"
+      }
+    },
     "/assets/metadata": {
       "delete": {
         "description": "Delete metadata key-value pairs for multiple assets.",
@@ -21582,6 +21619,54 @@
       "LicenseResponseDto": {
         "$ref": "#/components/schemas/UserLicense"
       },
+      "LocationSuggestionResponseDto": {
+        "properties": {
+          "accuracyMeters": {
+            "exclusiveMinimum": true,
+            "maximum": 9007199254740991,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "assetIds": {
+            "items": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "confidence": {
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "latitude": {
+            "type": "number"
+          },
+          "locality": {
+            "type": "string"
+          },
+          "longitude": {
+            "type": "number"
+          },
+          "timeWindowMinutes": {
+            "exclusiveMinimum": true,
+            "maximum": 9007199254740991,
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "accuracyMeters",
+          "assetIds",
+          "confidence",
+          "latitude",
+          "locality",
+          "longitude",
+          "timeWindowMinutes"
+        ],
+        "type": "object"
+      },
       "LogLevel": {
         "description": "Log level",
         "enum": [
@@ -22281,7 +22366,9 @@
             "enum": [
               "fileCreatedAt",
               "originalFileName",
-              "fileSizeInByte"
+              "fileSizeInByte",
+              "model",
+              "lensModel"
             ],
             "type": "string"
           },
@@ -22354,7 +22441,9 @@
                   "enum": [
                     "fileCreatedAt",
                     "originalFileName",
-                    "fileSizeInByte"
+                    "fileSizeInByte",
+                    "model",
+                    "lensModel"
                   ],
                   "type": "string"
                 },

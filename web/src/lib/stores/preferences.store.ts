@@ -90,6 +90,14 @@ export enum AlbumAssetSortBy {
   FileName = 'fileName',
   FileSize = 'fileSize',
   Tag = 'tag',
+  Camera = 'camera',
+  Lens = 'lens',
+  Engagement = 'engagement',
+  Location = 'location',
+  Time = 'time',
+  Description = 'description',
+  CameraSettings = 'cameraSettings',
+  LensSettings = 'lensSettings',
 }
 
 export interface AlbumAssetViewSettings {

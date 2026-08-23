@@ -177,6 +177,26 @@ const withBoundingBox = <T>(qb: SelectQueryBuilder<DB, 'asset' | 'asset_exif', T
 export class AssetRepository {
   constructor(@InjectKysely() private db: Kysely<DB>) {}
 
+  async getLocationInferenceCandidates(ownerId: string) {
+    return this.db
+      .selectFrom('asset')
+      .innerJoin('asset_exif', 'asset.id', 'asset_exif.assetId')
+      .select([
+        'asset.id',
+        'asset.localDateTime',
+        'asset_exif.latitude',
+        'asset_exif.longitude',
+        'asset_exif.city',
+        'asset_exif.state',
+        'asset_exif.country',
+      ])
+      .where('asset.ownerId', '=', ownerId)
+      .where('asset.deletedAt', 'is', null)
+      .where('asset.visibility', '!=', AssetVisibility.Locked)
+      .orderBy('asset.localDateTime', 'asc')
+      .execute();
+  }
+
   @GenerateSql({
     params: [
       {

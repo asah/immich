@@ -15,6 +15,7 @@ import {
   AssetMetadataUpsertDto,
   AssetStatsDto,
   AssetStatsResponseDto,
+  LocationSuggestionResponseDto,
   UpdateAssetDto,
 } from 'src/dtos/asset.dto';
 import { AuthDto } from 'src/dtos/auth.dto';
@@ -39,6 +40,13 @@ export class AssetController {
   })
   getAssetStatistics(@Auth() auth: AuthDto, @Query() dto: AssetStatsDto): Promise<AssetStatsResponseDto> {
     return this.service.getStatistics(auth, dto);
+  }
+
+  @Get('location-suggestions')
+  @Authenticated({ permission: Permission.AssetRead })
+  @Endpoint({ summary: 'Get conservative location suggestions' })
+  getLocationSuggestions(@Auth() auth: AuthDto): Promise<LocationSuggestionResponseDto[]> {
+    return this.service.getLocationSuggestions(auth);
   }
 
   @Post('jobs')

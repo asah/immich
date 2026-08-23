@@ -15,9 +15,20 @@
     disabled: boolean;
     onFavorite: () => void;
     onReaction?: (reactionKey: string) => void;
+    onComments?: () => void;
+    allowAddingReactions?: boolean;
   }
 
-  let { isLiked, numberOfComments, numberOfLikes, disabled, onFavorite, onReaction }: Props = $props();
+  let {
+    isLiked,
+    numberOfComments,
+    numberOfLikes,
+    disabled,
+    onFavorite,
+    onReaction,
+    onComments,
+    allowAddingReactions = true,
+  }: Props = $props();
   const reactionCounts = $derived(
     activityManager.activities
       .filter(({ type, parentActivityId }) => type === 'like' && !parentActivityId)
@@ -44,7 +55,7 @@
       <span>{count}</span>
     </button>
   {/each}
-  {#if onReaction}
+  {#if onReaction && allowAddingReactions}
     <div class:opacity-50={disabled} class:pointer-events-none={disabled}>
       <ReactionPicker count={0} selectedEmoji="＋" onSelect={({ key }) => onReaction?.(key)} />
     </div>
@@ -62,8 +73,8 @@
     </Button>
   {/if}
   <Button
-    onclick={() => assetViewerManager.toggleActivityPanel()}
-    aria-label="Open activity"
+    onclick={() => onComments?.() ?? assetViewerManager.toggleActivityPanel()}
+    aria-label={onComments ? 'Show photos with comments' : 'Open activity'}
     leadingIcon={mdiCommentOutline}
     shape="round"
     size="large"

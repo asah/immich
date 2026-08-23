@@ -50,6 +50,18 @@ const AssetBulkUpdateSchema = AssetBulkUpdateBaseSchema.pipe(
   IsNotSiblingOf(AssetBulkUpdateBaseSchema, 'dateTimeRelative', ['dateTimeOriginal']),
 ).meta({ id: 'AssetBulkUpdateDto' });
 
+const LocationSuggestionSchema = z
+  .object({
+    assetIds: z.array(z.uuidv4()),
+    latitude: z.number(),
+    longitude: z.number(),
+    locality: z.string(),
+    accuracyMeters: z.number().int().positive(),
+    confidence: z.number().min(0).max(1),
+    timeWindowMinutes: z.number().int().positive(),
+  })
+  .meta({ id: 'LocationSuggestionResponseDto' });
+
 const UpdateAssetSchema = UpdateAssetBaseSchema.extend({
   livePhotoVideoId: z.uuidv4().nullish().describe('Live photo video ID'),
 }).meta({ id: 'UpdateAssetDto' });
@@ -179,6 +191,7 @@ export const mapStats = (stats: AssetStats): AssetStatsResponseDto => {
 };
 
 export class AssetBulkUpdateDto extends createZodDto(AssetBulkUpdateSchema) {}
+export class LocationSuggestionResponseDto extends createZodDto(LocationSuggestionSchema) {}
 export class UpdateAssetDto extends createZodDto(UpdateAssetSchema) {}
 export class AssetBulkDeleteDto extends createZodDto(AssetBulkDeleteSchema) {}
 export class AssetIdsDto extends createZodDto(AssetIdsSchema) {}

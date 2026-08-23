@@ -9133,12 +9133,16 @@ export enum OrderBy {
     FileCreatedAt = "fileCreatedAt",
     OriginalFileName = "originalFileName",
     FileSizeInByte = "fileSizeInByte",
+    Model = "model",
+    LensModel = "lensModel",
     AlbumPriority = "albumPriority"
 }
 export enum Field {
     FileCreatedAt = "fileCreatedAt",
     OriginalFileName = "originalFileName",
     FileSizeInByte = "fileSizeInByte",
+    Model = "model",
+    LensModel = "lensModel",
     AlbumPriority = "albumPriority"
 }
 export enum SearchSuggestionType {
