@@ -25,6 +25,14 @@
           bind:value={configToEdit.user.deleteDelay}
           isEdited={configToEdit.user.deleteDelay !== config.user.deleteDelay}
         />
+        <SettingInputField
+          inputType={SettingInputFieldType.NUMBER}
+          min={0}
+          label="Default invitation account quota (GiB)"
+          description="Applied when someone creates an account from an album email invitation. Leave blank for unlimited storage."
+          bind:value={configToEdit.user.defaultStorageQuota}
+          isEdited={configToEdit.user.defaultStorageQuota !== config.user.defaultStorageQuota}
+        />
       </div>
 
       <div class="ms-4">

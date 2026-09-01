@@ -3,6 +3,7 @@ import { SystemConfigDto } from 'src/dtos/system-config.dto';
 import { AssetFileType, JobName, JobStatus, UserMetadataKey } from 'src/enum';
 import { NotificationService } from 'src/services/notification.service';
 import { AlbumFactory } from 'test/factories/album.factory';
+import { ActivityFactory } from 'test/factories/activity.factory';
 import { AssetFileFactory } from 'test/factories/asset-file.factory';
 import { AssetFactory } from 'test/factories/asset.factory';
 import { UserFactory } from 'test/factories/user.factory';
@@ -539,6 +540,101 @@ describe(NotificationService.name, () => {
           recipientId: '2',
         },
       });
+    });
+  });
+
+  describe('shared activity notifications', () => {
+    it('selects the asset owner, album owner, and prior participants, excluding the actor', async () => {
+      const album = AlbumFactory.from({ id: 'album' }).build();
+      const albumOwner = album.albumUsers[0].user.id;
+      mocks.activity.getParticipantIds.mockResolvedValue(['actor', 'participant']);
+      mocks.album.getById.mockResolvedValue(getForAlbum(album));
+      mocks.asset.getByIdsWithAllRelationsButStacks.mockResolvedValue([{ ownerId: 'asset-owner' } as any]);
+
+      await sut.onActivityCreate({ activityId: 'activity', actorId: 'actor', albumId: 'album', assetId: 'asset', isLiked: false });
+
+      expect(mocks.job.queue).toHaveBeenCalledTimes(3);
+      expect(mocks.job.queue).toHaveBeenCalledWith({
+        name: JobName.NotifyActivity,
+        data: { id: 'album', activityId: 'activity', recipientId: 'participant', delay: 0 },
+      });
+      expect(mocks.job.queue).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ recipientId: albumOwner }) }));
+      expect(mocks.job.queue).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ recipientId: 'asset-owner' }) }));
+    });
+
+    it('sends an immediate comment notification and email when enabled', async () => {
+      const activity = ActivityFactory.create({ id: 'activity', albumId: 'album', assetId: 'asset', userId: 'actor', isLiked: false });
+      const recipient = UserFactory.create({ id: 'recipient' });
+      const actor = UserFactory.create({ id: 'actor', name: 'Commenter' });
+      mocks.activity.getById.mockResolvedValue(activity);
+      mocks.user.get.mockResolvedValueOnce(recipient).mockResolvedValueOnce(actor);
+      mocks.album.getById.mockResolvedValue(getForAlbum(AlbumFactory.create({ id: 'album', albumName: 'Holiday' })));
+      mocks.notification.create.mockResolvedValue(notificationStub.albumEvent);
+      mocks.systemMetadata.get.mockResolvedValue({ server: {} });
+      mocks.email.renderEmail.mockResolvedValue({ html: '<html />', text: 'text' });
+
+      await expect(sut.handleActivity({ id: 'album', activityId: 'activity', recipientId: 'recipient' })).resolves.toBe(JobStatus.Success);
+
+      expect(mocks.notification.create).toHaveBeenCalledWith(expect.objectContaining({ title: 'New comment', userId: 'recipient' }));
+      expect(mocks.email.renderEmail).toHaveBeenCalledWith(expect.objectContaining({ template: 'activity' }));
+      expect(mocks.job.queue).toHaveBeenCalledWith({
+        name: JobName.SendMail,
+        data: expect.objectContaining({ to: recipient.email, subject: 'Commenter commented on Holiday' }),
+      });
+    });
+
+    it('suppresses a reaction when the recipient disabled reactions', async () => {
+      const activity = ActivityFactory.create({ id: 'activity', albumId: 'album', userId: 'actor', isLiked: true });
+      const recipient = UserFactory.from().metadata({
+        key: UserMetadataKey.Preferences,
+        value: { emailNotifications: { enabled: true, activity: true, reactions: false } },
+      }).build();
+      mocks.activity.getById.mockResolvedValue(activity);
+      mocks.user.get.mockResolvedValueOnce(recipient).mockResolvedValueOnce(UserFactory.create({ id: 'actor' }));
+      mocks.album.getById.mockResolvedValue(getForAlbum(AlbumFactory.create({ id: 'album' })));
+
+      await expect(sut.handleActivity({ id: 'album', activityId: 'activity', recipientId: recipient.id })).resolves.toBe(JobStatus.Skipped);
+      expect(mocks.notification.create).not.toHaveBeenCalled();
+      expect(mocks.email.renderEmail).not.toHaveBeenCalled();
+    });
+
+    it('coalesces hourly activity email delivery without creating an early local notice', async () => {
+      const activity = ActivityFactory.create({ id: 'activity', albumId: 'album', userId: 'actor', isLiked: false });
+      const recipient = UserFactory.from().metadata({
+        key: UserMetadataKey.Preferences,
+        value: { emailNotifications: { frequency: 'hourly' } },
+      }).build();
+      mocks.activity.getById.mockResolvedValue(activity);
+      mocks.user.get.mockResolvedValueOnce(recipient).mockResolvedValueOnce(UserFactory.create({ id: 'actor' }));
+      mocks.album.getById.mockResolvedValue(getForAlbum(AlbumFactory.create({ id: 'album' })));
+
+      await expect(sut.handleActivity({ id: 'album', activityId: 'activity', recipientId: recipient.id })).resolves.toBe(JobStatus.Skipped);
+
+      expect(mocks.job.removeJob).toHaveBeenCalledWith(JobName.NotifyActivity, `album/${recipient.id}`);
+      expect(mocks.job.queue).toHaveBeenCalledWith({
+        name: JobName.NotifyActivity,
+        data: { id: 'album', activityId: 'activity', recipientId: recipient.id, delay: 3_600_000, deferred: true },
+      });
+      expect(mocks.notification.create).not.toHaveBeenCalled();
+    });
+
+    it('queues a non-owner description update for the photo owner', async () => {
+      mocks.asset.getByIdsWithAllRelationsButStacks.mockResolvedValue([{ ownerId: 'owner' } as any]);
+
+      await sut.onAssetDescriptionUpdate({ assetId: 'asset', actorId: 'editor' });
+
+      expect(mocks.job.queue).toHaveBeenCalledWith({
+        name: JobName.NotifyAssetDescription,
+        data: { id: 'asset', recipientId: 'owner', actorId: 'editor' },
+      });
+    });
+
+    it('does not notify an owner about their own description edit', async () => {
+      mocks.asset.getByIdsWithAllRelationsButStacks.mockResolvedValue([{ ownerId: 'owner' } as any]);
+
+      await sut.onAssetDescriptionUpdate({ assetId: 'asset', actorId: 'owner' });
+
+      expect(mocks.job.queue).not.toHaveBeenCalled();
     });
   });
 

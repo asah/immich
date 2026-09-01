@@ -5,8 +5,8 @@
   import { Icon } from '@immich/ui';
   import { onMount } from 'svelte';
 
-  type Props = { value?: string; label?: string };
-  let { value = $bindable(''), label = '' }: Props = $props();
+  type Props = { value?: string; label?: string; onSubmit?: () => void };
+  let { value = $bindable(''), label = '', onSubmit }: Props = $props();
   let editor = $state<HTMLDivElement>();
   let color = $state('#111827');
   let savedRange = $state<Range>();
@@ -128,7 +128,13 @@
       aria-multiline="true"
       oninput={() => (value = editor?.innerHTML ?? '')}
       onblur={() => (value = editor?.innerHTML ?? '')}
-      onkeydown={(event) => event.stopPropagation()}
+      onkeydown={(event) => {
+        event.stopPropagation();
+        if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+          event.preventDefault();
+          onSubmit?.();
+        }
+      }}
       onkeypress={(event) => event.stopPropagation()}
       onkeyup={(event) => {
         event.stopPropagation();

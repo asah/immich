@@ -38,6 +38,11 @@ const getDefaultPreferences = (): UserPreferences => {
       enabled: true,
       albumInvite: true,
       albumUpdate: true,
+      activity: true,
+      comments: true,
+      descriptions: true,
+      reactions: true,
+      frequency: 'immediate',
     },
     download: {
       archiveSize: HumanReadableSize.GiB * 4,

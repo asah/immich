@@ -40,6 +40,7 @@ type EventMap = {
   // album events
   AlbumUpdate: [{ id: string; userIds: string[]; recipientIds: string[] }];
   AlbumInvite: [{ id: string; userId: string; senderName: string }];
+  ActivityCreate: [{ activityId: string; actorId: string; albumId: string; assetId?: string; isLiked: boolean; parentActivityId?: string }];
 
   // asset events
   AssetCreate: [{ asset: Pick<Asset, 'id' | 'ownerId'>; file?: UploadFile }];
@@ -50,6 +51,7 @@ type EventMap = {
   AssetTrash: [{ assetId: string; userId: string }];
   AssetDelete: [{ assetId: string; userId: string }];
   AssetMetadataExtracted: [{ assetId: string; userId: string; source?: JobSource }];
+  AssetDescriptionUpdate: [{ assetId: string; actorId: string }];
 
   // asset bulk events
   AssetTrashAll: [{ assetIds: string[]; userId: string }];

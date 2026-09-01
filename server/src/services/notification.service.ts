@@ -179,6 +179,16 @@ export class NotificationService extends BaseService {
     }
   }
 
+  @OnEvent({ name: 'AssetDescriptionUpdate' })
+  async onAssetDescriptionUpdate({ assetId, actorId }: ArgOf<'AssetDescriptionUpdate'>) {
+    const [asset] = await this.assetRepository.getByIdsWithAllRelationsButStacks([assetId]);
+    if (!asset || asset.ownerId === actorId) return;
+    await this.jobRepository.queue({
+      name: JobName.NotifyAssetDescription,
+      data: { id: assetId, recipientId: asset.ownerId, actorId },
+    });
+  }
+
   @OnEvent({ name: 'AssetRestoreAll' })
   onAssetsRestore({ assetIds, userId }: ArgOf<'AssetRestoreAll'>) {
     this.websocketRepository.clientSend('on_asset_restore', userId, assetIds);
@@ -234,6 +244,28 @@ export class NotificationService extends BaseService {
   @OnEvent({ name: 'AlbumInvite' })
   async onAlbumInvite({ id, userId, senderName }: ArgOf<'AlbumInvite'>) {
     await this.jobRepository.queue({ name: JobName.NotifyAlbumInvite, data: { id, recipientId: userId, senderName } });
+  }
+
+  @OnEvent({ name: 'ActivityCreate' })
+  async onActivityCreate({ activityId, actorId, albumId, assetId, isLiked, parentActivityId }: ArgOf<'ActivityCreate'>) {
+    const recipientIds = new Set<string>(await this.activityRepository.getParticipantIds(albumId, assetId));
+    const album = await this.albumRepository.getById(albumId, { withAssets: false });
+    for (const albumUser of album?.albumUsers ?? []) {
+      if (albumUser.role === 'owner') recipientIds.add(albumUser.user.id);
+    }
+    if (assetId) {
+      const [asset] = await this.assetRepository.getByIdsWithAllRelationsButStacks([assetId]);
+      if (asset) recipientIds.add(asset.ownerId);
+    }
+    if (parentActivityId) {
+      const parent = await this.activityRepository.getById(parentActivityId);
+      if (parent) recipientIds.add(parent.userId);
+    }
+    recipientIds.delete(actorId);
+    for (const recipientId of recipientIds) {
+      await this.jobRepository.removeJob(JobName.NotifyActivity, `${albumId}/${recipientId}`);
+      await this.jobRepository.queue({ name: JobName.NotifyActivity, data: { id: albumId, activityId, recipientId, delay: 0 } });
+    }
   }
 
   @OnEvent({ name: 'SessionDelete' })
@@ -411,6 +443,68 @@ export class NotificationService extends BaseService {
       },
     });
 
+    return JobStatus.Success;
+  }
+
+  @OnJob({ name: JobName.NotifyActivity, queue: QueueName.Notification })
+  async handleActivity({ id: albumId, activityId, recipientId, deferred }: JobOf<JobName.NotifyActivity>) {
+    const [activity, recipient, album] = await Promise.all([
+      this.activityRepository.getById(activityId),
+      this.userRepository.get(recipientId, { withDeleted: false }),
+      this.albumRepository.getById(albumId, { withAssets: false }),
+    ]);
+    if (!activity || !recipient || !album || activity.userId === recipientId) return JobStatus.Skipped;
+    const actor = await this.userRepository.get(activity.userId, { withDeleted: false });
+    if (!actor) return JobStatus.Skipped;
+    const { emailNotifications } = getPreferences(recipient.metadata);
+    const enabledForType = activity.isLiked ? emailNotifications.reactions : emailNotifications.comments;
+    if (!emailNotifications.enabled || !emailNotifications.activity || !enabledForType) return JobStatus.Skipped;
+
+    const delay = { immediate: 0, hourly: 3_600_000, daily: 86_400_000 }[emailNotifications.frequency];
+    if (delay > 0 && !deferred) {
+      await this.jobRepository.removeJob(JobName.NotifyActivity, `${albumId}/${recipientId}`);
+      await this.jobRepository.queue({ name: JobName.NotifyActivity, data: { id: albumId, activityId, recipientId, delay, deferred: true } });
+      return JobStatus.Skipped;
+    }
+    const item = await this.notificationRepository.create({
+      userId: recipientId, type: NotificationType.Activity, level: NotificationLevel.Info,
+      title: activity.isLiked ? 'New reaction' : 'New comment',
+      description: `${actor.name} ${activity.isLiked ? 'reacted to' : 'commented on'} ${album.albumName}`,
+      data: JSON.stringify({ albumId, assetId: activity.assetId }),
+    });
+    this.websocketRepository.clientSend('on_notification', recipientId, mapNotification(item));
+    const { server } = await this.getConfig({ withCache: false });
+    const { html, text } = await this.emailRepository.renderEmail({
+      template: EmailTemplate.ACTIVITY,
+      data: { baseUrl: getExternalDomain(server), albumId, albumName: album.albumName, actorName: actor.name, recipientName: recipient.name, activity: activity.isLiked ? 'reacted to' : 'commented on', assetId: activity.assetId ?? undefined },
+      customTemplate: '',
+    });
+    await this.jobRepository.queue({ name: JobName.SendMail, data: { to: recipient.email, subject: `${actor.name} ${activity.isLiked ? 'reacted to' : 'commented on'} ${album.albumName}`, html, text } });
+    return JobStatus.Success;
+  }
+
+  @OnJob({ name: JobName.NotifyAssetDescription, queue: QueueName.Notification })
+  async handleAssetDescription({ id, recipientId, actorId }: JobOf<JobName.NotifyAssetDescription>) {
+    const [[asset], recipient, actor] = await Promise.all([
+      this.assetRepository.getByIdsWithAllRelationsButStacks([id]),
+      this.userRepository.get(recipientId, { withDeleted: false }),
+      this.userRepository.get(actorId, { withDeleted: false }),
+    ]);
+    if (!asset || !recipient || !actor || recipientId === actorId) return JobStatus.Skipped;
+    const { emailNotifications } = getPreferences(recipient.metadata);
+    if (!emailNotifications.enabled || !emailNotifications.descriptions) return JobStatus.Skipped;
+    const item = await this.notificationRepository.create({
+      userId: recipientId, type: NotificationType.AssetUpdate, level: NotificationLevel.Info,
+      title: 'Photo description updated', description: `${actor.name} updated a photo description`, data: JSON.stringify({ assetId: id }),
+    });
+    this.websocketRepository.clientSend('on_notification', recipientId, mapNotification(item));
+    const { server } = await this.getConfig({ withCache: false });
+    const { html, text } = await this.emailRepository.renderEmail({
+      template: EmailTemplate.ACTIVITY,
+      data: { baseUrl: getExternalDomain(server), albumId: id, albumName: 'a photo', actorName: actor.name, recipientName: recipient.name, activity: 'updated the description of', itemPath: `/photos/${id}` },
+      customTemplate: '',
+    });
+    await this.jobRepository.queue({ name: JobName.SendMail, data: { to: recipient.email, subject: `${actor.name} updated a photo description`, html, text } });
     return JobStatus.Success;
   }
 

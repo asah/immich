@@ -3,7 +3,9 @@ import { render } from '@react-email/render';
 import { createTransport } from 'nodemailer';
 import React from 'react';
 import { AlbumInviteEmail } from 'src/emails/album-invite.email';
+import { AlbumAccountInviteEmail } from 'src/emails/album-account-invite.email';
 import { AlbumUpdateEmail } from 'src/emails/album-update.email';
+import { ActivityEmail } from 'src/emails/activity.email';
 import { TestEmail } from 'src/emails/test.email';
 import { WelcomeEmail } from 'src/emails/welcome.email';
 import { LoggingRepository } from 'src/repositories/logging.repository';
@@ -38,7 +40,9 @@ export enum EmailTemplate {
 
   // ALBUM
   ALBUM_INVITE = 'album-invite',
+  ALBUM_ACCOUNT_INVITE = 'album-account-invite',
   ALBUM_UPDATE = 'album-update',
+  ACTIVITY = 'activity',
 }
 
 interface BaseEmailProps {
@@ -64,11 +68,27 @@ export interface AlbumInviteEmailProps extends BaseEmailProps {
   cid?: string;
 }
 
+export interface AlbumAccountInviteEmailProps extends BaseEmailProps {
+  albumName: string;
+  senderName: string;
+  inviteUrl: string;
+}
+
 export interface AlbumUpdateEmailProps extends BaseEmailProps {
   albumName: string;
   albumId: string;
   recipientName: string;
   cid?: string;
+}
+
+export interface ActivityEmailProps extends BaseEmailProps {
+  albumId: string;
+  albumName: string;
+  actorName: string;
+  recipientName: string;
+  activity: 'commented on' | 'reacted to' | 'updated the description of';
+  assetId?: string;
+  itemPath?: string;
 }
 
 export type EmailRenderRequest =
@@ -88,8 +108,18 @@ export type EmailRenderRequest =
       customTemplate: string;
     }
   | {
+      template: EmailTemplate.ALBUM_ACCOUNT_INVITE;
+      data: AlbumAccountInviteEmailProps;
+      customTemplate: string;
+    }
+  | {
       template: EmailTemplate.ALBUM_UPDATE;
       data: AlbumUpdateEmailProps;
+      customTemplate: string;
+    }
+  | {
+      template: EmailTemplate.ACTIVITY;
+      data: ActivityEmailProps;
       customTemplate: string;
     };
 
@@ -150,9 +180,15 @@ export class EmailRepository {
       case EmailTemplate.ALBUM_INVITE: {
         return React.createElement(AlbumInviteEmail, { ...data, customTemplate });
       }
+      case EmailTemplate.ALBUM_ACCOUNT_INVITE: {
+        return React.createElement(AlbumAccountInviteEmail, { ...data, customTemplate });
+      }
 
       case EmailTemplate.ALBUM_UPDATE: {
         return React.createElement(AlbumUpdateEmail, { ...data, customTemplate });
+      }
+      case EmailTemplate.ACTIVITY: {
+        return React.createElement(ActivityEmail, { ...data, customTemplate });
       }
     }
   }

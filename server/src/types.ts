@@ -306,6 +306,17 @@ export interface INotifyAlbumUpdateJob extends IEntityJob, IDelayedJob {
   recipientId: string;
 }
 
+export interface INotifyActivityJob extends IEntityJob, IDelayedJob {
+  recipientId: string;
+  activityId: string;
+  deferred?: true;
+}
+
+export interface INotifyAssetDescriptionJob extends IEntityJob {
+  recipientId: string;
+  actorId: string;
+}
+
 export type IWorkflowJob<T extends WorkflowType = WorkflowType> = {
   id: string;
   trigger: WorkflowTrigger;
@@ -447,6 +458,8 @@ export type JobItem =
   | { name: JobName.SendMail; data: IEmailJob }
   | { name: JobName.NotifyAlbumInvite; data: INotifyAlbumInviteJob }
   | { name: JobName.NotifyAlbumUpdate; data: INotifyAlbumUpdateJob }
+  | { name: JobName.NotifyActivity; data: INotifyActivityJob }
+  | { name: JobName.NotifyAssetDescription; data: INotifyAssetDescriptionJob }
   | { name: JobName.NotifyUserSignup; data: INotifySignupJob }
 
   // Version check
@@ -605,6 +618,11 @@ export type UserPreferences = {
     enabled: boolean;
     albumInvite: boolean;
     albumUpdate: boolean;
+    activity: boolean;
+    comments: boolean;
+    descriptions: boolean;
+    reactions: boolean;
+    frequency: 'immediate' | 'hourly' | 'daily';
   };
   download: {
     archiveSize: number;

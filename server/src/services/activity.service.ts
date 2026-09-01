@@ -116,6 +116,16 @@ export class ActivityService extends BaseService {
     }
 
     await this.activityRepository.addAssets(activity.id, attachmentIds);
+    if (!isDuplicate) {
+      await this.eventRepository.emit('ActivityCreate', {
+        activityId: activity.id,
+        actorId: auth.user.id,
+        albumId: dto.albumId,
+        assetId: activity.assetId ?? undefined,
+        isLiked: activity.isLiked,
+        parentActivityId: activity.parentActivityId ?? undefined,
+      });
+    }
     return { duplicate: isDuplicate, value: { ...mapActivity(activity), assetIds: attachmentIds } };
   }
 

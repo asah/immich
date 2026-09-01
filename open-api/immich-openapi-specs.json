@@ -2635,6 +2635,60 @@
         "x-immich-state": "Stable"
       }
     },
+    "/albums/{id}/invites": {
+      "post": {
+        "operationId": "inviteUsersToAlbum",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InviteUsersDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "summary": "Invite email addresses to an album",
+        "tags": [
+          "Albums"
+        ],
+        "x-immich-history": [
+          {
+            "version": "v3",
+            "state": "Added"
+          }
+        ],
+        "x-immich-permission": "albumUser.create"
+      }
+    },
     "/albums/{id}/map-markers": {
       "get": {
         "description": "Retrieve map marker information for a specific album by its ID.",
@@ -5203,6 +5257,44 @@
           }
         ],
         "x-immich-state": "Stable"
+      }
+    },
+    "/auth/album-invite/accept": {
+      "post": {
+        "operationId": "acceptAlbumInvite",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlbumInviteAcceptDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponseDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Accept an email album invitation",
+        "tags": [
+          "Authentication"
+        ],
+        "x-immich-history": [
+          {
+            "version": "v3",
+            "state": "Added"
+          }
+        ]
       }
     },
     "/auth/change-password": {
@@ -18685,6 +18777,29 @@
         ],
         "type": "object"
       },
+      "AlbumInviteAcceptDto": {
+        "properties": {
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "password": {
+            "minLength": 8,
+            "type": "string"
+          },
+          "token": {
+            "minLength": 32,
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "password",
+          "token"
+        ],
+        "type": "object"
+      },
       "AlbumResponseDto": {
         "properties": {
           "albumName": {
@@ -21031,6 +21146,10 @@
       },
       "EmailNotificationsResponse": {
         "properties": {
+          "activity": {
+            "description": "Whether to receive email notifications for activity on shared media",
+            "type": "boolean"
+          },
           "albumInvite": {
             "description": "Whether to receive email notifications for album invites",
             "type": "boolean"
@@ -21039,20 +21158,50 @@
             "description": "Whether to receive email notifications for album updates",
             "type": "boolean"
           },
+          "comments": {
+            "description": "Whether to receive email notifications for comments",
+            "type": "boolean"
+          },
+          "descriptions": {
+            "description": "Whether to receive email notifications for photo description changes",
+            "type": "boolean"
+          },
           "enabled": {
             "description": "Whether email notifications are enabled",
+            "type": "boolean"
+          },
+          "frequency": {
+            "description": "Email notification delivery frequency",
+            "enum": [
+              "immediate",
+              "hourly",
+              "daily"
+            ],
+            "type": "string"
+          },
+          "reactions": {
+            "description": "Whether to receive email notifications for reactions",
             "type": "boolean"
           }
         },
         "required": [
+          "activity",
           "albumInvite",
           "albumUpdate",
-          "enabled"
+          "comments",
+          "descriptions",
+          "enabled",
+          "frequency",
+          "reactions"
         ],
         "type": "object"
       },
       "EmailNotificationsUpdate": {
         "properties": {
+          "activity": {
+            "description": "Whether to receive email notifications for activity on shared media",
+            "type": "boolean"
+          },
           "albumInvite": {
             "description": "Whether to receive email notifications for album invites",
             "type": "boolean"
@@ -21061,8 +21210,29 @@
             "description": "Whether to receive email notifications for album updates",
             "type": "boolean"
           },
+          "comments": {
+            "description": "Whether to receive email notifications for comments",
+            "type": "boolean"
+          },
+          "descriptions": {
+            "description": "Whether to receive email notifications for photo description changes",
+            "type": "boolean"
+          },
           "enabled": {
             "description": "Whether email notifications are enabled",
+            "type": "boolean"
+          },
+          "frequency": {
+            "description": "Email notification delivery frequency",
+            "enum": [
+              "immediate",
+              "hourly",
+              "daily"
+            ],
+            "type": "string"
+          },
+          "reactions": {
+            "description": "Whether to receive email notifications for reactions",
             "type": "boolean"
           }
         },
@@ -21392,6 +21562,24 @@
         ],
         "type": "object"
       },
+      "InviteUsersDto": {
+        "properties": {
+          "emails": {
+            "items": {
+              "format": "email",
+              "pattern": "^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$",
+              "type": "string"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "emails"
+        ],
+        "type": "object"
+      },
       "JobCreateDto": {
         "properties": {
           "name": {
@@ -21442,6 +21630,8 @@
           "NotifyUserSignup",
           "NotifyAlbumInvite",
           "NotifyAlbumUpdate",
+          "NotifyActivity",
+          "NotifyAssetDescription",
           "UserDelete",
           "UserDeleteCheck",
           "UserSyncUsage",
@@ -22696,6 +22886,8 @@
           "SystemMessage",
           "AlbumInvite",
           "AlbumUpdate",
+          "Activity",
+          "AssetUpdate",
           "Custom"
         ],
         "type": "string"
@@ -34845,6 +35037,13 @@
       },
       "SystemConfigUserDto": {
         "properties": {
+          "defaultStorageQuota": {
+            "description": "Default storage quota for invitation-created accounts",
+            "maximum": 9007199254740991,
+            "minimum": 0,
+            "nullable": true,
+            "type": "integer"
+          },
           "deleteDelay": {
             "description": "Delete delay",
             "maximum": 9007199254740991,
@@ -34853,6 +35052,7 @@
           }
         },
         "required": [
+          "defaultStorageQuota",
           "deleteDelay"
         ],
         "type": "object"

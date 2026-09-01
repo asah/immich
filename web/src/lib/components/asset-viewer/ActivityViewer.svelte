@@ -297,6 +297,9 @@
                     direction="left"
                     size="small"
                   >
+                    <div class="px-3 py-1 text-xs font-semibold text-gray-500 dark:text-gray-300">
+                      {reaction.user.name}
+                    </div>
                     <MenuOption
                       activeColor="bg-red-200"
                       icon={mdiDeleteOutline}
@@ -319,6 +322,9 @@
                     direction="left"
                     size="small"
                   >
+                    <div class="px-3 py-1 text-xs font-semibold text-gray-500 dark:text-gray-300">
+                      {reaction.user.name}
+                    </div>
                     <MenuOption
                       text="Copy link to comment"
                       subtitle={new Date(reaction.createdAt).toLocaleString(undefined, timeOptions)}
@@ -370,6 +376,9 @@
                       direction="left"
                       size="small"
                     >
+                      <div class="px-3 py-1 text-xs font-semibold text-gray-500 dark:text-gray-300">
+                        {reaction.user.name}
+                      </div>
                       <MenuOption
                         activeColor="bg-red-200"
                         icon={mdiDeleteOutline}
@@ -441,7 +450,7 @@
         class="rounded-2xl border border-gray-300 bg-gray-100 p-2 text-immich-dark-gray dark:border-gray-700 dark:bg-gray-800"
       >
         <form class="flex max-h-64 w-full flex-col gap-2" {onsubmit}>
-          <RichTextEditor bind:value={message} label="" />
+          <RichTextEditor bind:value={message} label="" onSubmit={() => void handleSendComment()} />
           {#if attachedAssets.length}
             <div class="flex gap-1 overflow-x-auto">
               {#each attachedAssets as attached (attached.id)}

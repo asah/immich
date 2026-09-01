@@ -126,6 +126,7 @@ export interface AlbumAssetDisplayInfo {
   cameraSettings: boolean;
   lens: boolean;
   lensSettings: boolean;
+  reactions: boolean;
 }
 
 export const defaultAlbumAssetDisplayInfo: AlbumAssetDisplayInfo = {
@@ -139,6 +140,7 @@ export const defaultAlbumAssetDisplayInfo: AlbumAssetDisplayInfo = {
   cameraSettings: false,
   lens: false,
   lensSettings: false,
+  reactions: true,
 };
 
 export const albumAssetViewSettings = persistedObject<AlbumAssetViewSettings>('album-asset-view-settings', {

@@ -2,6 +2,7 @@ import {
   addAssetsToAlbum as addToAlbum,
   addAssetsToAlbums as addToAlbums,
   addUsersToAlbum,
+  inviteUsersToAlbum,
   AlbumUserRole,
   BulkIdErrorReason,
   deleteAlbum,
@@ -196,6 +197,18 @@ export const handleAddUsersToAlbum = async (album: AlbumResponseDto, users: User
     return true;
   } catch (error) {
     handleError(error, $t('errors.error_adding_users_to_album'));
+  }
+};
+
+export const handleInviteEmailsToAlbum = async (album: AlbumResponseDto, emails: string[]) => {
+  const $t = await getFormatter();
+  try {
+    await inviteUsersToAlbum({ id: album.id, emails });
+    eventManager.emit('AlbumShare');
+    return true;
+  } catch (error) {
+    handleError(error, $t('errors.error_adding_users_to_album'));
+    return false;
   }
 };
 

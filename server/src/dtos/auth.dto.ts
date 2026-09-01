@@ -67,6 +67,10 @@ const SignUpSchema = LoginCredentialSchema.extend({
   name: z.string().describe('User name').meta({ example: 'Admin' }),
 }).meta({ id: 'SignUpDto' });
 
+const AlbumInviteAcceptSchema = z
+  .object({ token: z.string().min(32), name: z.string().min(1).max(100), password: z.string().min(8) })
+  .meta({ id: 'AlbumInviteAcceptDto' });
+
 const ChangePasswordSchema = z
   .object({
     password: z.string().describe('Current password').meta({ example: 'password' }),
@@ -142,6 +146,7 @@ export class LoginCredentialDto extends createZodDto(LoginCredentialSchema) {}
 export class LoginResponseDto extends createZodDto(LoginResponseSchema) {}
 export class LogoutResponseDto extends createZodDto(LogoutResponseSchema) {}
 export class SignUpDto extends createZodDto(SignUpSchema) {}
+export class AlbumInviteAcceptDto extends createZodDto(AlbumInviteAcceptSchema) {}
 export class ChangePasswordDto extends createZodDto(ChangePasswordSchema) {}
 export class PinCodeSetupDto extends createZodDto(PinCodeSetupSchema) {}
 export class PinCodeResetDto extends createZodDto(PinCodeResetSchema) {}

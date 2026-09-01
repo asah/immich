@@ -20,6 +20,7 @@ import { GlobalExceptionFilter } from 'src/middleware/global-exception.filter';
 import { AccessRepository } from 'src/repositories/access.repository';
 import { ActivityRepository } from 'src/repositories/activity.repository';
 import { AlbumUserRepository } from 'src/repositories/album-user.repository';
+import { AlbumInviteRepository } from 'src/repositories/album-invite.repository';
 import { AlbumRepository } from 'src/repositories/album.repository';
 import { ApiKeyRepository } from 'src/repositories/api-key.repository';
 import { AppRepository } from 'src/repositories/app.repository';
@@ -224,6 +225,7 @@ export type ServiceOverrides = {
   activity: ActivityRepository;
   album: AlbumRepository;
   albumUser: AlbumUserRepository;
+  albumInvite: AlbumInviteRepository;
   apiKey: ApiKeyRepository;
   app: AppRepository;
   asset: AssetRepository;
@@ -309,6 +311,7 @@ export const getMocks = () => {
     activity: automock(ActivityRepository),
     album: automock(AlbumRepository, { strict: false }),
     albumUser: automock(AlbumUserRepository),
+    albumInvite: automock(AlbumInviteRepository),
     asset: newAssetRepositoryMock(),
     assetEdit: automock(AssetEditRepository),
     assetJob: automock(AssetJobRepository),
@@ -376,6 +379,7 @@ export const newTestService = <T extends BaseService>(
     overrides.access || (mocks.access as IAccessRepository as AccessRepository),
     overrides.activity || (mocks.activity as As<ActivityRepository>),
     overrides.album || (mocks.album as As<AlbumRepository>),
+    overrides.albumInvite || (mocks.albumInvite as As<AlbumInviteRepository>),
     overrides.albumUser || (mocks.albumUser as As<AlbumUserRepository>),
     overrides.apiKey || (mocks.apiKey as As<ApiKeyRepository>),
     overrides.app || (mocks.app as As<AppRepository>),

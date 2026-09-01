@@ -5,6 +5,7 @@ import { Endpoint, HistoryBuilder } from 'src/decorators';
 import {
   AuthDto,
   AuthStatusResponseDto,
+  AlbumInviteAcceptDto,
   ChangePasswordDto,
   LoginCredentialDto,
   LoginResponseDto,
@@ -57,6 +58,24 @@ export class AuthController {
   })
   signUpAdmin(@Body() dto: SignUpDto): Promise<UserAdminResponseDto> {
     return this.service.adminSignUp(dto);
+  }
+
+  @Post('album-invite/accept')
+  @Endpoint({ summary: 'Accept an email album invitation', history: new HistoryBuilder().added('v3') })
+  async acceptAlbumInvite(
+    @Res({ passthrough: true }) res: Response,
+    @Body() dto: AlbumInviteAcceptDto,
+    @GetLoginDetails() loginDetails: LoginDetails,
+  ): Promise<LoginResponseDto> {
+    const body = await this.service.acceptAlbumInvite(dto, loginDetails);
+    return respondWithCookie(res, body, {
+      isSecure: loginDetails.isSecure,
+      values: [
+        { key: ImmichCookie.AccessToken, value: body.accessToken },
+        { key: ImmichCookie.AuthType, value: AuthType.Password },
+        { key: ImmichCookie.IsAuthenticated, value: 'true' },
+      ],
+    });
   }
 
   @Post('validateToken')

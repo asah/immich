@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { DateTime } from 'luxon';
 import {
   AddUsersDto,
   AlbumResponseDto,
@@ -14,12 +15,14 @@ import {
 import { BulkIdErrorReason, BulkIdResponseDto, BulkIdsDto } from 'src/dtos/asset-ids.response.dto';
 import { AuthDto } from 'src/dtos/auth.dto';
 import { MapMarkerResponseDto } from 'src/dtos/map.dto';
-import { AlbumUserRole, Permission } from 'src/enum';
+import { AlbumUserRole, JobName, Permission } from 'src/enum';
+import { EmailTemplate } from 'src/repositories/email.repository';
 import { AlbumAssetCount, AlbumInfoOptions } from 'src/repositories/album.repository';
 import { BaseService } from 'src/services/base.service';
 import { addAssets, removeAssets } from 'src/utils/asset.util';
 import { asDateTimeString } from 'src/utils/date';
 import { getPreferences } from 'src/utils/preferences';
+import { getExternalDomain } from 'src/utils/misc';
 
 @Injectable()
 export class AlbumService extends BaseService {
@@ -309,6 +312,48 @@ export class AlbumService extends BaseService {
     }
 
     return mapAlbum(await this.findOrFail(id, auth.user.id, { withAssets: true }));
+  }
+
+  async inviteUsers(auth: AuthDto, id: string, emails: string[]): Promise<void> {
+    await this.requireAccess({ auth, permission: Permission.AlbumShare, ids: [id] });
+    const config = await this.getConfig({ withCache: false });
+    if (!config.passwordLogin.enabled || !config.notifications.smtp.enabled || !config.server.externalDomain) {
+      throw new BadRequestException('Email album invitations require password login, SMTP, and an external domain');
+    }
+
+    const album = await this.findOrFail(id, auth.user.id, { withAssets: false });
+    for (const email of new Set(emails.map((email) => email.trim().toLowerCase()))) {
+      const user = await this.userRepository.getByEmail(email);
+      if (user) {
+        if (!album.albumUsers.some(({ user: member }) => member.id === user.id)) {
+          await this.albumUserRepository.create({ albumId: id, userId: user.id, role: AlbumUserRole.Viewer });
+          await this.eventRepository.emit('AlbumInvite', { id, userId: user.id, senderName: auth.user.name });
+        }
+        continue;
+      }
+
+      const token = this.cryptoRepository.randomBytes(32).toString('base64url');
+      await this.albumInviteRepository.createOrReplace({
+        albumId: id,
+        inviterId: auth.user.id,
+        email,
+        tokenHash: this.cryptoRepository.hashSha256(token),
+        role: AlbumUserRole.Viewer,
+        expiresAt: DateTime.now().plus({ days: 7 }).toJSDate(),
+        acceptedAt: null,
+        revokedAt: null,
+      });
+      const inviteUrl = `${getExternalDomain(config.server)}/auth/album-invite?token=${encodeURIComponent(token)}`;
+      const { html, text } = await this.emailRepository.renderEmail({
+        template: EmailTemplate.ALBUM_ACCOUNT_INVITE,
+        data: { albumName: album.albumName, senderName: auth.user.name, inviteUrl, baseUrl: getExternalDomain(config.server) },
+        customTemplate: '',
+      });
+      await this.jobRepository.queue({
+        name: JobName.SendMail,
+        data: { to: email, subject: `${auth.user.name} invited you to a shared album`, html, text },
+      });
+    }
   }
 
   async removeUser(auth: AuthDto, id: string, userId: string | 'me'): Promise<void> {

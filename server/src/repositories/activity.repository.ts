@@ -120,6 +120,16 @@ export class ActivityRepository {
       .execute();
   }
 
+  async getParticipantIds(albumId: string, assetId?: string) {
+    const rows = await this.db
+      .selectFrom('activity')
+      .select('userId')
+      .where('albumId', '=', asUuid(albumId))
+      .$if(!!assetId, (qb) => qb.where('assetId', '=', asUuid(assetId!)))
+      .execute();
+    return [...new Set(rows.map(({ userId }) => userId))];
+  }
+
   @GenerateSql({ params: [{ albumId: DummyValue.UUID, assetId: DummyValue.UUID }] })
   async getStatistics({
     albumId,

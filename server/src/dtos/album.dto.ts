@@ -8,7 +8,7 @@ import { UserResponseSchema, mapUser } from 'src/dtos/user.dto';
 import { AlbumUserRole, AlbumUserRoleSchema, AssetOrder, AssetOrderSchema } from 'src/enum';
 import { MaybeDehydrated } from 'src/types';
 import { asDateTimeString } from 'src/utils/date';
-import { stringToBool } from 'src/validation';
+import { stringToBool, toEmail } from 'src/validation';
 import z from 'zod';
 
 const AlbumUserAddSchema = z
@@ -23,6 +23,8 @@ const AddUsersSchema = z
     albumUsers: z.array(AlbumUserAddSchema).min(1).describe('Album users to add'),
   })
   .meta({ id: 'AddUsersDto' });
+
+const InviteUsersSchema = z.object({ emails: z.array(toEmail).min(1).max(20) }).meta({ id: 'InviteUsersDto' });
 
 const AlbumUserCreateSchema = z
   .object({
@@ -155,6 +157,7 @@ const AlbumUserParamSchema = z.object({
 
 export class AlbumUserParamDto extends createZodDto(AlbumUserParamSchema) {}
 export class AddUsersDto extends createZodDto(AddUsersSchema) {}
+export class InviteUsersDto extends createZodDto(InviteUsersSchema) {}
 export class AlbumUserCreateDto extends createZodDto(AlbumUserCreateSchema) {}
 export class CreateAlbumDto extends createZodDto(CreateAlbumSchema) {}
 export class AlbumsAddAssetsDto extends createZodDto(AlbumsAddAssetsSchema) {}

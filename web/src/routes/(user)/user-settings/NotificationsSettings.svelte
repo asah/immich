@@ -9,6 +9,11 @@
   let emailNotificationsEnabled = $state(authManager.preferences.emailNotifications?.enabled ?? true);
   let albumInviteNotificationEnabled = $state(authManager.preferences.emailNotifications?.albumInvite ?? true);
   let albumUpdateNotificationEnabled = $state(authManager.preferences.emailNotifications?.albumUpdate ?? true);
+  let activityNotificationEnabled = $state(authManager.preferences.emailNotifications?.activity ?? true);
+  let commentNotificationEnabled = $state(authManager.preferences.emailNotifications?.comments ?? true);
+  let reactionNotificationEnabled = $state(authManager.preferences.emailNotifications?.reactions ?? true);
+  let descriptionNotificationEnabled = $state(authManager.preferences.emailNotifications?.descriptions ?? true);
+  let notificationFrequency = $state(authManager.preferences.emailNotifications?.frequency ?? 'immediate');
 
   const handleSave = async () => {
     try {
@@ -18,6 +23,11 @@
             enabled: emailNotificationsEnabled,
             albumInvite: emailNotificationsEnabled && albumInviteNotificationEnabled,
             albumUpdate: emailNotificationsEnabled && albumUpdateNotificationEnabled,
+            activity: emailNotificationsEnabled && activityNotificationEnabled,
+            comments: emailNotificationsEnabled && activityNotificationEnabled && commentNotificationEnabled,
+            descriptions: emailNotificationsEnabled && descriptionNotificationEnabled,
+            reactions: emailNotificationsEnabled && activityNotificationEnabled && reactionNotificationEnabled,
+            frequency: notificationFrequency,
           },
         },
       });
@@ -50,6 +60,30 @@
 
         <Field label={$t('album_updated')} description={$t('album_updated_setting_description')} {disabled}>
           <Switch bind:checked={albumUpdateNotificationEnabled} />
+        </Field>
+
+        <Field label="Shared photo and album activity" description="Owners are notified by default; participants receive relevant replies and updates." {disabled}>
+          <Switch bind:checked={activityNotificationEnabled} />
+        </Field>
+
+        <Field label="Comments" description="Comments and replies on shared photos and albums." disabled={disabled || !activityNotificationEnabled}>
+          <Switch bind:checked={commentNotificationEnabled} />
+        </Field>
+
+        <Field label="Reactions" description="Reactions on shared photos and albums." disabled={disabled || !activityNotificationEnabled}>
+          <Switch bind:checked={reactionNotificationEnabled} />
+        </Field>
+
+        <Field label="Photo description changes" description="A non-owner changed the description of one of your photos." {disabled}>
+          <Switch bind:checked={descriptionNotificationEnabled} />
+        </Field>
+
+        <Field label="Email delivery" description="Immediate sends each notice; hourly and daily coalesce updates for the same item." {disabled}>
+          <select class="immich-form-select" bind:value={notificationFrequency}>
+            <option value="immediate">Immediately</option>
+            <option value="hourly">Hourly</option>
+            <option value="daily">Daily</option>
+          </select>
         </Field>
       </div>
 

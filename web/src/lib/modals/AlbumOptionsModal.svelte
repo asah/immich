@@ -126,7 +126,18 @@
 
   const updateSortCriterion = (index: number, update: Partial<AlbumAssetSortCriterion>) => {
     void saveSortCriteria(
-      sortCriteria.map((criterion, at) => (at === index ? { ...criterion, ...update } : criterion)),
+      sortCriteria.map((criterion, at) =>
+        at === index
+          ? {
+              ...criterion,
+              ...update,
+              sortOrder:
+                update.sortBy === AlbumAssetSortBy.Engagement || update.sortBy === AlbumAssetSortBy.FileSize
+                  ? SortOrder.Desc
+                  : (update.sortOrder ?? criterion.sortOrder),
+            }
+          : criterion,
+      ),
     );
   };
 
@@ -141,6 +152,7 @@
     { key: 'cameraSettings', label: $t('camera_settings') },
     { key: 'lens', label: $t('lens_name') },
     { key: 'lensSettings', label: $t('lens_settings') },
+    { key: 'reactions', label: $t('reactions') },
   ]);
 
   const setDisplayInfo = (key: keyof AlbumAssetDisplayInfo, checked: boolean) => {
@@ -209,7 +221,17 @@
                 disabled={readOnly}
                 onclick={() => {
                   const next = sortByOptions.find(({ value }) => !sortCriteria.some(({ sortBy }) => sortBy === value));
-                  if (next) void saveSortCriteria([...sortCriteria, { sortBy: next.value, sortOrder: SortOrder.Asc }]);
+                  if (next)
+                    void saveSortCriteria([
+                      ...sortCriteria,
+                      {
+                        sortBy: next.value,
+                        sortOrder:
+                          next.value === AlbumAssetSortBy.Engagement || next.value === AlbumAssetSortBy.FileSize
+                            ? SortOrder.Desc
+                            : SortOrder.Asc,
+                      },
+                    ]);
                 }}>+ {$t('add_sort_criterion')}</button
               >
             {/if}

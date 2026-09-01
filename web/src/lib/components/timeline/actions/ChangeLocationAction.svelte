@@ -1,5 +1,6 @@
 <script lang="ts">
   import MenuOption from '$lib/components/shared-components/context-menu/MenuOption.svelte';
+  import { shortcut } from '$lib/actions/shortcut';
   import { assetMultiSelectManager } from '$lib/managers/asset-multi-select-manager.svelte';
   import { authManager } from '$lib/managers/auth-manager.svelte';
   import GeolocationPointPickerModal from '$lib/modals/GeolocationPointPickerModal.svelte';
@@ -33,6 +34,8 @@
     }
   };
 </script>
+
+<svelte:document use:shortcut={{ shortcut: { key: 'l', shift: true }, onShortcut: onAction }} />
 
 {#if menuItem}
   <MenuOption text={$t('change_location')} icon={mdiMapMarkerMultipleOutline} onClick={onAction} />

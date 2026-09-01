@@ -403,6 +403,7 @@ const SystemConfigTrashSchema = z
 const SystemConfigUserSchema = z
   .object({
     deleteDelay: z.int().min(1).describe('Delete delay'),
+    defaultStorageQuota: z.int().min(0).nullable().describe('Default storage quota for invitation-created accounts'),
   })
   .meta({ id: 'SystemConfigUserDto' });
 

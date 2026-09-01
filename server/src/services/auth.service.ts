@@ -7,6 +7,7 @@ import { AuthSharedLink, AuthUser, UserAdmin } from 'src/database';
 import {
   AuthDto,
   AuthStatusResponseDto,
+  AlbumInviteAcceptDto,
   ChangePasswordDto,
   LoginCredentialDto,
   LogoutResponseDto,
@@ -216,6 +217,27 @@ export class AuthService extends BaseService {
     });
 
     return mapUserAdmin(admin);
+  }
+
+  async acceptAlbumInvite(dto: AlbumInviteAcceptDto, loginDetails: LoginDetails) {
+    const config = await this.getConfig({ withCache: false });
+    if (!config.passwordLogin.enabled) throw new BadRequestException('Password login has been disabled');
+    const quota = config.user.defaultStorageQuota;
+    const result = await this.albumInviteRepository.redeem(this.cryptoRepository.hashSha256(dto.token), {
+      name: dto.name.trim(),
+      password: await this.cryptoRepository.hashBcrypt(dto.password, SALT_ROUNDS),
+      quotaSizeInBytes: quota === null ? null : quota * HumanReadableSize.GiB,
+    });
+    if (result.status !== 'success') {
+      if (result.status === 'existing') {
+        throw new BadRequestException('An account already exists for this invitation. Sign in to join the album.');
+      }
+      throw new BadRequestException('This invitation is invalid or has expired');
+    }
+    const user = await this.userRepository.get(result.userId, {});
+    if (!user) throw new BadRequestException('Unable to create account from invitation');
+    await this.eventRepository.emit('UserCreate', user);
+    return this.createLoginResponse(user, loginDetails);
   }
 
   async authenticate({ headers, queryParams, metadata }: ValidateRequest): Promise<AuthDto> {

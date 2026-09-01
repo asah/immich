@@ -10,6 +10,7 @@ import {
   AlbumUserParamDto,
   CreateAlbumDto,
   GetAlbumsDto,
+  InviteUsersDto,
   UpdateAlbumDto,
   UpdateAlbumUserDto,
 } from 'src/dtos/album.dto';
@@ -164,6 +165,13 @@ export class AlbumController {
     @Body() dto: AddUsersDto,
   ): Promise<AlbumResponseDto> {
     return this.service.addUsers(auth, id, dto);
+  }
+
+  @Post(':id/invites')
+  @Authenticated({ permission: Permission.AlbumUserCreate })
+  @Endpoint({ summary: 'Invite email addresses to an album', history: new HistoryBuilder().added('v3') })
+  inviteUsersToAlbum(@Auth() auth: AuthDto, @Param() { id }: UUIDParamDto, @Body() dto: InviteUsersDto): Promise<void> {
+    return this.service.inviteUsers(auth, id, dto.emails);
   }
 
   @Put(':id/user/:userId')

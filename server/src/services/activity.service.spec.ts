@@ -13,6 +13,10 @@ describe(ActivityService.name, () => {
 
   beforeEach(() => {
     ({ sut, mocks } = newTestService(ActivityService));
+    mocks.activity.getAssetIds.mockResolvedValue([]);
+    mocks.activity.getAssetsInAlbum.mockImplementation(async (_albumId, assetIds) => assetIds.map((assetId) => ({ assetId })));
+    mocks.activity.addAssets.mockResolvedValue();
+    mocks.activity.updateReaction.mockResolvedValue(undefined as never);
   });
 
   it('should work', () => {
@@ -100,7 +104,10 @@ describe(ActivityService.name, () => {
         albumId: activity.albumId,
         assetId: activity.assetId,
         comment: 'comment',
+        commentDocument: null,
         isLiked: false,
+        parentActivityId: null,
+        reactionKey: null,
       });
     });
 
@@ -126,7 +133,22 @@ describe(ActivityService.name, () => {
 
       await sut.create(AuthFactory.create({ id: userId }), { albumId, assetId, type: ReactionType.LIKE });
 
-      expect(mocks.activity.create).toHaveBeenCalledWith({ userId: activity.userId, albumId, assetId, isLiked: true });
+      expect(mocks.activity.create).toHaveBeenCalledWith({
+        userId: activity.userId, albumId, assetId, isLiked: true, comment: null, commentDocument: null, parentActivityId: null, reactionKey: ReactionType.LIKE,
+      });
+    });
+
+    it('emits an activity event for a newly-created comment', async () => {
+      const [albumId, assetId, userId] = newUuids();
+      const activity = ActivityFactory.create({ id: 'activity', userId, albumId, assetId, isLiked: false });
+      mocks.access.activity.checkCreateAccess.mockResolvedValue(new Set([albumId]));
+      mocks.activity.create.mockResolvedValue(getForActivity(activity));
+
+      await sut.create(AuthFactory.create({ id: userId }), { albumId, assetId, type: ReactionType.COMMENT, comment: 'comment' });
+
+      expect(mocks.event.emit).toHaveBeenCalledWith('ActivityCreate', {
+        activityId: 'activity', actorId: userId, albumId, assetId, isLiked: false, parentActivityId: undefined,
+      });
     });
 
     it('should skip if like exists', async () => {
@@ -140,6 +162,7 @@ describe(ActivityService.name, () => {
       await sut.create(AuthFactory.create(), { albumId, assetId, type: ReactionType.LIKE });
 
       expect(mocks.activity.create).not.toHaveBeenCalled();
+      expect(mocks.event.emit).toHaveBeenCalledWith('ActivityCreate', expect.objectContaining({ isLiked: true }));
     });
   });
 

@@ -911,6 +911,8 @@ export enum JobName {
   NotifyUserSignup = 'NotifyUserSignup',
   NotifyAlbumInvite = 'NotifyAlbumInvite',
   NotifyAlbumUpdate = 'NotifyAlbumUpdate',
+  NotifyActivity = 'NotifyActivity',
+  NotifyAssetDescription = 'NotifyAssetDescription',
 
   UserDelete = 'UserDelete',
   UserDeleteCheck = 'UserDeleteCheck',
@@ -1170,6 +1172,8 @@ export enum NotificationType {
   SystemMessage = 'SystemMessage',
   AlbumInvite = 'AlbumInvite',
   AlbumUpdate = 'AlbumUpdate',
+  Activity = 'Activity',
+  AssetUpdate = 'AssetUpdate',
   Custom = 'Custom',
 }
 

@@ -213,6 +213,7 @@ export type SystemConfig = {
   };
   user: {
     deleteDelay: number;
+    defaultStorageQuota: number | null;
   };
 };
 
@@ -445,5 +446,6 @@ export const defaults = Object.freeze<SystemConfig>({
   },
   user: {
     deleteDelay: 7,
+    defaultStorageQuota: null,
   },
 });

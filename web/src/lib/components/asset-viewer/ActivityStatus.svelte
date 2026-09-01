@@ -17,6 +17,8 @@
     onReaction?: (reactionKey: string) => void;
     onComments?: () => void;
     allowAddingReactions?: boolean;
+    activeReactionKey?: string;
+    activeComments?: boolean;
   }
 
   let {
@@ -28,6 +30,8 @@
     onReaction,
     onComments,
     allowAddingReactions = true,
+    activeReactionKey,
+    activeComments = false,
   }: Props = $props();
   const reactionCounts = $derived(
     activityManager.activities
@@ -45,8 +49,8 @@
     <button
       type="button"
       class="flex items-center gap-1 rounded-full border border-transparent px-2 py-1 text-sm transition hover:border-primary hover:bg-primary/10"
-      class:border-primary={isLiked?.reactionKey === key}
-      class:bg-primary={isLiked?.reactionKey === key}
+      class:border-primary={activeReactionKey ? activeReactionKey === key : isLiked?.reactionKey === key}
+      class:bg-primary={activeReactionKey ? activeReactionKey === key : isLiked?.reactionKey === key}
       aria-label={`${reactionEmoji[key] ?? '😀'} ${count} reaction${count === 1 ? '' : 's'}`}
       title={`${count} ${key} reaction${count === 1 ? '' : 's'}`}
       onclick={() => onReaction?.(key)}
@@ -80,7 +84,7 @@
     size="large"
     variant="ghost"
     color="secondary"
-    class="p-3 text-base"
+    class={activeComments ? 'border-primary bg-primary p-3 text-base' : 'p-3 text-base'}
   >
     {#if numberOfComments}
       {numberOfComments.toLocaleString($locale)}

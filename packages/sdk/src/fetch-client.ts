@@ -321,12 +321,22 @@ export type DownloadResponse = {
     includeEmbeddedVideos: boolean;
 };
 export type EmailNotificationsResponse = {
+    /** Whether to receive email notifications for activity on shared media */
+    activity: boolean;
     /** Whether to receive email notifications for album invites */
     albumInvite: boolean;
     /** Whether to receive email notifications for album updates */
     albumUpdate: boolean;
+    /** Whether to receive email notifications for comments */
+    comments: boolean;
+    /** Whether to receive email notifications for photo description changes */
+    descriptions: boolean;
     /** Whether email notifications are enabled */
     enabled: boolean;
+    /** Email notification delivery frequency */
+    frequency: 'immediate' | 'hourly' | 'daily';
+    /** Whether to receive email notifications for reactions */
+    reactions: boolean;
 };
 export type FoldersResponse = {
     /** Whether folders are enabled */
@@ -405,12 +415,22 @@ export type DownloadUpdate = {
     includeEmbeddedVideos?: boolean;
 };
 export type EmailNotificationsUpdate = {
+    /** Whether to receive email notifications for activity on shared media */
+    activity?: boolean;
     /** Whether to receive email notifications for album invites */
     albumInvite?: boolean;
     /** Whether to receive email notifications for album updates */
     albumUpdate?: boolean;
+    /** Whether to receive email notifications for comments */
+    comments?: boolean;
+    /** Whether to receive email notifications for photo description changes */
+    descriptions?: boolean;
     /** Whether email notifications are enabled */
     enabled?: boolean;
+    /** Email notification delivery frequency */
+    frequency?: 'immediate' | 'hourly' | 'daily';
+    /** Whether to receive email notifications for reactions */
+    reactions?: boolean;
 };
 export type FoldersUpdate = {
     /** Whether folders are enabled */
@@ -3672,6 +3692,8 @@ export type SystemConfigTrashDto = {
     enabled: boolean;
 };
 export type SystemConfigUserDto = {
+    /** Default storage quota for invitation-created accounts */
+    defaultStorageQuota: number | null;
     /** Delete delay */
     deleteDelay: number;
 };
@@ -5103,6 +5125,25 @@ export function addUsersToAlbum({ id, addUsersDto }: {
         ...opts,
         method: "PUT",
         body: addUsersDto
+    })));
+}
+/** Create an account and accept a one-time album invitation. */
+export function acceptAlbumInvite({ albumInviteAcceptDto }: { albumInviteAcceptDto: { token: string; name: string; password: string } }, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 201;
+        data: LoginResponseDto;
+    }>("/auth/album-invite/accept", oazapfts.json({
+        ...opts,
+        method: "POST",
+        body: albumInviteAcceptDto
+    })));
+}
+/** Invite email addresses to an album. Unknown recipients create their account from the emailed link. */
+export function inviteUsersToAlbum({ id, emails }: { id: string; emails: string[] }, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchText(`/albums/${encodeURIComponent(id)}/invites`, oazapfts.json({
+        ...opts,
+        method: "POST",
+        body: { emails }
     })));
 }
 /**

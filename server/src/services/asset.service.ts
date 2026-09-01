@@ -171,6 +171,10 @@ export class AssetService extends BaseService {
       throw new BadRequestException('Asset not found');
     }
 
+    if (description !== undefined) {
+      await this.eventRepository.emit('AssetDescriptionUpdate', { assetId: id, actorId: auth.user.id });
+    }
+
     return mapAsset(asset, { auth });
   }
 

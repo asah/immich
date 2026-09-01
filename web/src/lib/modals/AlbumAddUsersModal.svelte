@@ -1,7 +1,7 @@
 <script lang="ts">
   import { initInput } from '$lib/actions/focus';
   import UserAvatar from '$lib/components/shared-components/UserAvatar.svelte';
-  import { handleAddUsersToAlbum } from '$lib/services/album.service';
+  import { handleAddUsersToAlbum, handleInviteEmailsToAlbum } from '$lib/services/album.service';
   import { normalizeSearchString } from '$lib/utils/string-utils';
   import { searchUsers, type AlbumResponseDto, type UserResponseDto } from '@immich/sdk';
   import { FormModal, ListButton, LoadingSpinner, Stack, Text } from '@immich/ui';
@@ -16,6 +16,7 @@
   };
 
   let search = $state('');
+  let emails = $state('');
 
   const { album, onClose }: Props = $props();
 
@@ -43,7 +44,10 @@
   };
 
   const onSubmit = async () => {
-    const success = await handleAddUsersToAlbum(album, [...selectedUsers.values()]);
+    const emailAddresses = [...new Set(emails.split(/[;,\s]+/).map((email) => email.trim()).filter(Boolean))];
+    const existingSuccess = selectedUsers.size === 0 || (await handleAddUsersToAlbum(album, [...selectedUsers.values()]));
+    const emailSuccess = emailAddresses.length === 0 || (await handleInviteEmailsToAlbum(album, emailAddresses));
+    const success = existingSuccess && emailSuccess;
     if (success) {
       onClose();
     }
@@ -60,7 +64,7 @@
   submitText={$t('add')}
   cancelText={$t('back')}
   {onSubmit}
-  disabled={selectedUsers.size === 0}
+  disabled={selectedUsers.size === 0 && emails.trim().length === 0}
   {onClose}
 >
   {#if loading}
@@ -69,6 +73,16 @@
     </div>
   {:else}
     <Stack>
+      <input
+        class="border-b-4 border-immich-bg px-6 py-2 text-2xl focus:border-immich-primary dark:border-immich-dark-gray dark:focus:border-immich-dark-primary"
+        placeholder="Email address (separate multiple addresses with commas)"
+        bind:value={emails}
+        type="email"
+        multiple
+      />
+      {#if emails.trim()}
+        <Text size="small" color="muted">New people receive a one-time link to create an account and join this album.</Text>
+      {/if}
       <input
         class="border-b-4 border-immich-bg px-6 py-2 text-2xl focus:border-immich-primary dark:border-immich-dark-gray dark:focus:border-immich-dark-primary"
         placeholder={$t('search')}

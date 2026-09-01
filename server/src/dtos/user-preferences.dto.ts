@@ -71,6 +71,11 @@ const EmailNotificationsUpdateSchema = z
     enabled: z.boolean().optional().describe('Whether email notifications are enabled'),
     albumInvite: z.boolean().optional().describe('Whether to receive email notifications for album invites'),
     albumUpdate: z.boolean().optional().describe('Whether to receive email notifications for album updates'),
+    activity: z.boolean().optional().describe('Whether to receive email notifications for activity on shared media'),
+    comments: z.boolean().optional().describe('Whether to receive email notifications for comments'),
+    descriptions: z.boolean().optional().describe('Whether to receive email notifications for photo description changes'),
+    reactions: z.boolean().optional().describe('Whether to receive email notifications for reactions'),
+    frequency: z.enum(['immediate', 'hourly', 'daily']).optional().describe('Email notification delivery frequency'),
   })
   .optional()
   .meta({ id: 'EmailNotificationsUpdate' });
@@ -176,6 +181,11 @@ const EmailNotificationsResponseSchema = z
     enabled: z.boolean().describe('Whether email notifications are enabled'),
     albumInvite: z.boolean().describe('Whether to receive email notifications for album invites'),
     albumUpdate: z.boolean().describe('Whether to receive email notifications for album updates'),
+    activity: z.boolean().describe('Whether to receive email notifications for activity on shared media'),
+    comments: z.boolean().describe('Whether to receive email notifications for comments'),
+    descriptions: z.boolean().describe('Whether to receive email notifications for photo description changes'),
+    reactions: z.boolean().describe('Whether to receive email notifications for reactions'),
+    frequency: z.enum(['immediate', 'hourly', 'daily']).describe('Email notification delivery frequency'),
   })
   .meta({ id: 'EmailNotificationsResponse' });
 

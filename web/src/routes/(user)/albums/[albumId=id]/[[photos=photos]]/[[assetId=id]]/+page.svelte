@@ -726,7 +726,9 @@
             >
               {#snippet assetOverlay(asset)}
                 {@const engagement = engagementByAsset[asset.id] ?? { reactions: {}, comments: 0 }}
-                <AssetEngagementBadge reactions={engagement.reactions} comments={engagement.comments} />
+                {#if $albumAssetViewSettings.displayInfo?.reactions ?? true}
+                  <AssetEngagementBadge reactions={engagement.reactions} comments={engagement.comments} />
+                {/if}
               {/snippet}
             </GalleryViewer>
           </div>
@@ -751,7 +753,9 @@
         >
           {#snippet customThumbnailLayout(asset)}
             {@const engagement = engagementByAsset[asset.id] ?? { reactions: {}, comments: 0 }}
-            <AssetEngagementBadge reactions={engagement.reactions} comments={engagement.comments} />
+            {#if $albumAssetViewSettings.displayInfo?.reactions ?? true}
+              <AssetEngagementBadge reactions={engagement.reactions} comments={engagement.comments} />
+            {/if}
           {/snippet}
           {#if viewMode !== AlbumPageViewMode.SELECT_ASSETS}
             {#if viewMode !== AlbumPageViewMode.SELECT_THUMBNAIL}
@@ -850,6 +854,8 @@
             numberOfLikes={undefined}
             onFavorite={handleFavorite}
             allowAddingReactions={false}
+            activeReactionKey={engagementFilter === 'comments' ? undefined : engagementFilter}
+            activeComments={engagementFilter === 'comments'}
             onReaction={(key) => (engagementFilter = engagementFilter === key ? undefined : key)}
             onComments={() => (engagementFilter = engagementFilter === 'comments' ? undefined : 'comments')}
           />
