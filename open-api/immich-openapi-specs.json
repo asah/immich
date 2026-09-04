@@ -2636,6 +2636,58 @@
       }
     },
     "/albums/{id}/invites": {
+      "get": {
+        "operationId": "getPendingInvites",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AlbumInviteResponseDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "summary": "List pending email invitations sent by the current user",
+        "tags": [
+          "Albums"
+        ],
+        "x-immich-history": [
+          {
+            "version": "v3",
+            "state": "Added"
+          }
+        ],
+        "x-immich-permission": "album.share"
+      },
       "post": {
         "operationId": "inviteUsersToAlbum",
         "parameters": [
@@ -2687,6 +2739,62 @@
           }
         ],
         "x-immich-permission": "albumUser.create"
+      }
+    },
+    "/albums/{id}/invites/{inviteId}": {
+      "delete": {
+        "operationId": "revokeInvite",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Album ID",
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+              "type": "string"
+            }
+          },
+          {
+            "name": "inviteId",
+            "required": true,
+            "in": "path",
+            "description": "Invitation ID",
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "summary": "Revoke a pending email invitation",
+        "tags": [
+          "Albums"
+        ],
+        "x-immich-history": [
+          {
+            "version": "v3",
+            "state": "Added"
+          }
+        ],
+        "x-immich-permission": "album.share"
       }
     },
     "/albums/{id}/map-markers": {
@@ -5278,7 +5386,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LoginResponseDto"
+                  "$ref": "#/components/schemas/AlbumInviteAcceptResponseDto"
                 }
               }
             },
@@ -5286,6 +5394,93 @@
           }
         },
         "summary": "Accept an email album invitation",
+        "tags": [
+          "Authentication"
+        ],
+        "x-immich-history": [
+          {
+            "version": "v3",
+            "state": "Added"
+          }
+        ]
+      }
+    },
+    "/auth/album-invite/claim": {
+      "post": {
+        "operationId": "claimAlbumInvite",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlbumInviteTokenDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlbumInviteClaimDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "summary": "Claim an email album invitation with an existing account",
+        "tags": [
+          "Authentication"
+        ],
+        "x-immich-history": [
+          {
+            "version": "v3",
+            "state": "Added"
+          }
+        ]
+      }
+    },
+    "/auth/album-invite/preview": {
+      "post": {
+        "operationId": "getAlbumInvitePreview",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlbumInviteTokenDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlbumInvitePreviewDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Preview an email album invitation",
         "tags": [
           "Authentication"
         ],
@@ -18796,6 +18991,153 @@
         "required": [
           "name",
           "password",
+          "token"
+        ],
+        "type": "object"
+      },
+      "AlbumInviteAcceptResponseDto": {
+        "properties": {
+          "accessToken": {
+            "description": "Access token",
+            "type": "string"
+          },
+          "albumId": {
+            "description": "Album ID",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+            "type": "string"
+          },
+          "isAdmin": {
+            "description": "Is admin user",
+            "type": "boolean"
+          },
+          "isOnboarded": {
+            "description": "Is onboarded",
+            "type": "boolean"
+          },
+          "name": {
+            "description": "User name",
+            "type": "string"
+          },
+          "profileImagePath": {
+            "description": "Profile image path",
+            "type": "string"
+          },
+          "shouldChangePassword": {
+            "description": "Should change password",
+            "type": "boolean"
+          },
+          "userEmail": {
+            "description": "User email",
+            "format": "email",
+            "pattern": "^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$",
+            "type": "string"
+          },
+          "userId": {
+            "description": "User ID",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "accessToken",
+          "albumId",
+          "isAdmin",
+          "isOnboarded",
+          "name",
+          "profileImagePath",
+          "shouldChangePassword",
+          "userEmail",
+          "userId"
+        ],
+        "type": "object"
+      },
+      "AlbumInviteClaimDto": {
+        "properties": {
+          "albumId": {
+            "description": "Album ID",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "albumId"
+        ],
+        "type": "object"
+      },
+      "AlbumInvitePreviewDto": {
+        "properties": {
+          "albumId": {
+            "description": "Album ID",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+            "type": "string"
+          },
+          "albumName": {
+            "description": "Album name",
+            "type": "string"
+          },
+          "recipientEmail": {
+            "description": "Masked email address the invitation was sent to",
+            "type": "string"
+          },
+          "senderName": {
+            "description": "Name of the person who shared the album",
+            "type": "string"
+          }
+        },
+        "required": [
+          "albumId",
+          "albumName",
+          "recipientEmail",
+          "senderName"
+        ],
+        "type": "object"
+      },
+      "AlbumInviteResponseDto": {
+        "properties": {
+          "createdAt": {
+            "description": "Invitation creation time",
+            "format": "date-time",
+            "type": "string"
+          },
+          "email": {
+            "description": "Invitation email",
+            "format": "email",
+            "pattern": "^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$",
+            "type": "string"
+          },
+          "expiresAt": {
+            "description": "Invitation expiry time",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "description": "Invitation ID",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "createdAt",
+          "email",
+          "expiresAt",
+          "id"
+        ],
+        "type": "object"
+      },
+      "AlbumInviteTokenDto": {
+        "properties": {
+          "token": {
+            "maxLength": 128,
+            "minLength": 32,
+            "type": "string"
+          }
+        },
+        "required": [
           "token"
         ],
         "type": "object"

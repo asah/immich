@@ -71,6 +71,25 @@ const AlbumInviteAcceptSchema = z
   .object({ token: z.string().min(32), name: z.string().min(1).max(100), password: z.string().min(8) })
   .meta({ id: 'AlbumInviteAcceptDto' });
 
+const AlbumInviteTokenSchema = z.object({ token: z.string().min(32).max(128) });
+
+const AlbumInvitePreviewSchema = z
+  .object({
+    albumId: z.uuidv4().describe('Album ID'),
+    albumName: z.string().describe('Album name'),
+    senderName: z.string().describe('Name of the person who shared the album'),
+    recipientEmail: z.string().describe('Masked email address the invitation was sent to'),
+  })
+  .meta({ id: 'AlbumInvitePreviewDto' });
+
+const AlbumInviteClaimSchema = z
+  .object({ albumId: z.uuidv4().describe('Album ID') })
+  .meta({ id: 'AlbumInviteClaimDto' });
+
+const AlbumInviteAcceptResponseSchema = LoginResponseSchema.extend({
+  albumId: z.uuidv4().describe('Album ID'),
+}).meta({ id: 'AlbumInviteAcceptResponseDto' });
+
 const ChangePasswordSchema = z
   .object({
     password: z.string().describe('Current password').meta({ example: 'password' }),
@@ -147,6 +166,10 @@ export class LoginResponseDto extends createZodDto(LoginResponseSchema) {}
 export class LogoutResponseDto extends createZodDto(LogoutResponseSchema) {}
 export class SignUpDto extends createZodDto(SignUpSchema) {}
 export class AlbumInviteAcceptDto extends createZodDto(AlbumInviteAcceptSchema) {}
+export class AlbumInviteTokenDto extends createZodDto(AlbumInviteTokenSchema) {}
+export class AlbumInvitePreviewDto extends createZodDto(AlbumInvitePreviewSchema) {}
+export class AlbumInviteClaimDto extends createZodDto(AlbumInviteClaimSchema) {}
+export class AlbumInviteAcceptResponseDto extends createZodDto(AlbumInviteAcceptResponseSchema) {}
 export class ChangePasswordDto extends createZodDto(ChangePasswordSchema) {}
 export class PinCodeSetupDto extends createZodDto(PinCodeSetupSchema) {}
 export class PinCodeResetDto extends createZodDto(PinCodeResetSchema) {}

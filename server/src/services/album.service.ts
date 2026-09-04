@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { DateTime } from 'luxon';
 import {
   AddUsersDto,
+  AlbumInviteResponseDto,
   AlbumResponseDto,
   AlbumsAddAssetsDto,
   AlbumsAddAssetsResponseDto,
@@ -16,13 +17,13 @@ import { BulkIdErrorReason, BulkIdResponseDto, BulkIdsDto } from 'src/dtos/asset
 import { AuthDto } from 'src/dtos/auth.dto';
 import { MapMarkerResponseDto } from 'src/dtos/map.dto';
 import { AlbumUserRole, JobName, Permission } from 'src/enum';
-import { EmailTemplate } from 'src/repositories/email.repository';
 import { AlbumAssetCount, AlbumInfoOptions } from 'src/repositories/album.repository';
+import { EmailTemplate } from 'src/repositories/email.repository';
 import { BaseService } from 'src/services/base.service';
 import { addAssets, removeAssets } from 'src/utils/asset.util';
 import { asDateTimeString } from 'src/utils/date';
-import { getPreferences } from 'src/utils/preferences';
 import { getExternalDomain } from 'src/utils/misc';
+import { getPreferences } from 'src/utils/preferences';
 
 @Injectable()
 export class AlbumService extends BaseService {
@@ -343,10 +344,15 @@ export class AlbumService extends BaseService {
         acceptedAt: null,
         revokedAt: null,
       });
-      const inviteUrl = `${getExternalDomain(config.server)}/auth/album-invite?token=${encodeURIComponent(token)}`;
+      const inviteUrl = `${getExternalDomain(config.server)}/auth/album-invite#token=${encodeURIComponent(token)}`;
       const { html, text } = await this.emailRepository.renderEmail({
         template: EmailTemplate.ALBUM_ACCOUNT_INVITE,
-        data: { albumName: album.albumName, senderName: auth.user.name, inviteUrl, baseUrl: getExternalDomain(config.server) },
+        data: {
+          albumName: album.albumName,
+          senderName: auth.user.name,
+          inviteUrl,
+          baseUrl: getExternalDomain(config.server),
+        },
         customTemplate: '',
       });
       await this.jobRepository.queue({
@@ -354,6 +360,22 @@ export class AlbumService extends BaseService {
         data: { to: email, subject: `${auth.user.name} invited you to a shared album`, html, text },
       });
     }
+  }
+
+  async getPendingInvites(auth: AuthDto, id: string): Promise<AlbumInviteResponseDto[]> {
+    await this.requireAccess({ auth, permission: Permission.AlbumShare, ids: [id] });
+    const invites = await this.albumInviteRepository.getPending(id, auth.user.id);
+    return invites.map((invite) => ({
+      id: invite.id,
+      email: invite.email,
+      createdAt: asDateTimeString(invite.createdAt),
+      expiresAt: asDateTimeString(invite.expiresAt),
+    }));
+  }
+
+  async revokeInvite(auth: AuthDto, albumId: string, inviteId: string): Promise<void> {
+    await this.requireAccess({ auth, permission: Permission.AlbumShare, ids: [albumId] });
+    await this.albumInviteRepository.revoke(inviteId, albumId, auth.user.id);
   }
 
   async removeUser(auth: AuthDto, id: string, userId: string | 'me'): Promise<void> {

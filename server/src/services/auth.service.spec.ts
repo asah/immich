@@ -90,6 +90,56 @@ describe(AuthService.name, () => {
     });
   });
 
+  describe('album invitations', () => {
+    it('previews a valid invitation without revealing the full recipient email', async () => {
+      const albumId = newUuid();
+      mocks.albumInvite.getPreview.mockResolvedValue({
+        albumId,
+        albumName: 'Summer trip',
+        senderName: 'Alex',
+        email: 'recipient@example.com',
+      });
+
+      await expect(sut.getAlbumInvitePreview({ token: 'a'.repeat(43) })).resolves.toEqual({
+        albumId,
+        albumName: 'Summer trip',
+        senderName: 'Alex',
+        recipientEmail: 'r•••@example.com',
+      });
+    });
+
+    it('rejects an invalid invitation preview', async () => {
+      mocks.albumInvite.getPreview.mockResolvedValue(undefined);
+
+      await expect(sut.getAlbumInvitePreview({ token: 'a'.repeat(43) })).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('claims an invitation only when the repository validates the account email', async () => {
+      const auth = AuthFactory.create();
+      const albumId = newUuid();
+      mocks.albumInvite.claim.mockResolvedValue({ status: 'success', albumId });
+
+      await expect(sut.claimAlbumInvite(auth, { token: 'a'.repeat(43) })).resolves.toEqual({ albumId });
+      expect(mocks.albumInvite.claim).toHaveBeenCalledWith(expect.any(Buffer), auth.user);
+    });
+
+    it('rejects a claimed invitation that is invalid or belongs to another email', async () => {
+      mocks.albumInvite.claim.mockResolvedValue({ status: 'invalid' });
+
+      await expect(sut.claimAlbumInvite(AuthFactory.create(), { token: 'a'.repeat(43) })).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+    });
+
+    it('maps a concurrent account-creation conflict to the existing-account flow', async () => {
+      mocks.albumInvite.redeem.mockRejectedValue({ code: '23505' });
+
+      await expect(
+        sut.acceptAlbumInvite({ token: 'a'.repeat(43), name: 'Recipient', password: 'password' }, loginDetails),
+      ).rejects.toMatchObject({ message: 'An account already exists for this invitation. Sign in to join the album.' });
+    });
+  });
+
   describe('changePassword', () => {
     it('should change the password', async () => {
       const user = UserFactory.create();

@@ -620,6 +620,16 @@ export type BulkIdResponseDto = {
     /** Whether operation succeeded */
     success: boolean;
 };
+export type AlbumInviteResponseDto = {
+    /** Invitation creation time */
+    createdAt: string;
+    /** Invitation email */
+    email: string;
+    /** Invitation expiry time */
+    expiresAt: string;
+    /** Invitation ID */
+    id: string;
+};
 export type AlbumAssetPriorityDto = {
     /** Asset ID */
     assetId: string;
@@ -1090,6 +1100,48 @@ export type SignUpDto = {
     name: string;
     /** User password */
     password: string;
+};
+export type AlbumInviteAcceptDto = {
+    name: string;
+    password: string;
+    token: string;
+};
+export type AlbumInviteAcceptResponseDto = {
+    /** Access token */
+    accessToken: string;
+    /** Album ID */
+    albumId: string;
+    /** Is admin user */
+    isAdmin: boolean;
+    /** Is onboarded */
+    isOnboarded: boolean;
+    /** User name */
+    name: string;
+    /** Profile image path */
+    profileImagePath: string;
+    /** Should change password */
+    shouldChangePassword: boolean;
+    /** User email */
+    userEmail: string;
+    /** User ID */
+    userId: string;
+};
+export type AlbumInviteTokenDto = {
+    token: string;
+};
+export type AlbumInviteClaimDto = {
+    /** Album ID */
+    albumId: string;
+};
+export type AlbumInvitePreviewDto = {
+    /** Album ID */
+    albumId: string;
+    /** Album name */
+    albumName: string;
+    /** Masked email address the invitation was sent to */
+    recipientEmail: string;
+    /** Name of the person who shared the album */
+    senderName: string;
 };
 export type ChangePasswordDto = {
     /** Invalidate all other sessions */
@@ -5042,6 +5094,19 @@ export function addAssetsToAlbum({ id, bulkIdsDto }: {
     })));
 }
 /**
+ * List pending email invitations sent by the current user
+ */
+export function getPendingInvites({ id }: {
+    id: string;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 200;
+        data: AlbumInviteResponseDto[];
+    }>(`/albums/${encodeURIComponent(id)}/invites`, {
+        ...opts
+    }));
+}
+/**
  * Get album asset priorities
  */
 export function getAlbumAssetPriorities({ id }: {
@@ -5066,6 +5131,18 @@ export function updateAlbumAssetPriority({ id, updateAlbumAssetPriorityDto }: {
         method: "PATCH",
         body: updateAlbumAssetPriorityDto
     })));
+}
+/**
+ * Revoke a pending email invitation
+ */
+export function revokeInvite({ id, inviteId }: {
+    id: string;
+    inviteId: string;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchText(`/albums/${encodeURIComponent(id)}/invites/${encodeURIComponent(inviteId)}`, {
+        ...opts,
+        method: "DELETE"
+    }));
 }
 /**
  * Retrieve album map markers
@@ -5125,17 +5202,6 @@ export function addUsersToAlbum({ id, addUsersDto }: {
         ...opts,
         method: "PUT",
         body: addUsersDto
-    })));
-}
-/** Create an account and accept a one-time album invitation. */
-export function acceptAlbumInvite({ albumInviteAcceptDto }: { albumInviteAcceptDto: { token: string; name: string; password: string } }, opts?: Oazapfts.RequestOpts) {
-    return oazapfts.ok(oazapfts.fetchJson<{
-        status: 201;
-        data: LoginResponseDto;
-    }>("/auth/album-invite/accept", oazapfts.json({
-        ...opts,
-        method: "POST",
-        body: albumInviteAcceptDto
     })));
 }
 /** Invite email addresses to an album. Unknown recipients create their account from the emailed link. */
@@ -5658,6 +5724,51 @@ export function signUpAdmin({ signUpDto }: {
         ...opts,
         method: "POST",
         body: signUpDto
+    })));
+}
+/**
+ * Accept an email album invitation
+ */
+export function acceptAlbumInvite({ albumInviteAcceptDto }: {
+    albumInviteAcceptDto: AlbumInviteAcceptDto;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 201;
+        data: AlbumInviteAcceptResponseDto;
+    }>("/auth/album-invite/accept", oazapfts.json({
+        ...opts,
+        method: "POST",
+        body: albumInviteAcceptDto
+    })));
+}
+/**
+ * Claim an email album invitation with an existing account
+ */
+export function claimAlbumInvite({ albumInviteTokenDto }: {
+    albumInviteTokenDto: AlbumInviteTokenDto;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 201;
+        data: AlbumInviteClaimDto;
+    }>("/auth/album-invite/claim", oazapfts.json({
+        ...opts,
+        method: "POST",
+        body: albumInviteTokenDto
+    })));
+}
+/**
+ * Preview an email album invitation
+ */
+export function getAlbumInvitePreview({ albumInviteTokenDto }: {
+    albumInviteTokenDto: AlbumInviteTokenDto;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 200;
+        data: AlbumInvitePreviewDto;
+    }>("/auth/album-invite/preview", oazapfts.json({
+        ...opts,
+        method: "POST",
+        body: albumInviteTokenDto
     })));
 }
 /**

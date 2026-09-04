@@ -3,9 +3,13 @@ import { ApiTags } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import { Endpoint, HistoryBuilder } from 'src/decorators';
 import {
+  AlbumInviteAcceptDto,
+  AlbumInviteAcceptResponseDto,
+  AlbumInviteClaimDto,
+  AlbumInvitePreviewDto,
+  AlbumInviteTokenDto,
   AuthDto,
   AuthStatusResponseDto,
-  AlbumInviteAcceptDto,
   ChangePasswordDto,
   LoginCredentialDto,
   LoginResponseDto,
@@ -40,7 +44,7 @@ export class AuthController {
     @GetLoginDetails() loginDetails: LoginDetails,
   ): Promise<LoginResponseDto> {
     const body = await this.service.login(loginCredential, loginDetails);
-    return respondWithCookie(res, body, {
+    respondWithCookie(res, body, {
       isSecure: loginDetails.isSecure,
       values: [
         { key: ImmichCookie.AccessToken, value: body.accessToken },
@@ -48,6 +52,24 @@ export class AuthController {
         { key: ImmichCookie.IsAuthenticated, value: 'true' },
       ],
     });
+    return body;
+  }
+
+  @Post('album-invite/preview')
+  @HttpCode(HttpStatus.OK)
+  @Endpoint({ summary: 'Preview an email album invitation', history: new HistoryBuilder().added('v3') })
+  getAlbumInvitePreview(@Body() dto: AlbumInviteTokenDto): Promise<AlbumInvitePreviewDto> {
+    return this.service.getAlbumInvitePreview(dto);
+  }
+
+  @Post('album-invite/claim')
+  @Authenticated({ permission: false })
+  @Endpoint({
+    summary: 'Claim an email album invitation with an existing account',
+    history: new HistoryBuilder().added('v3'),
+  })
+  claimAlbumInvite(@Auth() auth: AuthDto, @Body() dto: AlbumInviteTokenDto): Promise<AlbumInviteClaimDto> {
+    return this.service.claimAlbumInvite(auth, dto);
   }
 
   @Post('admin-sign-up')
@@ -66,9 +88,9 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
     @Body() dto: AlbumInviteAcceptDto,
     @GetLoginDetails() loginDetails: LoginDetails,
-  ): Promise<LoginResponseDto> {
+  ): Promise<AlbumInviteAcceptResponseDto> {
     const body = await this.service.acceptAlbumInvite(dto, loginDetails);
-    return respondWithCookie(res, body, {
+    respondWithCookie(res, body, {
       isSecure: loginDetails.isSecure,
       values: [
         { key: ImmichCookie.AccessToken, value: body.accessToken },
@@ -76,6 +98,7 @@ export class AuthController {
         { key: ImmichCookie.IsAuthenticated, value: 'true' },
       ],
     });
+    return body;
   }
 
   @Post('validateToken')

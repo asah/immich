@@ -26,6 +26,20 @@ const AddUsersSchema = z
 
 const InviteUsersSchema = z.object({ emails: z.array(toEmail).min(1).max(20) }).meta({ id: 'InviteUsersDto' });
 
+const AlbumInviteParamSchema = z.object({
+  id: z.uuidv4().describe('Album ID'),
+  inviteId: z.uuidv4().describe('Invitation ID'),
+});
+
+const AlbumInviteResponseSchema = z
+  .object({
+    id: z.uuidv4().describe('Invitation ID'),
+    email: toEmail.describe('Invitation email'),
+    createdAt: z.string().meta({ format: 'date-time' }).describe('Invitation creation time'),
+    expiresAt: z.string().meta({ format: 'date-time' }).describe('Invitation expiry time'),
+  })
+  .meta({ id: 'AlbumInviteResponseDto' });
+
 const AlbumUserCreateSchema = z
   .object({
     userId: z.uuidv4().describe('User ID'),
@@ -158,6 +172,8 @@ const AlbumUserParamSchema = z.object({
 export class AlbumUserParamDto extends createZodDto(AlbumUserParamSchema) {}
 export class AddUsersDto extends createZodDto(AddUsersSchema) {}
 export class InviteUsersDto extends createZodDto(InviteUsersSchema) {}
+export class AlbumInviteParamDto extends createZodDto(AlbumInviteParamSchema) {}
+export class AlbumInviteResponseDto extends createZodDto(AlbumInviteResponseSchema) {}
 export class AlbumUserCreateDto extends createZodDto(AlbumUserCreateSchema) {}
 export class CreateAlbumDto extends createZodDto(CreateAlbumSchema) {}
 export class AlbumsAddAssetsDto extends createZodDto(AlbumsAddAssetsSchema) {}

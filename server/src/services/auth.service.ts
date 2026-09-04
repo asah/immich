@@ -2,12 +2,17 @@ import { BadRequestException, ForbiddenException, Injectable, UnauthorizedExcept
 import { parse } from 'cookie';
 import { DateTime } from 'luxon';
 import { IncomingHttpHeaders } from 'node:http';
+import { PostgresError } from 'postgres';
 import { LOGIN_DUMMY_HASH, LOGIN_URL, MOBILE_REDIRECT, SALT_ROUNDS } from 'src/constants';
 import { AuthSharedLink, AuthUser, UserAdmin } from 'src/database';
 import {
+  AlbumInviteAcceptDto,
+  AlbumInviteAcceptResponseDto,
+  AlbumInviteClaimDto,
+  AlbumInvitePreviewDto,
+  AlbumInviteTokenDto,
   AuthDto,
   AuthStatusResponseDto,
-  AlbumInviteAcceptDto,
   ChangePasswordDto,
   LoginCredentialDto,
   LogoutResponseDto,
@@ -36,6 +41,12 @@ export interface LoginDetails {
   deviceOS: string;
   appVersion: string | null;
 }
+
+const maskEmail = (email: string) => {
+  const [localPart, domain] = email.split('@');
+  if (!domain) return '••••';
+  return `${localPart.slice(0, 1)}•••@${domain}`;
+};
 
 interface ClaimOptions<T> {
   key: string;
@@ -219,15 +230,26 @@ export class AuthService extends BaseService {
     return mapUserAdmin(admin);
   }
 
-  async acceptAlbumInvite(dto: AlbumInviteAcceptDto, loginDetails: LoginDetails) {
+  async acceptAlbumInvite(
+    dto: AlbumInviteAcceptDto,
+    loginDetails: LoginDetails,
+  ): Promise<AlbumInviteAcceptResponseDto> {
     const config = await this.getConfig({ withCache: false });
     if (!config.passwordLogin.enabled) throw new BadRequestException('Password login has been disabled');
     const quota = config.user.defaultStorageQuota;
-    const result = await this.albumInviteRepository.redeem(this.cryptoRepository.hashSha256(dto.token), {
-      name: dto.name.trim(),
-      password: await this.cryptoRepository.hashBcrypt(dto.password, SALT_ROUNDS),
-      quotaSizeInBytes: quota === null ? null : quota * HumanReadableSize.GiB,
-    });
+    let result;
+    try {
+      result = await this.albumInviteRepository.redeem(this.cryptoRepository.hashSha256(dto.token), {
+        name: dto.name.trim(),
+        password: await this.cryptoRepository.hashBcrypt(dto.password, SALT_ROUNDS),
+        quotaSizeInBytes: quota === null ? null : quota * HumanReadableSize.GiB,
+      });
+    } catch (error) {
+      if ((error as PostgresError).code === '23505') {
+        throw new BadRequestException('An account already exists for this invitation. Sign in to join the album.');
+      }
+      throw error;
+    }
     if (result.status !== 'success') {
       if (result.status === 'existing') {
         throw new BadRequestException('An account already exists for this invitation. Sign in to join the album.');
@@ -237,7 +259,25 @@ export class AuthService extends BaseService {
     const user = await this.userRepository.get(result.userId, {});
     if (!user) throw new BadRequestException('Unable to create account from invitation');
     await this.eventRepository.emit('UserCreate', user);
-    return this.createLoginResponse(user, loginDetails);
+    return { ...(await this.createLoginResponse(user, loginDetails)), albumId: result.albumId };
+  }
+
+  async getAlbumInvitePreview(dto: AlbumInviteTokenDto): Promise<AlbumInvitePreviewDto> {
+    const invite = await this.albumInviteRepository.getPreview(this.cryptoRepository.hashSha256(dto.token));
+    if (!invite) throw new BadRequestException('This invitation is invalid or has expired');
+    return {
+      albumId: invite.albumId,
+      albumName: invite.albumName,
+      senderName: invite.senderName,
+      recipientEmail: maskEmail(invite.email),
+    };
+  }
+
+  async claimAlbumInvite(auth: AuthDto, dto: AlbumInviteTokenDto): Promise<AlbumInviteClaimDto> {
+    const result = await this.albumInviteRepository.claim(this.cryptoRepository.hashSha256(dto.token), auth.user);
+    if (result.status !== 'success')
+      throw new BadRequestException('This invitation is invalid, expired, or belongs to another email address');
+    return { albumId: result.albumId };
   }
 
   async authenticate({ headers, queryParams, metadata }: ValidateRequest): Promise<AuthDto> {

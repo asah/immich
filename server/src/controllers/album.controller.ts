@@ -3,6 +3,8 @@ import { ApiTags } from '@nestjs/swagger';
 import { Endpoint, HistoryBuilder } from 'src/decorators';
 import {
   AddUsersDto,
+  AlbumInviteParamDto,
+  AlbumInviteResponseDto,
   AlbumResponseDto,
   AlbumsAddAssetsDto,
   AlbumsAddAssetsResponseDto,
@@ -58,6 +60,24 @@ export class AlbumController {
   })
   getAlbumStatistics(@Auth() auth: AuthDto): Promise<AlbumStatisticsResponseDto> {
     return this.service.getStatistics(auth);
+  }
+
+  @Get(':id/invites')
+  @Authenticated({ permission: Permission.AlbumShare })
+  @Endpoint({
+    summary: 'List pending email invitations sent by the current user',
+    history: new HistoryBuilder().added('v3'),
+  })
+  getPendingInvites(@Auth() auth: AuthDto, @Param() { id }: UUIDParamDto): Promise<AlbumInviteResponseDto[]> {
+    return this.service.getPendingInvites(auth, id);
+  }
+
+  @Delete(':id/invites/:inviteId')
+  @Authenticated({ permission: Permission.AlbumShare })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Endpoint({ summary: 'Revoke a pending email invitation', history: new HistoryBuilder().added('v3') })
+  revokeInvite(@Auth() auth: AuthDto, @Param() { id, inviteId }: AlbumInviteParamDto): Promise<void> {
+    return this.service.revokeInvite(auth, id, inviteId);
   }
 
   @Authenticated({ permission: Permission.AlbumRead, sharedLink: true })
