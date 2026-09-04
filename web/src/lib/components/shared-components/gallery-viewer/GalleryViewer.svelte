@@ -66,6 +66,9 @@
     rowHeight?: number;
     /** Temporarily reveal sections without changing the user's saved collapsed-section preference. */
     forceSectionsOpen?: boolean;
+    /** Render one fixed caption line below each album thumbnail instead of over its crop. */
+    captionsBelow?: boolean;
+    instantCameraStyle?: boolean;
   };
 
   let {
@@ -92,6 +95,8 @@
     imageClass = '',
     rowHeight,
     forceSectionsOpen = false,
+    captionsBelow = false,
+    instantCameraStyle = false,
   }: Props = $props();
 
   const navigationAssets = $derived(viewerAssets ?? assets);
@@ -104,7 +109,7 @@
   const effectiveCollapsedSectionKeys = $derived(forceSectionsOpen ? new Set<string>() : collapsedSectionKeys);
 
   const layoutOptions = $derived({
-    spacing: 2,
+    spacing: instantCameraStyle ? 8 : 2,
     heightTolerance: 0.5,
     rowHeight: rowHeight ?? (Math.floor(viewport.width) < 850 ? 100 : 235),
     rowWidth: Math.floor(viewport.width),
@@ -136,9 +141,50 @@
           primarySortGroupDescriptions ? 0 : 32,
           sectionHeaderHeight,
           (key) => effectiveCollapsedSectionKeys.has(key),
+          24,
         )
       : getJustifiedLayoutFromAssets(assets, layoutOptions),
   );
+  const captionRows = $derived.by(() => {
+    if (!captionsBelow || !displayAssetInfo) return [] as Array<{ top: number; indexes: number[] }>;
+    const rows = new Map<number, number[]>();
+    for (let index = 0; index < assets.length; index++) {
+      const top = geometry.getTop(index);
+      rows.set(top, [...(rows.get(top) ?? []), index]);
+    }
+    return [...rows.entries()].sort(([left], [right]) => left - right).map(([top, indexes]) => ({ top, indexes }));
+  });
+  let expandedCaptionAssetId = $state<string>();
+  const captionFooterHeight = $derived(captionsBelow && displayAssetInfo ? 32 : 0);
+  const captionGeometry = $derived.by(() => {
+    if (!captionFooterHeight) return geometry;
+    const positions = new Map<number, { top: number; height: number }>();
+    let offset = 0;
+    for (const row of captionRows) {
+      const expanded = row.indexes.some((index) => assets[index]?.id === expandedCaptionAssetId);
+      const extraHeight = expanded ? 48 : 0;
+      for (const index of row.indexes) {
+        positions.set(index, {
+          top: geometry.getTop(index) + offset,
+          height: geometry.getHeight(index) + captionFooterHeight + extraHeight,
+        });
+      }
+      offset += captionFooterHeight + extraHeight;
+    }
+    return {
+      ...geometry,
+      containerHeight: geometry.containerHeight + offset,
+      getTop: (index: number) => positions.get(index)?.top ?? geometry.getTop(index),
+      getHeight: (index: number) => positions.get(index)?.height ?? geometry.getHeight(index),
+    };
+  });
+  const getCaptionOffset = (top: number) =>
+    captionRows
+      .filter((row) => row.top < top)
+      .reduce((offset, row) => {
+        const expanded = row.indexes.some((index) => assets[index]?.id === expandedCaptionAssetId);
+        return offset + captionFooterHeight + (expanded ? 48 : 0);
+      }, 0);
   const dividerTops = $derived('dividerTops' in geometry ? (geometry.dividerTops as number[]) : []);
   const sanitizeDescription = (value: string) =>
     value
@@ -153,7 +199,10 @@
     let groupIndex = 0;
     for (let index = 0; index < primarySortGroupKeys.length; index++) {
       if (index > 0 && primarySortGroupKeys[index] === primarySortGroupKeys[index - 1]) continue;
-      const top = dividerTops[groupIndex] - (sectionGroups[groupIndex]?.headerHeight ?? 56) / 2;
+      const top =
+        dividerTops[groupIndex] -
+        (sectionGroups[groupIndex]?.headerHeight ?? 56) / 2 +
+        getCaptionOffset(dividerTops[groupIndex]);
       groupIndex++;
       const key = primarySortGroupKeys[index];
       const assetId = assets[index]?.id;
@@ -184,13 +233,13 @@
   };
 
   const getStyle = (index: number) => {
-    return `top: ${geometry.getTop(index)}px; left: ${geometry.getLeft(index)}px; width: ${geometry.getWidth(index)}px; height: ${geometry.getHeight(index)}px;`;
+    return `top: ${captionGeometry.getTop(index)}px; left: ${geometry.getLeft(index)}px; width: ${geometry.getWidth(index)}px; height: ${captionGeometry.getHeight(index)}px;`;
   };
 
   const isInOrNearViewport = (index: number) => {
     const window = slidingWindow;
-    const top = geometry.getTop(index);
-    return top + pageHeaderOffset < window.bottom && top + geometry.getHeight(index) > window.top;
+    const top = captionGeometry.getTop(index);
+    return top + pageHeaderOffset < window.bottom && top + captionGeometry.getHeight(index) > window.top;
   };
 
   let lastAssetMouseEvent: TimelineAsset | null = $state(null);
@@ -451,8 +500,10 @@
 {#if assets.length > 0}
   <div
     data-row-height={layoutOptions.rowHeight}
+    class:bg-black={instantCameraStyle}
+    class:p-2={instantCameraStyle}
     style:position="relative"
-    style:height={geometry.containerHeight + 'px'}
+    style:height={captionGeometry.containerHeight + 'px'}
     style:width={geometry.containerWidth + 'px'}
   >
     {#each dividerLabels as label (label.top + label.key)}
@@ -460,12 +511,17 @@
       <div
         data-section-bar={label.assetId}
         data-collapsed={isSectionCollapsed(label.key)}
-        class="absolute inset-x-0 z-10 border-t border-gray-300 bg-white/90 px-2 py-2 font-sans text-sm leading-5 text-gray-500 dark:border-gray-600 dark:bg-immich-dark-gray/90"
+        class={`absolute inset-x-0 z-10 border-t px-2 py-2 font-sans text-sm leading-5 ${
+          instantCameraStyle
+            ? 'border-gray-700 bg-black text-gray-300'
+            : 'border-gray-300 bg-white/90 text-gray-500 dark:border-gray-600 dark:bg-immich-dark-gray/90'
+        }`}
         style:top={`${label.top}px`}
       >
         <div class="flex max-w-[90%] items-center gap-1 truncate">
           <button
             class="shrink-0 rounded p-1 hover:bg-gray-200 dark:hover:bg-gray-700"
+            class:hover:bg-gray-800={instantCameraStyle}
             type="button"
             aria-label={`${isSectionCollapsed(label.key) ? 'Expand' : 'Collapse'} section ${label.key}`}
             aria-expanded={!isSectionCollapsed(label.key)}
@@ -483,8 +539,8 @@
             <button
               type="button"
               class="truncate text-xl font-semibold text-primary underline hover:text-primary md:text-2xl"
-              onclick={() => toggleSection(label.key)}
-            >{label.key}</button>
+              onclick={() => toggleSection(label.key)}>{label.key}</button
+            >
             <a
               class="shrink-0 hover:text-primary"
               aria-label={`Open link to section ${label.key}`}
@@ -511,30 +567,50 @@
     {#each assets as asset, index (asset.id + '-' + index)}
       {#if !isAssetInCollapsedSection(index) && isInOrNearViewport(index)}
         {@const currentAsset = toTimelineAsset(asset)}
-        <div class="absolute" style:overflow="clip" style={getStyle(index)}>
-          <Thumbnail
-            readonly={disableAssetSelect}
-            onClick={() => {
-              if (assetInteraction.selectionActive) {
-                handleSelectAssets(currentAsset);
-                return;
-              }
-              void navigateToAsset(asset);
-            }}
-            onSelect={() => handleSelectAssets(currentAsset)}
-            onPreview={assetInteraction.selectionActive ? () => void navigateToAsset(asset) : undefined}
-            onMouseEvent={() => assetMouseEventHandler(currentAsset)}
-            {showArchiveIcon}
-            asset={currentAsset}
-            selected={assetInteraction.hasSelectedAsset(currentAsset.id)}
-            selectionCandidate={assetInteraction.hasSelectionCandidate(currentAsset.id)}
-            thumbnailWidth={geometry.getWidth(index)}
-            thumbnailHeight={geometry.getHeight(index)}
-            {imageClass}
-          />
-          {@render assetOverlay?.(asset)}
-          {#if displayAssetInfo && !isTimelineAsset(asset)}
-            <GalleryAssetInfo {asset} settings={displayAssetInfo} />
+        <div class="absolute" style={getStyle(index)}>
+          <div
+            class="absolute inset-x-0 top-0 overflow-clip"
+            class:border-4={instantCameraStyle}
+            class:border-white={instantCameraStyle}
+            style:height={geometry.getHeight(index) + 'px'}
+          >
+            <Thumbnail
+              readonly={disableAssetSelect}
+              onClick={() => {
+                if (assetInteraction.selectionActive) {
+                  handleSelectAssets(currentAsset);
+                  return;
+                }
+                void navigateToAsset(asset);
+              }}
+              onSelect={() => handleSelectAssets(currentAsset)}
+              onPreview={assetInteraction.selectionActive ? () => void navigateToAsset(asset) : undefined}
+              onMouseEvent={() => assetMouseEventHandler(currentAsset)}
+              {showArchiveIcon}
+              asset={currentAsset}
+              selected={assetInteraction.hasSelectedAsset(currentAsset.id)}
+              selectionCandidate={assetInteraction.hasSelectionCandidate(currentAsset.id)}
+              thumbnailWidth={geometry.getWidth(index)}
+              thumbnailHeight={geometry.getHeight(index)}
+              {imageClass}
+            />
+            {@render assetOverlay?.(asset)}
+            {#if displayAssetInfo && !isTimelineAsset(asset) && !captionsBelow}
+              <GalleryAssetInfo {asset} settings={displayAssetInfo} />
+            {/if}
+          </div>
+          {#if displayAssetInfo && !isTimelineAsset(asset) && captionsBelow}
+            <div class="absolute inset-x-0" style:top={geometry.getHeight(index) + 'px'}>
+              <GalleryAssetInfo
+                {asset}
+                settings={displayAssetInfo}
+                placement="below"
+                expanded={expandedCaptionAssetId === asset.id}
+                onToggleExpanded={() =>
+                  (expandedCaptionAssetId = expandedCaptionAssetId === asset.id ? undefined : asset.id)}
+                {instantCameraStyle}
+              />
+            </div>
           {:else if showAssetName && !isTimelineAsset(asset)}
             <div
               class="absolute bottom-0 w-full overflow-clip bg-slate-50/75 bg-linear-to-t p-1 text-center font-mono text-xs font-semibold text-ellipsis whitespace-pre-wrap dark:bg-slate-800/75"

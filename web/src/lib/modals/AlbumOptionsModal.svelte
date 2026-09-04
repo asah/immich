@@ -263,6 +263,13 @@
             <output class="w-12 text-right text-sm tabular-nums">{$albumAssetViewSettings.rowHeight ?? 235}px</output>
           </div>
         </Field>
+        <Field label="Instant camera" description="Use white photo cards on a black gallery surface.">
+          <Switch
+            checked={$albumAssetViewSettings.instantCameraStyle ?? false}
+            onCheckedChange={(instantCameraStyle) =>
+              ($albumAssetViewSettings = { ...$albumAssetViewSettings, instantCameraStyle })}
+          />
+        </Field>
         <div>
           <Text size="small" fontWeight="medium">{$t('display_file_info')}:</Text>
           <div class="grid grid-cols-2 gap-x-4 gap-y-2 pt-1">

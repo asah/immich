@@ -107,6 +107,8 @@ export interface AlbumAssetViewSettings {
   showSortDividers: boolean;
   /** Preferred justified-grid row height on album pages. Undefined preserves the responsive default. */
   rowHeight?: number;
+  /** Present album photos as white instant-camera cards on a black gallery surface. */
+  instantCameraStyle?: boolean;
   displayInfo: AlbumAssetDisplayInfo;
 }
 
@@ -148,6 +150,7 @@ export const albumAssetViewSettings = persistedObject<AlbumAssetViewSettings>('a
   sortOrder: SortOrder.Desc,
   sortCriteria: [{ sortBy: AlbumAssetSortBy.DateTaken, sortOrder: SortOrder.Desc }],
   showSortDividers: true,
+  instantCameraStyle: false,
   displayInfo: defaultAlbumAssetDisplayInfo,
 });
 

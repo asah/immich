@@ -140,6 +140,7 @@ export function getGroupedJustifiedLayoutFromAssets(
   dividerHeight = 32,
   headerHeight: number | ((groupIndex: number) => number) = 0,
   isGroupCollapsed: (groupKey: string) => boolean = () => false,
+  groupGap = 0,
 ): GroupedJustifiedLayout {
   if (assets.length === 0) {
     return {
@@ -178,17 +179,16 @@ export function getGroupedJustifiedLayoutFromAssets(
       for (let collapsedIndex = groupStart; collapsedIndex < index; collapsedIndex++) {
         positions[collapsedIndex] = undefined;
       }
-      groupStart = index;
-      groupNumber++;
-      continue;
+    } else {
+      const groupLayout = getJustifiedLayoutFromAssets(assets.slice(groupStart, index), options);
+      for (let groupIndex = 0; groupIndex < index - groupStart; groupIndex++) {
+        const position = groupLayout.getPosition(groupIndex);
+        positions[groupStart + groupIndex] = { ...position, top: position.top + topOffset };
+      }
+      topOffset += groupLayout.containerHeight;
     }
-
-    const groupLayout = getJustifiedLayoutFromAssets(assets.slice(groupStart, index), options);
-    for (let groupIndex = 0; groupIndex < index - groupStart; groupIndex++) {
-      const position = groupLayout.getPosition(groupIndex);
-      positions[groupStart + groupIndex] = { ...position, top: position.top + topOffset };
-    }
-    topOffset += groupLayout.containerHeight;
+    // Keep each section visually distinct without adding trailing empty space after the last one.
+    if (index < assets.length) topOffset += groupGap;
     groupStart = index;
     groupNumber++;
   }

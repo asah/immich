@@ -7,9 +7,20 @@
   type Props = {
     asset: AssetResponseDto;
     settings: AlbumAssetDisplayInfo;
+    placement?: 'overlay' | 'below';
+    expanded?: boolean;
+    onToggleExpanded?: (() => void) | undefined;
+    instantCameraStyle?: boolean;
   };
 
-  const { asset, settings }: Props = $props();
+  const {
+    asset,
+    settings,
+    placement = 'overlay',
+    expanded = false,
+    onToggleExpanded = undefined,
+    instantCameraStyle = false,
+  }: Props = $props();
   const dateTime = $derived(DateTime.fromISO(asset.localDateTime, { locale: $locale }));
   const fileSize = $derived(
     settings.fileSize && asset.exifInfo?.fileSizeInByte
@@ -53,17 +64,35 @@
       lens,
     ].filter(Boolean);
   });
+  const description = $derived(asset.exifInfo?.description?.trim() || '');
+  // This is deliberately approximate: captions use a fixed one-line footer, and
+  // the full text remains available in the asset viewer.
+  const hasMore = $derived(description.length > 96);
 </script>
 
-{#if fileSize}
+{#if fileSize && placement === 'overlay'}
   <div class="absolute top-2 right-2 rounded-full bg-black/75 px-2 py-0.5 text-xs font-semibold text-white shadow">
     {fileSize}
   </div>
 {/if}
 
-{#if values.length > 0}
+{#if placement === 'below' && description}
   <div
-    class="absolute bottom-0 w-full overflow-clip bg-slate-50/80 bg-linear-to-t p-1 text-center text-xs font-semibold text-ellipsis dark:bg-slate-800/80"
+    class={`flex min-h-8 items-center gap-1 border-x border-b px-2 text-left text-xs ${instantCameraStyle ? 'border-white bg-white text-black' : 'border-subtle bg-subtle text-immich-fg dark:text-immich-dark-fg'}`}
+  >
+    <span class:line-clamp-3={expanded} class="min-w-0 flex-1" title={description}>{description}</span>
+    {#if hasMore && onToggleExpanded}
+      <button
+        type="button"
+        class="shrink-0 text-primary hover:underline"
+        aria-expanded={expanded}
+        onclick={onToggleExpanded}
+      >{expanded ? 'Less' : 'More…'}</button>
+    {/if}
+  </div>
+{:else if placement === 'overlay' && values.length > 0}
+  <div
+    class="pointer-events-none absolute bottom-0 w-full overflow-clip bg-black/70 p-1 text-center text-xs font-semibold text-ellipsis text-white"
   >
     {#each values as value, index (`${index}-${value}`)}
       <div class="truncate" title={value}>{value}</div>

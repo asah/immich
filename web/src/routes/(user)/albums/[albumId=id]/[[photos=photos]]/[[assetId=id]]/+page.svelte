@@ -125,6 +125,7 @@
   let filenameRequest = 0;
   let availableTags: TagResponseDto[] = $state([]);
   let engagementFilter: string | 'comments' | undefined = $state();
+  let showPhotoCaptions = $state(true);
   let showAlbumUsers = $derived(timelineManager?.showAssetOwners ?? false);
 
   const timelineMultiSelectManager = new AssetMultiSelectManager();
@@ -667,6 +668,20 @@
   });
 </script>
 
+<svelte:window
+  onkeydown={(event) => {
+    const target = event.target as HTMLElement | null;
+    if (
+      event.key.toLowerCase() === 'i' &&
+      viewMode === AlbumPageViewMode.VIEW &&
+      !target?.matches('input, textarea, [contenteditable="true"]')
+    ) {
+      event.preventDefault();
+      showPhotoCaptions = !showPhotoCaptions;
+    }
+  }}
+/>
+
 <OnEvents
   {onSharedLinkCreate}
   onSharedLinkDelete={refreshAlbum}
@@ -682,33 +697,70 @@
 
 <div class="flex overflow-hidden" use:scrollMemoryClearer={{ routeStartsWith: Route.albums() }}>
   <div class="relative w-full shrink">
-    <main class="relative h-dvh overflow-hidden px-2 pt-(--navbar-height) max-md:pt-(--navbar-height-md) md:px-6">
+    <main
+      class="relative h-dvh overflow-hidden px-2 pt-(--navbar-height) max-md:pt-(--navbar-height-md) md:px-6"
+      class:bg-black={isAlternateSort && $albumAssetViewSettings.instantCameraStyle}
+    >
       {#if isAlternateSort}
         <section
-          class="h-full overflow-y-auto pt-8 md:pt-8"
+          class="h-full overflow-y-auto"
           bind:clientHeight={filenameViewport.height}
           bind:clientWidth={filenameViewport.width}
           onscroll={(event) => (filenameScrollTop = event.currentTarget.scrollTop)}
         >
-          <AlbumTitle
-            id={album.id}
-            albumName={album.albumName}
-            albumThumbnailAssetId={album.albumThumbnailAssetId}
-            {isOwned}
-            onUpdate={(albumName) => (album = { ...album, albumName })}
-          />
+          <div
+            class={$albumAssetViewSettings.instantCameraStyle
+              ? '-mx-2 bg-white px-2 py-8 text-immich-fg dark:bg-immich-dark-bg dark:text-immich-dark-fg md:-mx-6 md:px-6'
+              : 'pt-8'}
+          >
+            <AlbumTitle
+              id={album.id}
+              albumName={album.albumName}
+              albumThumbnailAssetId={album.albumThumbnailAssetId}
+              {isOwned}
+              onUpdate={(albumName) => (album = { ...album, albumName })}
+            />
 
-          {#if album.assetCount > 0}
-            <AlbumSummary {album} />
-          {/if}
+            {#if album.assetCount > 0}
+              <AlbumSummary {album} />
+            {/if}
 
-          <AlbumDescription
-            id={album.id}
-            {isOwned}
-            bind:description={() => album.description, (description) => (album = { ...album, description })}
-          />
+            <AlbumDescription
+              id={album.id}
+              {isOwned}
+              bind:description={() => album.description, (description) => (album = { ...album, description })}
+            />
+          </div>
 
-          <div class="mt-8" bind:this={filenameGalleryElement}>
+          <div
+            class={$albumAssetViewSettings.instantCameraStyle ? 'mt-0 bg-black' : 'mt-8'}
+            bind:this={filenameGalleryElement}
+          >
+            <div
+              class="mb-2 flex justify-end gap-2"
+              class:px-3={$albumAssetViewSettings.instantCameraStyle}
+              class:pt-3={$albumAssetViewSettings.instantCameraStyle}
+            >
+              <button
+                type="button"
+                class="rounded-full border border-subtle px-3 py-1 text-sm font-semibold text-immich-fg hover:bg-gray-100 dark:text-immich-dark-fg dark:hover:bg-gray-800"
+                class:text-white={$albumAssetViewSettings.instantCameraStyle}
+                aria-pressed={showPhotoCaptions}
+                aria-label="Toggle descriptions (I)"
+                title="Toggle descriptions (I)"
+                onclick={() => (showPhotoCaptions = !showPhotoCaptions)}>{showPhotoCaptions ? 'D' : 'd'}</button
+              >
+              <button
+                type="button"
+                class="rounded-md border border-subtle px-3 py-1 text-sm text-immich-fg hover:bg-gray-100"
+                aria-pressed={$albumAssetViewSettings.instantCameraStyle}
+                onclick={() =>
+                  ($albumAssetViewSettings = {
+                    ...$albumAssetViewSettings,
+                    instantCameraStyle: !$albumAssetViewSettings.instantCameraStyle,
+                  })}>Instant camera</button
+              >
+            </div>
             <GalleryViewer
               assets={filteredFilenameAssets}
               assetInteraction={assetMultiSelectManager}
@@ -720,6 +772,8 @@
               {primarySortGroupDescriptions}
               {primarySortGroupColors}
               forceSectionsOpen={Boolean(engagementFilter)}
+              captionsBelow={showPhotoCaptions}
+              instantCameraStyle={$albumAssetViewSettings.instantCameraStyle}
               slidingWindowOffset={filenameGalleryElement?.offsetTop ?? 0}
               viewportScrollTop={filenameScrollTop}
               viewport={filenameViewport}
