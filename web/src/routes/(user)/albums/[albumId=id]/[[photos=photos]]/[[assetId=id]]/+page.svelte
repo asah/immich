@@ -719,6 +719,7 @@
               {primarySortGroupKeys}
               {primarySortGroupDescriptions}
               {primarySortGroupColors}
+              forceSectionsOpen={Boolean(engagementFilter)}
               slidingWindowOffset={filenameGalleryElement?.offsetTop ?? 0}
               viewportScrollTop={filenameScrollTop}
               viewport={filenameViewport}
@@ -846,7 +847,7 @@
       {/if}
 
       {#if showActivityStatus}
-        <div class="absolute inset-e-0 bottom-0 z-2 me-12 mb-6">
+        <div class="absolute inset-e-0 bottom-0 z-30 me-12 mb-6">
           <ActivityStatus
             disabled={false}
             isLiked={activityManager.isLiked}
@@ -856,8 +857,13 @@
             allowAddingReactions={false}
             activeReactionKey={engagementFilter === 'comments' ? undefined : engagementFilter}
             activeComments={engagementFilter === 'comments'}
+            filterMode={true}
             onReaction={(key) => (engagementFilter = engagementFilter === key ? undefined : key)}
-            onComments={() => (engagementFilter = engagementFilter === 'comments' ? undefined : 'comments')}
+            onComments={() => {
+              const nextFilter = engagementFilter === 'comments' ? undefined : 'comments';
+              engagementFilter = nextFilter;
+              assetViewerManager.isShowActivityPanel = nextFilter === 'comments';
+            }}
           />
         </div>
       {/if}

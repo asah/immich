@@ -19,11 +19,15 @@
       const { albumId } = await claimAlbumInvite({ albumInviteTokenDto: { token } });
       sessionStorage.removeItem('albumInviteToken');
       await goto(Route.viewAlbum({ id: albumId }));
-    } catch (caught) {
-      error = getServerErrorMessage(caught) || 'This invitation is invalid or belongs to another email address.';
+    } catch (error_) {
+      error = getServerErrorMessage(error_) || 'This invitation is invalid or belongs to another email address.';
     }
   });
 </script>
+
+<svelte:head>
+  <meta name="referrer" content="no-referrer" />
+</svelte:head>
 
 <AuthPageLayout title="Joining shared album">
   <Stack gap={4}>

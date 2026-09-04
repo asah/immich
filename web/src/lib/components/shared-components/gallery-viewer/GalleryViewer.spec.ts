@@ -11,7 +11,7 @@ describe('GalleryViewer section links', () => {
     localStorage.clear();
   });
 
-  test('links an album tag section to its in-album position and offers the library-wide tag view', () => {
+  test('uses the section title to fold and the link icon for its in-album deep link', () => {
     const asset = assetFactory.build({ id: 'section-asset' });
     render(GalleryViewer, {
       assets: [asset],
@@ -22,13 +22,14 @@ describe('GalleryViewer section links', () => {
       primarySortGroupDescriptions: { Beach: 'Summer photos' },
     });
 
-    expect(screen.getAllByRole('link', { name: 'Beach' })[0]).toHaveAttribute(
+    expect(screen.getByRole('button', { name: 'Beach' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open link to section Beach' })).toHaveAttribute(
       'href',
       '/albums/album-id?at=section-asset',
     );
     expect(screen.getByRole('link', { name: 'all_photos' })).toHaveAttribute('href', '/tag/Beach');
     expect(screen.queryByText('album')).not.toBeInTheDocument();
-    expect(screen.getByLabelText('Beach')).toHaveAttribute('data-section-anchor', 'section-asset');
+    expect(screen.getByLabelText('Open link to section Beach')).toHaveAttribute('data-section-anchor', 'section-asset');
     expect(screen.getByText('items_count')).toBeInTheDocument();
   });
 
@@ -63,6 +64,23 @@ describe('GalleryViewer section links', () => {
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
     expect(container.querySelector('[data-section-bar="section-asset"]')).toHaveAttribute('data-collapsed', 'true');
     expect(localStorage.getItem('album-collapsed-sections')).toContain('anonymous:album-id');
+    expect(localStorage.getItem('album-collapsed-sections')).toContain('Beach');
+  });
+
+  test('temporarily opens saved-collapsed sections without changing the saved preference', async () => {
+    const asset = assetFactory.build({ id: 'section-asset' });
+    localStorage.setItem('album-collapsed-sections', JSON.stringify({ 'anonymous:album-id': ['Beach'] }));
+    const { container } = render(GalleryViewer, {
+      assets: [asset],
+      assetInteraction: new AssetMultiSelectManager(),
+      viewport: { width: 1000, height: 800 },
+      album: { id: 'album-id' } as never,
+      primarySortGroupKeys: ['Beach'],
+      primarySortGroupDescriptions: { Beach: null },
+      forceSectionsOpen: true,
+    });
+
+    expect(container.querySelector('[data-section-bar="section-asset"]')).toHaveAttribute('data-collapsed', 'false');
     expect(localStorage.getItem('album-collapsed-sections')).toContain('Beach');
   });
 

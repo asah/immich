@@ -19,6 +19,8 @@
     allowAddingReactions?: boolean;
     activeReactionKey?: string;
     activeComments?: boolean;
+    /** Ignore the current user's reaction when this bar is being used as a filter. */
+    filterMode?: boolean;
   }
 
   let {
@@ -32,6 +34,7 @@
     allowAddingReactions = true,
     activeReactionKey,
     activeComments = false,
+    filterMode = false,
   }: Props = $props();
   const reactionCounts = $derived(
     activityManager.activities
@@ -49,8 +52,8 @@
     <button
       type="button"
       class="flex items-center gap-1 rounded-full border border-transparent px-2 py-1 text-sm transition hover:border-primary hover:bg-primary/10"
-      class:border-primary={activeReactionKey ? activeReactionKey === key : isLiked?.reactionKey === key}
-      class:bg-primary={activeReactionKey ? activeReactionKey === key : isLiked?.reactionKey === key}
+      class:border-primary={activeReactionKey ? activeReactionKey === key : !filterMode && isLiked?.reactionKey === key}
+      class:bg-primary={activeReactionKey ? activeReactionKey === key : !filterMode && isLiked?.reactionKey === key}
       aria-label={`${reactionEmoji[key] ?? '😀'} ${count} reaction${count === 1 ? '' : 's'}`}
       title={`${count} ${key} reaction${count === 1 ? '' : 's'}`}
       onclick={() => onReaction?.(key)}

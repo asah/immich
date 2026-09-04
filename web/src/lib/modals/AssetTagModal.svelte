@@ -125,7 +125,6 @@
       defaultFirstOption
       options={allTags.map((tag) => ({ id: tag.id, label: tag.value, value: tag.id }))}
       placeholder={$t('search_tags')}
-      forceFocus
     />
   </div>
 

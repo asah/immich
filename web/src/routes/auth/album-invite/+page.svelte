@@ -32,15 +32,17 @@
     }
     try {
       preview = await getAlbumInvitePreview({ albumInviteTokenDto: { token } });
-    } catch (caught) {
-      error = getServerErrorMessage(caught) || 'This invitation is invalid or has expired.';
+    } catch (error_) {
+      error = getServerErrorMessage(error_) || 'This invitation is invalid or has expired.';
     } finally {
       previewLoading = false;
     }
   });
 
   const submit = async () => {
-    if (!token) return;
+    if (!token) {
+      return;
+    }
     loading = true;
     error = '';
     try {
@@ -48,12 +50,16 @@
       sessionStorage.removeItem('albumInviteToken');
       eventManager.emit('AuthLogin', user);
       await goto(Route.viewAlbum({ id: user.albumId }));
-    } catch (caught) {
-      error = getServerErrorMessage(caught) || 'This invitation is invalid or has expired.';
+    } catch (error_) {
+      error = getServerErrorMessage(error_) || 'This invitation is invalid or has expired.';
       loading = false;
     }
   };
 </script>
+
+<svelte:head>
+  <meta name="referrer" content="no-referrer" />
+</svelte:head>
 
 <AuthPageLayout title="Join shared album">
   <Stack gap={4}>

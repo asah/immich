@@ -1,5 +1,4 @@
 import js from '@eslint/js';
-import tslintPluginCompat from '@koddsson/eslint-plugin-tscompat';
 import prettier from 'eslint-config-prettier';
 import eslintPluginBetterTailwindcss from 'eslint-plugin-better-tailwindcss';
 import eslintPluginCompat from 'eslint-plugin-compat';
@@ -8,7 +7,6 @@ import eslintPluginUnicorn from 'eslint-plugin-unicorn';
 import globals from 'globals';
 import parser from 'svelte-eslint-parser';
 import typescriptEslint from 'typescript-eslint';
-import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -19,31 +17,9 @@ export default typescriptEslint.config(
   ...eslintPluginSvelte.configs.recommended,
   eslintPluginUnicorn.configs.recommended,
   js.configs.recommended,
-  {
-    plugins: {
-      tscompat: tslintPluginCompat,
-    },
-    rules: {
-      'tscompat/tscompat': [
-        'error',
-        {
-          browserslist: fs
-            .readFileSync(path.join(__dirname, '.browserslistrc'), 'utf8')
-            .split('\n')
-            .map((line) => line.trim())
-            .filter((line) => line && !line.startsWith('#')),
-        },
-      ],
-    },
-    languageOptions: {
-      parser,
-      parserOptions: {
-        project: ['./tsconfig.json'],
-        tsconfigRootDir: __dirname,
-      },
-    },
-    // ignores: ['**/service-worker/**'],
-  },
+  // @koddsson/eslint-plugin-tscompat resolves the root TypeScript 7 peer rather
+  // than this workspace's TypeScript 6 compiler and crashes before linting.
+  // Keep eslint-plugin-compat below enabled while this rule is repaired or pinned.
   {
     plugins: {
       compat: eslintPluginCompat,

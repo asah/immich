@@ -18,7 +18,7 @@
   import { keyboardManager } from '$lib/stores/keyboard-manager.svelte';
   import { showDeleteModal } from '$lib/stores/preferences.store';
   import type { AlbumAssetDisplayInfo } from '$lib/stores/preferences.store';
-  import { copyToClipboard, handlePromiseError } from '$lib/utils';
+  import { handlePromiseError } from '$lib/utils';
   import { deleteAssets } from '$lib/utils/actions';
   import { archiveAssets, getNextAsset, getPreviousAsset, navigateToAsset } from '$lib/utils/asset-utils';
   import { moveFocus } from '$lib/utils/focus-util';
@@ -30,7 +30,7 @@
   import { TUNABLES } from '$lib/utils/tunables';
   import { AssetVisibility, type AlbumResponseDto, type AssetResponseDto } from '@immich/sdk';
   import { Icon, modalManager } from '@immich/ui';
-  import { mdiChevronDown, mdiLink } from '@mdi/js';
+  import { mdiChevronDown, mdiChevronRight, mdiLink } from '@mdi/js';
   import { debounce } from 'lodash-es';
   import { t } from 'svelte-i18n';
   import type { Snippet } from 'svelte';
@@ -64,6 +64,8 @@
     viewportScrollTop?: number;
     imageClass?: ClassValue;
     rowHeight?: number;
+    /** Temporarily reveal sections without changing the user's saved collapsed-section preference. */
+    forceSectionsOpen?: boolean;
   };
 
   let {
@@ -89,6 +91,7 @@
     viewportScrollTop,
     imageClass = '',
     rowHeight,
+    forceSectionsOpen = false,
   }: Props = $props();
 
   const navigationAssets = $derived(viewerAssets ?? assets);
@@ -98,6 +101,7 @@
   const collapsedSectionKeys = $derived(
     new Set(sectionPersistenceKey ? collapsedAlbumSections.current[sectionPersistenceKey] : []),
   );
+  const effectiveCollapsedSectionKeys = $derived(forceSectionsOpen ? new Set<string>() : collapsedSectionKeys);
 
   const layoutOptions = $derived({
     spacing: 2,
@@ -131,7 +135,7 @@
           layoutOptions,
           primarySortGroupDescriptions ? 0 : 32,
           sectionHeaderHeight,
-          (key) => collapsedSectionKeys.has(key),
+          (key) => effectiveCollapsedSectionKeys.has(key),
         )
       : getJustifiedLayoutFromAssets(assets, layoutOptions),
   );
@@ -166,8 +170,7 @@
 
   const getSectionHref = (assetId: string) =>
     album ? `${Route.viewAlbum({ id: album.id })}?at=${assetId}` : undefined;
-  const copySectionLink = (href: string) => void copyToClipboard(new URL(href, window.location.href).toString());
-  const isSectionCollapsed = (key: string) => collapsedSectionKeys.has(key);
+  const isSectionCollapsed = (key: string) => effectiveCollapsedSectionKeys.has(key);
   const isAssetInCollapsedSection = (index: number) =>
     !!primarySortGroupKeys && isSectionCollapsed(primarySortGroupKeys[index]);
   const toggleSection = (key: string) => {
@@ -468,7 +471,7 @@
             aria-expanded={!isSectionCollapsed(label.key)}
             onclick={() => toggleSection(label.key)}
           >
-            <Icon class={isSectionCollapsed(label.key) ? 'rotate-180' : ''} icon={mdiChevronDown} size="20" />
+            <Icon icon={isSectionCollapsed(label.key) ? mdiChevronRight : mdiChevronDown} size="20" />
           </button>
           {#if primarySortGroupColors?.[label.key]}
             <span
@@ -477,19 +480,19 @@
             ></span>
           {/if}
           {#if sectionHref}
-            <a
-              class="truncate text-xl font-semibold text-primary underline hover:text-primary md:text-2xl"
-              href={sectionHref}>{label.key}</a
-            >
             <button
-              class="shrink-0 hover:text-primary"
               type="button"
-              aria-label={label.key}
+              class="truncate text-xl font-semibold text-primary underline hover:text-primary md:text-2xl"
+              onclick={() => toggleSection(label.key)}
+            >{label.key}</button>
+            <a
+              class="shrink-0 hover:text-primary"
+              aria-label={`Open link to section ${label.key}`}
               data-section-anchor={label.assetId}
-              onclick={() => copySectionLink(sectionHref)}
+              href={sectionHref}
             >
               <Icon icon={mdiLink} size="16" />
-            </button>
+            </a>
           {:else}
             <span class="truncate text-xl font-semibold text-primary md:text-2xl">{label.key}</span>
           {/if}
@@ -499,7 +502,7 @@
           >
         </div>
         {#if label.description}<div
-            class="mt-1 max-w-[90%] truncate text-xs leading-5 text-gray-600 dark:text-gray-300"
+            class="mt-1 ms-7 max-w-[calc(90%-1.75rem)] truncate text-xs leading-5 text-gray-600 dark:text-gray-300"
           >
             {@html sanitizeDescription(label.description)}
           </div>{/if}
