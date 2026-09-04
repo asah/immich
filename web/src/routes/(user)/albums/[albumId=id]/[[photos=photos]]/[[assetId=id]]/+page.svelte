@@ -80,6 +80,7 @@
     IconButton,
     modalManager,
     toastManager,
+    Tooltip,
   } from '@immich/ui';
   import {
     mdiAccountEye,
@@ -736,31 +737,6 @@
             class={$albumAssetViewSettings.instantCameraStyle ? 'mt-0 bg-black' : 'mt-8'}
             bind:this={filenameGalleryElement}
           >
-            <div
-              class="mb-2 flex justify-end gap-2"
-              class:px-3={$albumAssetViewSettings.instantCameraStyle}
-              class:pt-3={$albumAssetViewSettings.instantCameraStyle}
-            >
-              <button
-                type="button"
-                class="rounded-full border border-subtle px-3 py-1 text-sm font-semibold text-immich-fg hover:bg-gray-100 dark:text-immich-dark-fg dark:hover:bg-gray-800"
-                class:text-white={$albumAssetViewSettings.instantCameraStyle}
-                aria-pressed={showPhotoCaptions}
-                aria-label="Toggle descriptions (I)"
-                title="Toggle descriptions (I)"
-                onclick={() => (showPhotoCaptions = !showPhotoCaptions)}>{showPhotoCaptions ? 'D' : 'd'}</button
-              >
-              <button
-                type="button"
-                class="rounded-md border border-subtle px-3 py-1 text-sm text-immich-fg hover:bg-gray-100"
-                aria-pressed={$albumAssetViewSettings.instantCameraStyle}
-                onclick={() =>
-                  ($albumAssetViewSettings = {
-                    ...$albumAssetViewSettings,
-                    instantCameraStyle: !$albumAssetViewSettings.instantCameraStyle,
-                  })}>Instant camera</button
-              >
-            </div>
             <GalleryViewer
               assets={filteredFilenameAssets}
               assetInteraction={assetMultiSelectManager}
@@ -973,17 +949,38 @@
       {#if viewMode === AlbumPageViewMode.VIEW}
         <ControlAppBar backIcon={mdiArrowLeft} onClose={() => goto(Route.albums())}>
           {#snippet trailing()}
+            {#if isAlternateSort && album.assetCount > 0}
+              <Tooltip text={showPhotoCaptions ? 'Hide descriptions (I)' : 'Show descriptions (I)'}>
+                {#snippet child({ props })}
+                  <button
+                    {...props}
+                    type="button"
+                    class="grid size-9 place-items-center rounded-full text-sm font-bold text-immich-fg hover:bg-gray-100 dark:text-immich-dark-fg dark:hover:bg-gray-800"
+                    class:text-primary={showPhotoCaptions}
+                    aria-label={showPhotoCaptions ? 'Hide descriptions (I)' : 'Show descriptions (I)'}
+                    aria-pressed={showPhotoCaptions}
+                    onclick={() => (showPhotoCaptions = !showPhotoCaptions)}>{showPhotoCaptions ? 'D' : 'd'}</button
+                  >
+                {/snippet}
+              </Tooltip>
+            {/if}
+
             <ActionButton action={Cast} />
 
             {#if isEditor}
-              <IconButton
-                variant="ghost"
-                shape="round"
-                color="secondary"
-                aria-label={$t('select_from_computer')}
-                onclick={() => Upload.onAction(Upload)}
-                icon={mdiUpload}
-              />
+              <Tooltip text="Upload into this album">
+                {#snippet child({ props })}
+                  <IconButton
+                    {...props}
+                    variant="ghost"
+                    shape="round"
+                    color="secondary"
+                    aria-label="Upload into this album"
+                    onclick={() => Upload.onAction(Upload)}
+                    icon={mdiUpload}
+                  />
+                {/snippet}
+              </Tooltip>
               <IconButton
                 variant="ghost"
                 shape="round"
