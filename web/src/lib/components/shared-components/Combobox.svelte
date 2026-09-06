@@ -46,6 +46,10 @@
      */
     defaultFirstOption?: boolean;
     onSelect?: (option: ComboBoxOption | undefined) => void;
+    /** Called when Enter is pressed without a highlighted option. */
+    onEnter?: () => void | Promise<void>;
+    /** Override the default dropdown-close behavior when Escape is pressed. */
+    onEscape?: () => void;
     forceFocus?: boolean;
   }
 
@@ -59,6 +63,8 @@
     allowCreate = false,
     defaultFirstOption = false,
     onSelect = () => {},
+    onEnter,
+    onEscape,
     forceFocus = false,
   }: Props = $props();
 
@@ -280,6 +286,14 @@
     {
       shortcut: { key: 'Escape' },
       onShortcut: (event) => {
+        if (onEscape) {
+          event.preventDefault();
+          event.stopPropagation();
+          closeDropdown();
+          onEscape();
+          return;
+        }
+
         event.stopPropagation();
         closeDropdown();
       },
@@ -340,8 +354,17 @@
         {
           shortcut: { key: 'Enter' },
           onShortcut: () => {
+            // A highlighted suggestion always wins. This lets a form use Enter to
+            // submit its current values without taking away keyboard selection.
             if (selectedIndex !== undefined && filteredOptions.length > 0) {
               handleSelect(filteredOptions[selectedIndex]);
+              return;
+            }
+
+            if (onEnter) {
+              closeDropdown();
+              void onEnter();
+              return;
             }
             closeDropdown();
           },

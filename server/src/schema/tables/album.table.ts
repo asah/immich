@@ -48,6 +48,10 @@ export class AlbumTable {
   @Column({ default: AssetOrder.Desc })
   order!: Generated<AssetOrder>;
 
+  /** Owner-published album presentation, used consistently by members and shared-link viewers. */
+  @Column({ type: 'jsonb', nullable: true })
+  presentation!: unknown | null;
+
   @UpdateIdColumn({ index: true })
   updateId!: Generated<string>;
 }

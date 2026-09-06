@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { BulkIdErrorReason } from 'src/dtos/asset-ids.response.dto';
 import { AlbumUserRole, AssetOrder, UserMetadataKey } from 'src/enum';
 import { AlbumService } from 'src/services/album.service';
@@ -423,6 +423,70 @@ describe(AlbumService.name, () => {
         { id: album.id, albumName: 'new album name' },
         owner.id,
       );
+    });
+
+    it('should allow an owner to publish an album presentation', async () => {
+      const presentation = {
+        version: 1 as const,
+        sortCriteria: [{ sortBy: 'dateTaken' as const, sortOrder: 'desc' as const }],
+        showSortDividers: true,
+        instantCameraStyle: true,
+        displayInfo: {
+          location: false,
+          date: true,
+          time: false,
+          filename: false,
+          description: true,
+          fileSize: false,
+          camera: false,
+          cameraSettings: false,
+          lens: false,
+          lensSettings: false,
+          reactions: true,
+        },
+      };
+      const album = AlbumFactory.create({ presentation });
+      const { user: owner } = album.albumUsers.find(({ role }) => role === AlbumUserRole.Owner)!;
+      mocks.access.album.checkOwnerAccess.mockResolvedValue(new Set([album.id]));
+      mocks.album.getById.mockResolvedValue(getForAlbum(album));
+      mocks.album.update.mockResolvedValue(getForAlbum(album));
+
+      await sut.update(AuthFactory.create(owner), album.id, { presentation });
+
+      expect(mocks.album.update).toHaveBeenCalledWith(album.id, { id: album.id, presentation }, owner.id);
+    });
+
+    it('should prevent a non-owner editor from publishing an album presentation', async () => {
+      const editor = UserFactory.create();
+      const album = AlbumFactory.from().albumUser({ userId: editor.id, role: AlbumUserRole.Editor }).build();
+      mocks.access.album.checkOwnerAccess.mockResolvedValue(new Set([album.id]));
+      mocks.album.getById.mockResolvedValue(getForAlbum(album));
+
+      await expect(
+        sut.update(AuthFactory.create(editor), album.id, {
+          presentation: {
+            version: 1,
+            sortCriteria: [{ sortBy: 'dateTaken', sortOrder: 'desc' }],
+            showSortDividers: true,
+            instantCameraStyle: false,
+            displayInfo: {
+              location: false,
+              date: true,
+              time: false,
+              filename: false,
+              description: true,
+              fileSize: false,
+              camera: false,
+              cameraSettings: false,
+              lens: false,
+              lensSettings: false,
+              reactions: true,
+            },
+          },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+
+      expect(mocks.album.update).not.toHaveBeenCalled();
     });
   });
 

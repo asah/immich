@@ -2,7 +2,7 @@
   import { eventManager } from '$lib/managers/event-manager.svelte';
   import { removeTag, tagAssets } from '$lib/utils/asset-utils';
   import { getAllTags, getAssetInfo, upsertTags, type TagResponseDto } from '@immich/sdk';
-  import { Checkbox, FormModal, Label, Text } from '@immich/ui';
+  import { Button, Checkbox, Label, Modal, ModalBody, ModalFooter, Text } from '@immich/ui';
   import { mdiTag } from '@mdi/js';
   import { onMount } from 'svelte';
   import { t } from 'svelte-i18n';
@@ -25,6 +25,7 @@
   let existingTags = $derived(allTags.filter((tag) => tagCounts.has(tag.id)));
   let disabled = $derived(selectedIds.size === 0 && tagChanges.size === 0);
   let allowCreate: boolean = $state(true);
+  const formId = 'asset-tag-form';
 
   onMount(async () => {
     allTags = await getAllTags();
@@ -107,54 +108,82 @@
   };
 </script>
 
-<FormModal
+<Modal
   size="small"
   title={$t('tag_assets')}
   icon={mdiTag}
   {onClose}
-  {onSubmit}
-  submitText={$t('tag_assets')}
+  class="asset-tag-modal h-auto max-h-[calc(100dvh-2rem)]"
   onOpenAutoFocus={(event) => event.preventDefault()}
-  {disabled}
+  onEscapeKeydown={(event) => {
+    event.preventDefault();
+    onClose();
+  }}
 >
-  <div class="my-4 flex flex-col gap-2">
-    <Combobox
-      onSelect={handleSelect}
-      label={$t('tag')}
-      {allowCreate}
-      defaultFirstOption
-      options={allTags.map((tag) => ({ id: tag.id, label: tag.value, value: tag.id }))}
-      placeholder={$t('search_tags')}
-    />
-  </div>
-
-  {#if existingTags.length > 0}
-    <section class="flex flex-col gap-2 pt-2" aria-label={$t('tags')}>
-      <Text color="muted" size="small">{$t('tags')}</Text>
-      <div class="flex max-h-48 flex-col gap-2 overflow-y-auto">
-        {#each existingTags as tag (tag.id)}
-          {@const id = `tag-checkbox-${tag.id}`}
-          <div class="flex items-center gap-2">
-            <Checkbox
-              {id}
-              size="tiny"
-              checked={getTagState(tag.id) === true}
-              indeterminate={getTagState(tag.id) === 'indeterminate'}
-              onCheckedChange={(checked) => updateTagState(tag.id, checked === true)}
-            />
-            <Label for={id} label={tag.value} class="text-sm font-normal" />
-          </div>
-        {/each}
+  <ModalBody class="min-h-0 overflow-y-auto">
+    <form
+      id={formId}
+      onsubmit={(event) => {
+        event.preventDefault();
+        void onSubmit();
+      }}
+    >
+      <div class="my-4 flex flex-col gap-2">
+        <Combobox
+          onSelect={handleSelect}
+          onEnter={onSubmit}
+          onEscape={onClose}
+          label={$t('tag')}
+          {allowCreate}
+          forceFocus
+          options={allTags.map((tag) => ({ id: tag.id, label: tag.value, value: tag.id }))}
+          placeholder={$t('search_tags')}
+        />
       </div>
-    </section>
-  {/if}
 
-  <section class="flex flex-wrap gap-1 pt-2">
-    {#each selectedIds as tagId (tagId)}
-      {@const tag = tagMap[tagId]}
-      {#if tag}
-        <TagPill label={tag.value} onRemove={() => handleRemove(tagId)} />
+      {#if existingTags.length > 0}
+        <section class="flex flex-col gap-2 pt-2" aria-label={$t('tags')}>
+          <Text color="muted" size="small">{$t('tags')}</Text>
+          <div class="flex max-h-48 shrink overflow-y-auto">
+            {#each existingTags as tag (tag.id)}
+              {@const id = `tag-checkbox-${tag.id}`}
+              <div class="flex items-center gap-2">
+                <Checkbox
+                  {id}
+                  size="tiny"
+                  checked={getTagState(tag.id) === true}
+                  indeterminate={getTagState(tag.id) === 'indeterminate'}
+                  onCheckedChange={(checked) => updateTagState(tag.id, checked === true)}
+                />
+                <Label for={id} label={tag.value} class="text-sm font-normal" />
+              </div>
+            {/each}
+          </div>
+        </section>
       {/if}
-    {/each}
-  </section>
-</FormModal>
+
+      <section class="flex flex-wrap gap-1 pt-2">
+        {#each selectedIds as tagId (tagId)}
+          {@const tag = tagMap[tagId]}
+          {#if tag}
+            <TagPill label={tag.value} onRemove={() => handleRemove(tagId)} />
+          {/if}
+        {/each}
+      </section>
+    </form>
+  </ModalBody>
+  <ModalFooter>
+    <div class="flex w-full gap-2">
+      <Button shape="round" color="secondary" fullWidth onclick={() => onClose()}>{$t('cancel')}</Button>
+      <Button shape="round" type="submit" color="primary" fullWidth {disabled} form={formId}>{$t('tag_assets')}</Button>
+    </div>
+  </ModalFooter>
+</Modal>
+
+<style>
+  @media (max-width: 639px) {
+    :global([data-dialog-content]:has(.asset-tag-modal) > div) {
+      justify-content: flex-start;
+    }
+  }
+</style>

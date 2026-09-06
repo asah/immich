@@ -50,12 +50,8 @@
   import { openSlideshowAtAsset } from '$lib/services/slideshow.service';
   import { getAssetBulkActions } from '$lib/services/asset.service';
   import { SlideshowNavigation, slideshowStore } from '$lib/stores/slideshow.store';
-  import {
-    AlbumAssetSortBy,
-    albumAssetViewSettings,
-    defaultAlbumAssetDisplayInfo,
-    SortOrder,
-  } from '$lib/stores/preferences.store';
+  import { AlbumAssetSortBy, defaultAlbumAssetDisplayInfo, SortOrder } from '$lib/stores/preferences.store';
+  import { getAlbumPresentationSettings } from '$lib/utils/album-presentation';
   import { handlePromiseError } from '$lib/utils';
   import { handleError } from '$lib/utils/handle-error';
   import { isAlbumsRoute, navigate, type AssetGridRouteSearchParams } from '$lib/utils/navigation';
@@ -98,7 +94,7 @@
     mdiPresentationPlay,
     mdiUpload,
   } from '@mdi/js';
-  import { onDestroy, untrack } from 'svelte';
+  import { onDestroy, onMount, untrack } from 'svelte';
   import { t } from 'svelte-i18n';
   import { fly } from 'svelte/transition';
   import { DateTime } from 'luxon';
@@ -130,6 +126,37 @@
   let showAlbumUsers = $derived(timelineManager?.showAssetOwners ?? false);
 
   const timelineMultiSelectManager = new AssetMultiSelectManager();
+
+  // This page can render either Timeline or GalleryViewer. Capture Escape at the
+  // page boundary so a selection is cleared in both layouts before a child or
+  // route shortcut gets a chance to consume it.
+  onMount(() => {
+    const clearAlbumSelectionOnEscape = (event: KeyboardEvent) => {
+      if (
+        event.key !== 'Escape' ||
+        assetViewerManager.isViewing ||
+        document.querySelector('[data-dialog-content][data-state="open"]')
+      ) {
+        return;
+      }
+
+      if (assetMultiSelectManager.selectionActive) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        assetMultiSelectManager.clear();
+        return;
+      }
+
+      if (timelineMultiSelectManager.selectionActive) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        void handleCloseSelectAssets();
+      }
+    };
+
+    window.addEventListener('keydown', clearAlbumSelectionOnEscape, { capture: true });
+    return () => window.removeEventListener('keydown', clearAlbumSelectionOnEscape, { capture: true });
+  });
 
   const handleFavorite = async () => {
     try {
@@ -259,6 +286,7 @@
 
   let album = $derived(data.album);
   let albumId = $derived(album.id);
+  const presentationSettings = $derived(getAlbumPresentationSettings(album.presentation));
   const localDateTime = (asset: AssetResponseDto) => DateTime.fromISO(asset.localDateTime, { zone: 'utc' });
   const locationLabel = (asset: AssetResponseDto) => {
     const exif = asset.exifInfo;
@@ -295,9 +323,9 @@
     return '500 MB and over';
   };
   const sortCriteria = $derived.by(() => {
-    const criteria = $albumAssetViewSettings.sortCriteria?.length
-      ? $albumAssetViewSettings.sortCriteria
-      : [{ sortBy: $albumAssetViewSettings.sortBy, sortOrder: $albumAssetViewSettings.sortOrder }];
+    const criteria = presentationSettings.sortCriteria?.length
+      ? presentationSettings.sortCriteria
+      : [{ sortBy: presentationSettings.sortBy, sortOrder: presentationSettings.sortOrder }];
     return criteria.length === 1 && criteria[0].sortBy === AlbumAssetSortBy.DateTaken
       ? [{ ...criteria[0], sortOrder: album.order === AssetOrder.Asc ? SortOrder.Asc : SortOrder.Desc }]
       : criteria;
@@ -394,12 +422,12 @@
       (sortCriteria.length > 1 ||
         sortCriteria[0].sortBy !== AlbumAssetSortBy.DateTaken ||
         !!engagementFilter ||
-        $albumAssetViewSettings.showSortDividers ||
-        Object.values({ ...defaultAlbumAssetDisplayInfo, ...$albumAssetViewSettings.displayInfo }).some(Boolean)),
+        presentationSettings.showSortDividers ||
+        Object.values({ ...defaultAlbumAssetDisplayInfo, ...presentationSettings.displayInfo }).some(Boolean)),
   );
 
   const primarySortGroupKeys = $derived.by(() => {
-    if (!$albumAssetViewSettings.showSortDividers) {
+    if (!presentationSettings.showSortDividers) {
       return undefined;
     }
 
@@ -552,8 +580,8 @@
 
   $effect(() => {
     const alternateSort = isAlternateSort;
-    const sortBy = $albumAssetViewSettings.sortBy;
-    const sortOrder = $albumAssetViewSettings.sortOrder;
+    const sortBy = presentationSettings.sortBy;
+    const sortOrder = presentationSettings.sortOrder;
     const criteria = sortCriteria;
     const albumOrder = album.order;
     const id = albumId;
@@ -700,7 +728,7 @@
   <div class="relative w-full shrink">
     <main
       class="relative h-dvh overflow-hidden px-2 pt-(--navbar-height) max-md:pt-(--navbar-height-md) md:px-6"
-      class:bg-black={isAlternateSort && $albumAssetViewSettings.instantCameraStyle}
+      class:bg-black={isAlternateSort && presentationSettings.instantCameraStyle}
     >
       {#if isAlternateSort}
         <section
@@ -710,7 +738,7 @@
           onscroll={(event) => (filenameScrollTop = event.currentTarget.scrollTop)}
         >
           <div
-            class={$albumAssetViewSettings.instantCameraStyle
+            class={presentationSettings.instantCameraStyle
               ? '-mx-2 bg-white px-2 py-8 text-immich-fg dark:bg-immich-dark-bg dark:text-immich-dark-fg md:-mx-6 md:px-6'
               : 'pt-8'}
           >
@@ -734,7 +762,7 @@
           </div>
 
           <div
-            class={$albumAssetViewSettings.instantCameraStyle ? 'mt-0 bg-black' : 'mt-8'}
+            class={presentationSettings.instantCameraStyle ? 'mt-0 bg-black' : 'mt-8'}
             bind:this={filenameGalleryElement}
           >
             <GalleryViewer
@@ -742,22 +770,22 @@
               assetInteraction={assetMultiSelectManager}
               onEndReached={() => loadFilenameAssets()}
               showArchiveIcon={true}
-              displayAssetInfo={{ ...defaultAlbumAssetDisplayInfo, ...$albumAssetViewSettings.displayInfo }}
+              displayAssetInfo={{ ...defaultAlbumAssetDisplayInfo, ...presentationSettings.displayInfo }}
               {album}
               {primarySortGroupKeys}
               {primarySortGroupDescriptions}
               {primarySortGroupColors}
               forceSectionsOpen={Boolean(engagementFilter)}
               captionsBelow={showPhotoCaptions}
-              instantCameraStyle={$albumAssetViewSettings.instantCameraStyle}
+              instantCameraStyle={presentationSettings.instantCameraStyle}
               slidingWindowOffset={filenameGalleryElement?.offsetTop ?? 0}
               viewportScrollTop={filenameScrollTop}
               viewport={filenameViewport}
-              rowHeight={$albumAssetViewSettings.rowHeight}
+              rowHeight={presentationSettings.rowHeight}
             >
               {#snippet assetOverlay(asset)}
                 {@const engagement = engagementByAsset[asset.id] ?? { reactions: {}, comments: 0 }}
-                {#if $albumAssetViewSettings.displayInfo?.reactions ?? true}
+                {#if presentationSettings.displayInfo?.reactions ?? true}
                   <AssetEngagementBadge reactions={engagement.reactions} comments={engagement.comments} />
                 {/if}
               {/snippet}
@@ -780,11 +808,11 @@
           sectionLink={getAlbumSectionLink}
           onEscape={handleEscape}
           withStacked={true}
-          rowHeight={$albumAssetViewSettings.rowHeight}
+          rowHeight={presentationSettings.rowHeight}
         >
           {#snippet customThumbnailLayout(asset)}
             {@const engagement = engagementByAsset[asset.id] ?? { reactions: {}, comments: 0 }}
-            {#if $albumAssetViewSettings.displayInfo?.reactions ?? true}
+            {#if presentationSettings.displayInfo?.reactions ?? true}
               <AssetEngagementBadge reactions={engagement.reactions} comments={engagement.comments} />
             {/if}
           {/snippet}

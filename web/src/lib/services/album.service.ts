@@ -203,7 +203,7 @@ export const handleAddUsersToAlbum = async (album: AlbumResponseDto, users: User
 export const handleInviteEmailsToAlbum = async (album: AlbumResponseDto, emails: string[]) => {
   const $t = await getFormatter();
   try {
-    await inviteUsersToAlbum({ id: album.id, emails });
+    await inviteUsersToAlbum({ id: album.id, inviteUsersDto: { emails } });
     eventManager.emit('AlbumShare');
     return true;
   } catch (error) {

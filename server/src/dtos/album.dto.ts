@@ -70,6 +70,51 @@ const AlbumsAddAssetsResponseSchema = z
   })
   .meta({ id: 'AlbumsAddAssetsResponseDto' });
 
+const AlbumPresentationDisplayInfoSchema = z.object({
+  location: z.boolean(),
+  date: z.boolean(),
+  time: z.boolean(),
+  filename: z.boolean(),
+  description: z.boolean(),
+  fileSize: z.boolean(),
+  camera: z.boolean(),
+  cameraSettings: z.boolean(),
+  lens: z.boolean(),
+  lensSettings: z.boolean(),
+  reactions: z.boolean(),
+});
+
+const AlbumPresentationSortCriterionSchema = z.object({
+  sortBy: z.enum([
+    'dateTaken',
+    'fileName',
+    'fileSize',
+    'tag',
+    'camera',
+    'lens',
+    'engagement',
+    'location',
+    'time',
+    'description',
+    'cameraSettings',
+    'lensSettings',
+  ]),
+  sortOrder: z.enum(['asc', 'desc']),
+});
+
+export const AlbumPresentationSchema = z
+  .object({
+    version: z.literal(1),
+    sortCriteria: z.array(AlbumPresentationSortCriterionSchema).min(1).max(4),
+    showSortDividers: z.boolean(),
+    rowHeight: z.int().min(100).max(400).optional(),
+    instantCameraStyle: z.boolean(),
+    displayInfo: AlbumPresentationDisplayInfoSchema,
+  })
+  .meta({ id: 'AlbumPresentationDto' });
+
+export type AlbumPresentation = z.infer<typeof AlbumPresentationSchema>;
+
 const UpdateAlbumSchema = z
   .object({
     albumName: z.string().optional().describe('Album name'),
@@ -77,6 +122,7 @@ const UpdateAlbumSchema = z
     albumThumbnailAssetId: z.uuidv4().optional().describe('Album thumbnail asset ID'),
     isActivityEnabled: z.boolean().optional().describe('Enable activity feed'),
     order: AssetOrderSchema.optional(),
+    presentation: AlbumPresentationSchema.nullish().describe('Owner-published album presentation'),
   })
   .meta({ id: 'UpdateAlbumDto' });
 
@@ -153,6 +199,7 @@ export const AlbumResponseSchema = z
     endDate: z.string().meta({ format: 'date-time' }).optional().describe('End date (latest asset)'),
     isActivityEnabled: z.boolean().describe('Activity feed enabled'),
     order: AssetOrderSchema.optional(),
+    presentation: AlbumPresentationSchema.nullable().describe('Owner-published album presentation'),
     contributorCounts: z.array(ContributorCountResponseSchema).optional(),
   })
   .meta({ id: 'AlbumResponseDto' });
@@ -197,6 +244,7 @@ export type MapAlbumDto = {
   id: string;
   isActivityEnabled: boolean;
   order: AssetOrder;
+  presentation: unknown | null;
 };
 
 export const mapAlbum = (entity: MaybeDehydrated<MapAlbumDto>): AlbumResponseDto => {
@@ -239,5 +287,6 @@ export const mapAlbum = (entity: MaybeDehydrated<MapAlbumDto>): AlbumResponseDto
     assetCount: entity.assets?.length || 0,
     isActivityEnabled: entity.isActivityEnabled,
     order: entity.order,
+    presentation: (entity.presentation as AlbumPresentation | null) ?? null,
   };
 };

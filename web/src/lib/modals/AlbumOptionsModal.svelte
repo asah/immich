@@ -11,13 +11,14 @@
   } from '$lib/services/album.service';
   import {
     AlbumAssetSortBy,
-    albumAssetViewSettings,
     defaultAlbumAssetDisplayInfo,
     locale,
     SortOrder,
     type AlbumAssetDisplayInfo,
     type AlbumAssetSortCriterion,
+    type AlbumAssetViewSettings,
   } from '$lib/stores/preferences.store';
+  import { getAlbumPresentationSettings, toAlbumPresentation } from '$lib/utils/album-presentation';
   import {
     AlbumUserRole,
     AssetOrder,
@@ -85,10 +86,11 @@
 
   let sharedLinks: SharedLinkResponseDto[] = $state([]);
 
+  const presentationSettings = $derived(getAlbumPresentationSettings(album.presentation));
   const sortCriteria = $derived.by(() => {
-    const criteria = $albumAssetViewSettings.sortCriteria?.length
-      ? $albumAssetViewSettings.sortCriteria
-      : [{ sortBy: $albumAssetViewSettings.sortBy, sortOrder: $albumAssetViewSettings.sortOrder }];
+    const criteria = presentationSettings.sortCriteria?.length
+      ? presentationSettings.sortCriteria
+      : [{ sortBy: presentationSettings.sortBy, sortOrder: presentationSettings.sortOrder }];
     return criteria.length === 1 && criteria[0].sortBy === AlbumAssetSortBy.DateTaken
       ? [{ ...criteria[0], sortOrder: album.order === AssetOrder.Asc ? SortOrder.Asc : SortOrder.Desc }]
       : criteria;
@@ -111,17 +113,22 @@
   );
 
   const saveSortCriteria = async (criteria: AlbumAssetSortCriterion[]) => {
+    if (readOnly) return;
     const [primary] = criteria;
-    $albumAssetViewSettings = {
-      ...$albumAssetViewSettings,
+    const settings = {
+      ...presentationSettings,
       sortBy: primary.sortBy,
       sortOrder: primary.sortOrder,
       sortCriteria: criteria,
     };
-    if (criteria.length === 1 && primary.sortBy === AlbumAssetSortBy.DateTaken) {
-      const assetOrder = primary.sortOrder === SortOrder.Asc ? AssetOrder.Asc : AssetOrder.Desc;
-      if (album.order !== assetOrder) await handleUpdateAlbum(album, { order: assetOrder });
-    }
+    album = { ...album, presentation: toAlbumPresentation(settings) };
+    const assetOrder =
+      criteria.length === 1 && primary.sortBy === AlbumAssetSortBy.DateTaken
+        ? primary.sortOrder === SortOrder.Asc
+          ? AssetOrder.Asc
+          : AssetOrder.Desc
+        : undefined;
+    await handleUpdateAlbum(album, { presentation: album.presentation, ...(assetOrder && { order: assetOrder }) });
   };
 
   const updateSortCriterion = (index: number, update: Partial<AlbumAssetSortCriterion>) => {
@@ -156,8 +163,20 @@
   ]);
 
   const setDisplayInfo = (key: keyof AlbumAssetDisplayInfo, checked: boolean) => {
-    const displayInfo = { ...defaultAlbumAssetDisplayInfo, ...$albumAssetViewSettings.displayInfo, [key]: checked };
-    $albumAssetViewSettings = { ...$albumAssetViewSettings, displayInfo };
+    if (readOnly) return;
+    const settings = {
+      ...presentationSettings,
+      displayInfo: { ...defaultAlbumAssetDisplayInfo, ...presentationSettings.displayInfo, [key]: checked },
+    };
+    album = { ...album, presentation: toAlbumPresentation(settings) };
+    void handleUpdateAlbum(album, { presentation: album.presentation });
+  };
+
+  const updatePresentation = (update: Partial<AlbumAssetViewSettings>) => {
+    if (readOnly) return;
+    const settings = { ...presentationSettings, ...update };
+    album = { ...album, presentation: toAlbumPresentation(settings) };
+    void handleUpdateAlbum(album, { presentation: album.presentation });
   };
 
   onMount(async () => {
@@ -239,9 +258,9 @@
         </div>
         <Field label={$t('album_sort_dividers')} description={$t('album_sort_dividers_description')}>
           <Switch
-            checked={$albumAssetViewSettings.showSortDividers}
-            onCheckedChange={(showSortDividers) =>
-              ($albumAssetViewSettings = { ...$albumAssetViewSettings, showSortDividers })}
+            checked={presentationSettings.showSortDividers}
+            disabled={readOnly}
+            onCheckedChange={(showSortDividers) => updatePresentation({ showSortDividers })}
           />
         </Field>
         <Field label="Image row height" description="Adjust the height of photo rows in this album view.">
@@ -252,22 +271,19 @@
               min="100"
               max="400"
               step="5"
-              value={$albumAssetViewSettings.rowHeight ?? 235}
+              value={presentationSettings.rowHeight ?? 235}
               aria-label="Image row height"
-              oninput={(event) =>
-                ($albumAssetViewSettings = {
-                  ...$albumAssetViewSettings,
-                  rowHeight: Number(event.currentTarget.value),
-                })}
+              disabled={readOnly}
+              onchange={(event) => updatePresentation({ rowHeight: Number(event.currentTarget.value) })}
             />
-            <output class="w-12 text-right text-sm tabular-nums">{$albumAssetViewSettings.rowHeight ?? 235}px</output>
+            <output class="w-12 text-right text-sm tabular-nums">{presentationSettings.rowHeight ?? 235}px</output>
           </div>
         </Field>
         <Field label="Instant camera" description="Use white photo cards on a black gallery surface.">
           <Switch
-            checked={$albumAssetViewSettings.instantCameraStyle ?? false}
-            onCheckedChange={(instantCameraStyle) =>
-              ($albumAssetViewSettings = { ...$albumAssetViewSettings, instantCameraStyle })}
+            checked={presentationSettings.instantCameraStyle ?? false}
+            disabled={readOnly}
+            onCheckedChange={(instantCameraStyle) => updatePresentation({ instantCameraStyle })}
           />
         </Field>
         <div>
@@ -278,7 +294,8 @@
                 <Checkbox
                   id={`album-display-info-${option.key}`}
                   size="tiny"
-                  checked={$albumAssetViewSettings.displayInfo?.[option.key] ?? false}
+                  checked={presentationSettings.displayInfo?.[option.key] ?? false}
+                  disabled={readOnly}
                   onCheckedChange={(checked) => setDisplayInfo(option.key, checked)}
                 />
                 <Label label={option.label} for={`album-display-info-${option.key}`} />

@@ -72,6 +72,14 @@
   let linkedCommentScrolled = $state(false);
   let isSendingMessage = $state(false);
   const isAlbumOwner = $derived(albumUsers[0].user.id === authManager.user.id);
+  // Asset comment threads stay conversational (oldest first); album activity is a feed (newest first).
+  const displayedActivities = $derived.by(() =>
+    assetId
+      ? activityManager.activities
+      : [...activityManager.activities].sort(
+          (left, right) => right.createdAt.localeCompare(left.createdAt) || right.id.localeCompare(left.id),
+        ),
+  );
 
   const timeOptions: Intl.DateTimeFormatOptions = {
     year: 'numeric',
@@ -245,7 +253,7 @@
         class="relative w-full immich-scrollbar overflow-y-auto px-2"
         style="height: {divHeight}px;padding-bottom: {chatHeight}px"
       >
-        {#each activityManager.activities as reaction, index (reaction.id)}
+        {#each displayedActivities as reaction, index (reaction.id)}
           {#if reaction.type === ReactionType.Comment}
             <div
               id={`comment-${reaction.id}`}
@@ -263,7 +271,7 @@
                     buttonLabel="React to comment"
                     onSelect={({ key }) => reactTo(reaction, key)}
                   />
-                  {#each activityManager.activities.filter((item) => item.parentActivityId === reaction.id) as reply (reply.id)}
+                  {#each displayedActivities.filter((item) => item.parentActivityId === reaction.id) as reply (reply.id)}
                     <span title={reply.reactionKey ?? 'reaction'}
                       >{reactionEmoji[reply.reactionKey ?? 'like'] ?? '😀'}</span
                     >
@@ -335,7 +343,7 @@
               {/if}
             </div>
 
-            {#if (index != activityManager.activities.length - 1 && !shouldGroup(activityManager.activities[index].createdAt, activityManager.activities[index + 1].createdAt)) || index === activityManager.activities.length - 1}
+            {#if (index != displayedActivities.length - 1 && !shouldGroup(displayedActivities[index].createdAt, displayedActivities[index + 1].createdAt)) || index === displayedActivities.length - 1}
               <div
                 class="w-full px-2 pt-1 text-right text-sm text-gray-500 dark:text-gray-300"
                 title={new Date(reaction.createdAt).toLocaleDateString(undefined, timeOptions)}
@@ -389,7 +397,7 @@
                   </div>
                 {/if}
               </div>
-              {#if (index != activityManager.activities.length - 1 && isTenMinutesApart(activityManager.activities[index].createdAt, activityManager.activities[index + 1].createdAt)) || index === activityManager.activities.length - 1}
+              {#if (index != displayedActivities.length - 1 && isTenMinutesApart(displayedActivities[index].createdAt, displayedActivities[index + 1].createdAt)) || index === displayedActivities.length - 1}
                 <div
                   class="w-full px-2 pt-1 text-right text-sm text-gray-500 dark:text-gray-300"
                   title={new Date(reaction.createdAt).toLocaleDateString(navigator.language, timeOptions)}

@@ -30,20 +30,20 @@ export type UserResponseDto = {
 export type ActivityResponseDto = {
     /** Asset ID (if activity is for an asset) */
     assetId: string | null;
+    /** Photo attachments referenced by this activity */
+    assetIds?: string[];
     /** Comment text (for comment activities) */
     comment?: string | null;
     /** Sanitized rich comment document */
-    commentDocument?: unknown;
-    /** Reaction key */
-    reactionKey?: string | null;
-    /** Comment activity receiving a reaction */
-    parentActivityId?: string | null;
-    /** Photo attachments referenced by this activity */
-    assetIds: string[];
+    commentDocument?: string | null;
     /** Creation date */
     createdAt: string;
     /** Activity ID */
     id: string;
+    /** Comment activity receiving a reaction */
+    parentActivityId?: string | null;
+    /** Reaction key */
+    reactionKey?: string | null;
     "type": ReactionType;
     user: UserResponseDto;
 };
@@ -52,16 +52,16 @@ export type ActivityCreateDto = {
     albumId: string;
     /** Asset ID (if activity is for an asset) */
     assetId?: string;
+    /** Photo attachments referenced by this activity */
+    assetIds?: string[];
     /** Comment text (required if type is comment) */
     comment?: string;
     /** Rich comment document */
-    commentDocument?: unknown;
-    /** Reaction key */
-    reactionKey?: string;
+    commentDocument?: string;
     /** Comment activity receiving a reaction */
     parentActivityId?: string;
-    /** Photo attachments referenced by this activity */
-    assetIds?: string[];
+    /** Reaction key */
+    reactionKey?: string;
     "type": ReactionType;
 };
 export type ActivityStatisticsResponseDto = {
@@ -334,7 +334,7 @@ export type EmailNotificationsResponse = {
     /** Whether email notifications are enabled */
     enabled: boolean;
     /** Email notification delivery frequency */
-    frequency: 'immediate' | 'hourly' | 'daily';
+    frequency: Frequency;
     /** Whether to receive email notifications for reactions */
     reactions: boolean;
 };
@@ -428,7 +428,7 @@ export type EmailNotificationsUpdate = {
     /** Whether email notifications are enabled */
     enabled?: boolean;
     /** Email notification delivery frequency */
-    frequency?: 'immediate' | 'hourly' | 'daily';
+    frequency?: Frequency;
     /** Whether to receive email notifications for reactions */
     reactions?: boolean;
 };
@@ -531,6 +531,29 @@ export type ContributorCountResponseDto = {
     /** User ID */
     userId: string;
 };
+export type AlbumPresentationDto = {
+    displayInfo: {
+        camera: boolean;
+        cameraSettings: boolean;
+        date: boolean;
+        description: boolean;
+        fileSize: boolean;
+        filename: boolean;
+        lens: boolean;
+        lensSettings: boolean;
+        location: boolean;
+        reactions: boolean;
+        time: boolean;
+    };
+    instantCameraStyle: boolean;
+    rowHeight?: number;
+    showSortDividers: boolean;
+    sortCriteria: {
+        sortBy: SortBy;
+        sortOrder: SortOrder;
+    }[];
+    version: Version;
+};
 export type AlbumResponseDto = {
     /** Album name */
     albumName: string;
@@ -556,6 +579,8 @@ export type AlbumResponseDto = {
     /** Last modified asset timestamp */
     lastModifiedAssetTimestamp?: string;
     order?: AssetOrder;
+    /** Owner-published album presentation */
+    presentation: (AlbumPresentationDto) | null;
     /** Is shared album */
     shared: boolean;
     /** Start date (earliest asset) */
@@ -607,6 +632,8 @@ export type UpdateAlbumDto = {
     /** Enable activity feed */
     isActivityEnabled?: boolean;
     order?: AssetOrder;
+    /** Owner-published album presentation */
+    presentation?: (AlbumPresentationDto) | null;
 };
 export type BulkIdsDto = {
     /** IDs to process */
@@ -630,17 +657,8 @@ export type AlbumInviteResponseDto = {
     /** Invitation ID */
     id: string;
 };
-export type AlbumAssetPriorityDto = {
-    /** Asset ID */
-    assetId: string;
-    /** Album-specific priority */
-    priority: number | null;
-};
-export type UpdateAlbumAssetPriorityDto = {
-    /** Asset IDs */
-    assetIds: string[];
-    /** Album-specific priority, or null to clear */
-    priority: number | null;
+export type InviteUsersDto = {
+    emails: string[];
 };
 export type MapMarkerResponseDto = {
     /** City name */
@@ -808,6 +826,15 @@ export type AssetJobsDto = {
     assetIds: string[];
     name: AssetJobName;
 };
+export type LocationSuggestionResponseDto = {
+    accuracyMeters: number;
+    assetIds: string[];
+    confidence: number;
+    latitude: number;
+    locality: string;
+    longitude: number;
+    timeWindowMinutes: number;
+};
 export type AssetMetadataBulkDeleteItemDto = {
     /** Asset ID */
     assetId: string;
@@ -917,10 +944,14 @@ export type AssetStackResponseDto = {
     primaryAssetId: string;
 };
 export type TagResponseDto = {
+    /** Number of assets tagged */
+    assetCount?: number;
     /** Tag color (hex) */
     color?: string;
     /** Creation date */
     createdAt: string;
+    /** Optional tag description */
+    description?: string | null;
     /** Tag ID */
     id: string;
     /** Tag name */
@@ -931,10 +962,6 @@ export type TagResponseDto = {
     updatedAt: string;
     /** Tag value (full path) */
     value: string;
-    /** Optional tag description */
-    description?: string | null;
-    /** Number of assets tagged */
-    assetCount?: number;
 };
 export type AssetResponseDto = {
     /** Base64 encoded SHA1 hash */
@@ -3803,7 +3830,9 @@ export type ReverseGeocodingStateResponseDto = {
 };
 export type TagCreateDto = {
     /** Tag color (hex) */
-    color?: string | null;
+    color: string | null;
+    /** Optional rich-text tag description */
+    description?: string | null;
     /** Tag name */
     name: string;
     /** Parent tag ID */
@@ -3824,12 +3853,12 @@ export type TagBulkAssetsResponseDto = {
     count: number;
 };
 export type TagUpdateDto = {
+    /** Tag color (hex) */
+    color: string | null;
+    /** Optional rich-text tag description */
+    description?: string | null;
     /** New tag name */
     name?: string;
-    /** Tag color (hex) */
-    color?: string | null;
-    /** Optional tag description */
-    description?: string | null;
 };
 export type TimeBucketAssetResponseDto = {
     /** Array of city names extracted from EXIF GPS data */
@@ -4486,13 +4515,13 @@ export type SyncUserV1 = {
 /**
  * List all activities
  */
-export function getActivities({ albumId, assetId, level, $type, userId, parentActivityId }: {
+export function getActivities({ albumId, assetId, level, parentActivityId, $type, userId }: {
     albumId: string;
     assetId?: string;
     level?: ReactionLevel;
+    parentActivityId?: string | null;
     $type?: ReactionType;
     userId?: string;
-    parentActivityId?: string;
 }, opts?: Oazapfts.RequestOpts) {
     return oazapfts.ok(oazapfts.fetchJson<{
         status: 200;
@@ -4501,9 +4530,9 @@ export function getActivities({ albumId, assetId, level, $type, userId, parentAc
         albumId,
         assetId,
         level,
+        parentActivityId,
         "type": $type,
-        userId,
-        parentActivityId
+        userId
     }))}`, {
         ...opts
     }));
@@ -5107,29 +5136,16 @@ export function getPendingInvites({ id }: {
     }));
 }
 /**
- * Get album asset priorities
+ * Invite email addresses to an album
  */
-export function getAlbumAssetPriorities({ id }: {
+export function inviteUsersToAlbum({ id, inviteUsersDto }: {
     id: string;
+    inviteUsersDto: InviteUsersDto;
 }, opts?: Oazapfts.RequestOpts) {
-    return oazapfts.ok(oazapfts.fetchJson<{
-        status: 200;
-        data: AlbumAssetPriorityDto[];
-    }>(`/albums/${encodeURIComponent(id)}/assets/priorities`, {
-        ...opts
-    }));
-}
-/**
- * Set album asset priority
- */
-export function updateAlbumAssetPriority({ id, updateAlbumAssetPriorityDto }: {
-    id: string;
-    updateAlbumAssetPriorityDto: UpdateAlbumAssetPriorityDto;
-}, opts?: Oazapfts.RequestOpts) {
-    return oazapfts.ok(oazapfts.fetchText(`/albums/${encodeURIComponent(id)}/assets/priority`, oazapfts.json({
+    return oazapfts.ok(oazapfts.fetchText(`/albums/${encodeURIComponent(id)}/invites`, oazapfts.json({
         ...opts,
-        method: "PATCH",
-        body: updateAlbumAssetPriorityDto
+        method: "POST",
+        body: inviteUsersDto
     })));
 }
 /**
@@ -5202,14 +5218,6 @@ export function addUsersToAlbum({ id, addUsersDto }: {
         ...opts,
         method: "PUT",
         body: addUsersDto
-    })));
-}
-/** Invite email addresses to an album. Unknown recipients create their account from the emailed link. */
-export function inviteUsersToAlbum({ id, emails }: { id: string; emails: string[] }, opts?: Oazapfts.RequestOpts) {
-    return oazapfts.ok(oazapfts.fetchText(`/albums/${encodeURIComponent(id)}/invites`, oazapfts.json({
-        ...opts,
-        method: "POST",
-        body: { emails }
     })));
 }
 /**
@@ -5378,6 +5386,17 @@ export function runAssetJobs({ assetJobsDto }: {
         method: "POST",
         body: assetJobsDto
     })));
+}
+/**
+ * Get conservative location suggestions
+ */
+export function getLocationSuggestions(opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 200;
+        data: LocationSuggestionResponseDto[];
+    }>("/assets/location-suggestions", {
+        ...opts
+    }));
 }
 /**
  * Delete asset metadata
@@ -8902,6 +8921,8 @@ export enum NotificationType {
     SystemMessage = "SystemMessage",
     AlbumInvite = "AlbumInvite",
     AlbumUpdate = "AlbumUpdate",
+    Activity = "Activity",
+    AssetUpdate = "AssetUpdate",
     Custom = "Custom"
 }
 export enum UserStatus {
@@ -8917,6 +8938,11 @@ export enum AssetOrder {
     Asc = "asc",
     Desc = "desc"
 }
+export enum Frequency {
+    Immediate = "immediate",
+    Hourly = "hourly",
+    Daily = "daily"
+}
 export enum AssetVisibility {
     Archive = "archive",
     Timeline = "timeline",
@@ -8927,6 +8953,27 @@ export enum AlbumUserRole {
     Editor = "editor",
     Owner = "owner",
     Viewer = "viewer"
+}
+export enum SortBy {
+    DateTaken = "dateTaken",
+    FileName = "fileName",
+    FileSize = "fileSize",
+    Tag = "tag",
+    Camera = "camera",
+    Lens = "lens",
+    Engagement = "engagement",
+    Location = "location",
+    Time = "time",
+    Description = "description",
+    CameraSettings = "cameraSettings",
+    LensSettings = "lensSettings"
+}
+export enum SortOrder {
+    Asc = "asc",
+    Desc = "desc"
+}
+export enum Version {
+    $1 = 1
 }
 export enum BulkIdErrorReason {
     Duplicate = "duplicate",
@@ -9250,6 +9297,8 @@ export enum JobName {
     NotifyUserSignup = "NotifyUserSignup",
     NotifyAlbumInvite = "NotifyAlbumInvite",
     NotifyAlbumUpdate = "NotifyAlbumUpdate",
+    NotifyActivity = "NotifyActivity",
+    NotifyAssetDescription = "NotifyAssetDescription",
     UserDelete = "UserDelete",
     UserDeleteCheck = "UserDeleteCheck",
     UserSyncUsage = "UserSyncUsage",
@@ -9286,16 +9335,14 @@ export enum OrderBy {
     OriginalFileName = "originalFileName",
     FileSizeInByte = "fileSizeInByte",
     Model = "model",
-    LensModel = "lensModel",
-    AlbumPriority = "albumPriority"
+    LensModel = "lensModel"
 }
 export enum Field {
     FileCreatedAt = "fileCreatedAt",
     OriginalFileName = "originalFileName",
     FileSizeInByte = "fileSizeInByte",
     Model = "model",
-    LensModel = "lensModel",
-    AlbumPriority = "albumPriority"
+    LensModel = "lensModel"
 }
 export enum SearchSuggestionType {
     Country = "country",

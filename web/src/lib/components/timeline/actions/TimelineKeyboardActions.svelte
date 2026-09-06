@@ -23,6 +23,7 @@
   import { archiveAssets, selectAllAssets, stackAssets } from '$lib/utils/asset-utils';
   import { AssetVisibility } from '@immich/sdk';
   import { isModalOpen, modalManager } from '@immich/ui';
+  import { onMount } from 'svelte';
 
   type Props = {
     timelineManager: TimelineManager;
@@ -109,6 +110,28 @@
     }
   };
 
+  // Register in the capture phase so route-level Escape shortcuts cannot
+  // navigate away before an active selection is cleared.
+  onMount(() => {
+    const clearSelectionOnEscape = (event: KeyboardEvent) => {
+      if (
+        event.key !== 'Escape' ||
+        !assetInteraction.selectionActive ||
+        assetViewerManager.isViewing ||
+        isModalOpen()
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      assetInteraction.clear();
+    };
+
+    window.addEventListener('keydown', clearSelectionOnEscape, { capture: true });
+    return () => window.removeEventListener('keydown', clearSelectionOnEscape, { capture: true });
+  });
+
   const shortcutList = $derived.by(() => {
     if (searchStore.isSearchEnabled || assetViewerManager.isViewing || isModalOpen()) {
       return [];
@@ -127,7 +150,9 @@
       { shortcut: { key: 'Y', shift: true }, onShortcut: () => setFocusTo('later', 'year') },
       { shortcut: { key: 'G' }, onShortcut: handleOpenDateModal },
     ];
-    if (onEscape) {
+    if (assetInteraction.selectionActive) {
+      shortcuts.push({ shortcut: { key: 'Escape' }, onShortcut: () => assetInteraction.clear() });
+    } else if (onEscape) {
       shortcuts.push({ shortcut: { key: 'Escape' }, onShortcut: onEscape });
     }
 

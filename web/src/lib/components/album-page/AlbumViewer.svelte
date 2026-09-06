@@ -15,6 +15,7 @@
   import { dragAndDropFilesStore } from '$lib/stores/drag-and-drop-files.store';
   import { mediaQueryManager } from '$lib/stores/media-query-manager.svelte';
   import { SlideshowNavigation, slideshowStore } from '$lib/stores/slideshow.store';
+  import { getAlbumPresentationSettings } from '$lib/utils/album-presentation';
   import { handlePromiseError } from '$lib/utils';
   import { fileUploadHandler, openFileUploadDialog } from '$lib/utils/file-uploader';
   import type { AlbumResponseDto, SharedLinkResponseDto } from '@immich/sdk';
@@ -32,6 +33,7 @@
   let { sharedLink }: Props = $props();
 
   const album = sharedLink.album as AlbumResponseDto;
+  const presentationSettings = $derived(getAlbumPresentationSettings(album.presentation));
 
   let { slideshowNavigation } = slideshowStore;
 
@@ -74,28 +76,45 @@
   }}
 />
 
-<main class="relative h-dvh overflow-hidden px-2 pt-(--navbar-height) max-md:pt-(--navbar-height-md) md:px-6">
-  <Timeline enableRouting={true} {album} bind:timelineManager {options} assetInteraction={assetMultiSelectManager}>
-    <section class="px-2 pt-8 md:px-0 md:pt-24">
-      <!-- ALBUM TITLE -->
-      <h1 class="text-2xl text-primary transition-all outline-none md:text-4xl lg:text-6xl">
-        {album.albumName}
-      </h1>
+<main
+  class="relative h-dvh overflow-hidden px-2 pt-(--navbar-height) max-md:pt-(--navbar-height-md) md:px-6"
+  class:bg-black={presentationSettings.instantCameraStyle}
+>
+  <div class:instant-camera={presentationSettings.instantCameraStyle} class="h-full">
+    <Timeline
+      enableRouting={true}
+      {album}
+      bind:timelineManager
+      {options}
+      assetInteraction={assetMultiSelectManager}
+      rowHeight={presentationSettings.rowHeight}
+      imageClass={presentationSettings.instantCameraStyle ? 'box-border border-4 border-white' : ''}
+    >
+      <section
+        class={presentationSettings.instantCameraStyle
+          ? '-mx-2 bg-white px-2 pt-8 pb-8 text-immich-fg dark:bg-immich-dark-bg dark:text-immich-dark-fg md:-mx-6 md:px-6'
+          : 'px-2 pt-8 md:px-0 md:pt-24'}
+      >
+        <!-- ALBUM TITLE -->
+        <h1 class="text-2xl text-primary transition-all outline-none md:text-4xl lg:text-6xl">
+          {album.albumName}
+        </h1>
 
-      {#if album.assetCount > 0}
-        <AlbumSummary {album} />
-      {/if}
+        {#if album.assetCount > 0}
+          <AlbumSummary {album} />
+        {/if}
 
-      <!-- ALBUM DESCRIPTION -->
-      {#if album.description}
-        <p
-          class="mt-6 mb-12 w-full pb-2 text-start text-base font-medium whitespace-pre-line text-black dark:text-gray-300"
-        >
-          {album.description}
-        </p>
-      {/if}
-    </section>
-  </Timeline>
+        <!-- ALBUM DESCRIPTION -->
+        {#if album.description}
+          <p
+            class="mt-6 mb-12 w-full pb-2 text-start text-base font-medium whitespace-pre-line text-black dark:text-gray-300"
+          >
+            {album.description}
+          </p>
+        {/if}
+      </section>
+    </Timeline>
+  </div>
 </main>
 
 <header>
@@ -154,3 +173,9 @@
     </ControlAppBar>
   {/if}
 </header>
+
+<style>
+  .instant-camera :global([data-group] > div:first-child) {
+    color: white;
+  }
+</style>

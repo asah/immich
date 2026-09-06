@@ -19142,6 +19142,124 @@
         ],
         "type": "object"
       },
+      "AlbumPresentationDto": {
+        "properties": {
+          "displayInfo": {
+            "properties": {
+              "camera": {
+                "type": "boolean"
+              },
+              "cameraSettings": {
+                "type": "boolean"
+              },
+              "date": {
+                "type": "boolean"
+              },
+              "description": {
+                "type": "boolean"
+              },
+              "fileSize": {
+                "type": "boolean"
+              },
+              "filename": {
+                "type": "boolean"
+              },
+              "lens": {
+                "type": "boolean"
+              },
+              "lensSettings": {
+                "type": "boolean"
+              },
+              "location": {
+                "type": "boolean"
+              },
+              "reactions": {
+                "type": "boolean"
+              },
+              "time": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "location",
+              "date",
+              "time",
+              "filename",
+              "description",
+              "fileSize",
+              "camera",
+              "cameraSettings",
+              "lens",
+              "lensSettings",
+              "reactions"
+            ],
+            "type": "object"
+          },
+          "instantCameraStyle": {
+            "type": "boolean"
+          },
+          "rowHeight": {
+            "maximum": 400,
+            "minimum": 100,
+            "type": "integer"
+          },
+          "showSortDividers": {
+            "type": "boolean"
+          },
+          "sortCriteria": {
+            "items": {
+              "properties": {
+                "sortBy": {
+                  "enum": [
+                    "dateTaken",
+                    "fileName",
+                    "fileSize",
+                    "tag",
+                    "camera",
+                    "lens",
+                    "engagement",
+                    "location",
+                    "time",
+                    "description",
+                    "cameraSettings",
+                    "lensSettings"
+                  ],
+                  "type": "string"
+                },
+                "sortOrder": {
+                  "enum": [
+                    "asc",
+                    "desc"
+                  ],
+                  "type": "string"
+                }
+              },
+              "required": [
+                "sortBy",
+                "sortOrder"
+              ],
+              "type": "object"
+            },
+            "maxItems": 4,
+            "minItems": 1,
+            "type": "array"
+          },
+          "version": {
+            "enum": [
+              1
+            ],
+            "type": "number"
+          }
+        },
+        "required": [
+          "displayInfo",
+          "instantCameraStyle",
+          "showSortDividers",
+          "sortCriteria",
+          "version"
+        ],
+        "type": "object"
+      },
       "AlbumResponseDto": {
         "properties": {
           "albumName": {
@@ -19211,6 +19329,15 @@
           "order": {
             "$ref": "#/components/schemas/AssetOrder"
           },
+          "presentation": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AlbumPresentationDto"
+              }
+            ],
+            "description": "Owner-published album presentation",
+            "nullable": true
+          },
           "shared": {
             "description": "Is shared album",
             "type": "boolean"
@@ -19236,6 +19363,7 @@
           "hasSharedLink",
           "id",
           "isActivityEnabled",
+          "presentation",
           "shared",
           "updatedAt"
         ],
@@ -35898,6 +36026,15 @@
           },
           "order": {
             "$ref": "#/components/schemas/AssetOrder"
+          },
+          "presentation": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AlbumPresentationDto"
+              }
+            ],
+            "description": "Owner-published album presentation",
+            "nullable": true
           }
         },
         "type": "object"
