@@ -136,6 +136,10 @@
       {#snippet trailing()}
         <ActionButton action={Cast} />
 
+        {#if album.voting?.enabled}
+          <a class="rounded-full px-3 py-2 text-sm font-semibold text-primary hover:bg-primary/10" href={`/share/${sharedLink.key}/vote`}>Vote</a>
+        {/if}
+
         {#if sharedLink.allowUpload}
           <IconButton
             shape="round"

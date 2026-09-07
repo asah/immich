@@ -146,10 +146,10 @@ export class AlbumService extends BaseService {
     const album = await this.findOrFail(id, auth.user.id, { withAssets: true });
 
     if (
-      dto.presentation !== undefined &&
+      (dto.presentation !== undefined || dto.voting !== undefined) &&
       !album.albumUsers.some(({ user, role }) => user.id === auth.user.id && role === AlbumUserRole.Owner)
     ) {
-      throw new ForbiddenException('Only the album owner can publish presentation settings');
+      throw new ForbiddenException('Only the album owner can publish presentation or voting settings');
     }
 
     if (dto.albumThumbnailAssetId) {
@@ -168,6 +168,7 @@ export class AlbumService extends BaseService {
         isActivityEnabled: dto.isActivityEnabled,
         order: dto.order,
         presentation: dto.presentation,
+        voting: dto.voting,
       },
       auth.user.id,
     );

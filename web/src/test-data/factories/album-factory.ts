@@ -16,4 +16,5 @@ export const albumFactory = Sync.makeFactory<AlbumResponseDto>({
   isActivityEnabled: true,
   order: AssetOrder.Desc,
   presentation: null,
+  voting: null,
 });

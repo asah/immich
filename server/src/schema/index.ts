@@ -39,6 +39,7 @@ import { AlbumAuditTable } from 'src/schema/tables/album-audit.table';
 import { AlbumUserAuditTable } from 'src/schema/tables/album-user-audit.table';
 import { AlbumUserTable } from 'src/schema/tables/album-user.table';
 import { AlbumInviteTable } from 'src/schema/tables/album-invite.table';
+import { AlbumVoteTable } from 'src/schema/tables/album-vote.table';
 import { AlbumTable } from 'src/schema/tables/album.table';
 import { ApiKeyTable } from 'src/schema/tables/api-key.table';
 import { AssetAuditTable } from 'src/schema/tables/asset-audit.table';
@@ -119,6 +120,7 @@ export class ImmichDatabase {
     AlbumUserAuditTable,
     AlbumUserTable,
     AlbumInviteTable,
+    AlbumVoteTable,
     AlbumTable,
     ApiKeyTable,
     AssetAuditTable,
@@ -238,6 +240,7 @@ export interface DB {
   album_user: AlbumUserTable;
   album_user_audit: AlbumUserAuditTable;
   album_invite: AlbumInviteTable;
+  album_vote: AlbumVoteTable;
 
   api_key: ApiKeyTable;
 

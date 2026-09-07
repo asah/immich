@@ -3089,6 +3089,222 @@
         "x-immich-state": "Stable"
       }
     },
+    "/albums/{id}/voting/leaderboard": {
+      "get": {
+        "operationId": "getAlbumVotingLeaderboard",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+              "type": "string"
+            }
+          },
+          {
+            "name": "key",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "slug",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlbumVoteLeaderboardDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "summary": "Get album voting leaderboard",
+        "tags": [
+          "Albums"
+        ],
+        "x-immich-history": [
+          {
+            "version": "v3",
+            "state": "Added"
+          }
+        ],
+        "x-immich-permission": "album.read"
+      }
+    },
+    "/albums/{id}/voting/session": {
+      "get": {
+        "operationId": "getAlbumVotingSession",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+              "type": "string"
+            }
+          },
+          {
+            "name": "key",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "slug",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlbumVoteSessionDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "summary": "Get a personal album voting sample",
+        "tags": [
+          "Albums"
+        ],
+        "x-immich-history": [
+          {
+            "version": "v3",
+            "state": "Added"
+          }
+        ],
+        "x-immich-permission": "album.read"
+      }
+    },
+    "/albums/{id}/voting/votes/{assetId}": {
+      "put": {
+        "operationId": "voteForAlbum",
+        "parameters": [
+          {
+            "name": "assetId",
+            "required": true,
+            "in": "path",
+            "description": "Asset ID",
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Album ID",
+            "schema": {
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+              "type": "string"
+            }
+          },
+          {
+            "name": "key",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "slug",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlbumVoteDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          },
+          {
+            "cookie": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "summary": "Cast or remove an album vote",
+        "tags": [
+          "Albums"
+        ],
+        "x-immich-history": [
+          {
+            "version": "v3",
+            "state": "Added"
+          }
+        ],
+        "x-immich-permission": "album.read"
+      }
+    },
     "/api-keys": {
       "get": {
         "description": "Retrieve all API keys of the current user.",
@@ -19351,6 +19567,15 @@
             "description": "Last update date",
             "format": "date-time",
             "type": "string"
+          },
+          "voting": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AlbumVotingDto"
+              }
+            ],
+            "description": "Owner-controlled community voting settings",
+            "nullable": true
           }
         },
         "required": [
@@ -19365,7 +19590,8 @@
           "isActivityEnabled",
           "presentation",
           "shared",
-          "updatedAt"
+          "updatedAt",
+          "voting"
         ],
         "type": "object"
       },
@@ -19457,6 +19683,209 @@
           "viewer"
         ],
         "type": "string"
+      },
+      "AlbumVoteCandidateDto": {
+        "properties": {
+          "assetId": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+            "type": "string"
+          },
+          "height": {
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991,
+            "nullable": true,
+            "type": "integer"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number",
+                "enum": [
+                  -1
+                ]
+              },
+              {
+                "type": "number",
+                "enum": [
+                  1
+                ]
+              }
+            ],
+            "nullable": true
+          },
+          "width": {
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991,
+            "nullable": true,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "assetId",
+          "height",
+          "value",
+          "width"
+        ],
+        "type": "object"
+      },
+      "AlbumVoteDto": {
+        "properties": {
+          "value": {
+            "anyOf": [
+              {
+                "type": "number",
+                "enum": [
+                  -1
+                ]
+              },
+              {
+                "type": "number",
+                "enum": [
+                  1
+                ]
+              }
+            ],
+            "nullable": true
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "type": "object"
+      },
+      "AlbumVoteLeaderboardDto": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AlbumVoteLeaderboardItemDto"
+            },
+            "type": "array"
+          },
+          "voters": {
+            "maximum": 9007199254740991,
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "voters"
+        ],
+        "type": "object"
+      },
+      "AlbumVoteLeaderboardItemDto": {
+        "properties": {
+          "assetId": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+            "type": "string"
+          },
+          "positiveVotes": {
+            "maximum": 9007199254740991,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "ratings": {
+            "maximum": 9007199254740991,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "score": {
+            "maximum": 9007199254740991,
+            "minimum": -9007199254740991,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "assetId",
+          "positiveVotes",
+          "ratings",
+          "score"
+        ],
+        "type": "object"
+      },
+      "AlbumVoteSessionDto": {
+        "properties": {
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/AlbumVoteCandidateDto"
+            },
+            "type": "array"
+          },
+          "leaderboardVisible": {
+            "type": "boolean"
+          },
+          "requiredCount": {
+            "maximum": 9007199254740991,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "sampleSize": {
+            "maximum": 9007199254740991,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "submittedCount": {
+            "maximum": 9007199254740991,
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "candidates",
+          "leaderboardVisible",
+          "requiredCount",
+          "sampleSize",
+          "submittedCount"
+        ],
+        "type": "object"
+      },
+      "AlbumVotingDto": {
+        "properties": {
+          "allowAnonymous": {
+            "default": true,
+            "type": "boolean"
+          },
+          "downvotesAffectRanking": {
+            "default": false,
+            "type": "boolean"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "leaderboardVisible": {
+            "default": true,
+            "type": "boolean"
+          },
+          "sampleSize": {
+            "anyOf": [
+              {
+                "type": "number",
+                "enum": [
+                  10
+                ]
+              },
+              {
+                "type": "number",
+                "enum": [
+                  20
+                ]
+              },
+              {
+                "type": "number",
+                "enum": [
+                  40
+                ]
+              }
+            ],
+            "default": 20
+          }
+        },
+        "required": [
+          "enabled"
+        ],
+        "type": "object"
       },
       "AlbumsAddAssetsDto": {
         "properties": {
@@ -36034,6 +36463,15 @@
               }
             ],
             "description": "Owner-published album presentation",
+            "nullable": true
+          },
+          "voting": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AlbumVotingDto"
+              }
+            ],
+            "description": "Owner-controlled community voting settings",
             "nullable": true
           }
         },

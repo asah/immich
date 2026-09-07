@@ -1036,6 +1036,10 @@
 
             <ActionButton action={Cast} />
 
+            {#if album.voting?.enabled}
+              <a class="rounded-full px-3 py-2 text-sm font-semibold text-primary hover:bg-primary/10" href={`/albums/${album.id}/vote`}>Vote</a>
+            {/if}
+
             {#if isEditor}
               <Tooltip text="Upload into this album">
                 {#snippet child({ props })}

@@ -52,6 +52,10 @@ export class AlbumTable {
   @Column({ type: 'jsonb', nullable: true })
   presentation!: unknown | null;
 
+  /** Owner-controlled community voting configuration. */
+  @Column({ type: 'jsonb', nullable: true })
+  voting!: unknown | null;
+
   @UpdateIdColumn({ index: true })
   updateId!: Generated<string>;
 }

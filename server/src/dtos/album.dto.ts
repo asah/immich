@@ -115,6 +115,18 @@ export const AlbumPresentationSchema = z
 
 export type AlbumPresentation = z.infer<typeof AlbumPresentationSchema>;
 
+export const AlbumVotingSchema = z
+  .object({
+    enabled: z.boolean(),
+    sampleSize: z.union([z.literal(10), z.literal(20), z.literal(40)]).default(20),
+    allowAnonymous: z.boolean().default(true),
+    leaderboardVisible: z.boolean().default(true),
+    downvotesAffectRanking: z.boolean().default(false),
+  })
+  .meta({ id: 'AlbumVotingDto' });
+
+export type AlbumVoting = z.infer<typeof AlbumVotingSchema>;
+
 const UpdateAlbumSchema = z
   .object({
     albumName: z.string().optional().describe('Album name'),
@@ -123,6 +135,7 @@ const UpdateAlbumSchema = z
     isActivityEnabled: z.boolean().optional().describe('Enable activity feed'),
     order: AssetOrderSchema.optional(),
     presentation: AlbumPresentationSchema.nullish().describe('Owner-published album presentation'),
+    voting: AlbumVotingSchema.nullish().describe('Owner-controlled community voting settings'),
   })
   .meta({ id: 'UpdateAlbumDto' });
 
@@ -200,6 +213,7 @@ export const AlbumResponseSchema = z
     isActivityEnabled: z.boolean().describe('Activity feed enabled'),
     order: AssetOrderSchema.optional(),
     presentation: AlbumPresentationSchema.nullable().describe('Owner-published album presentation'),
+    voting: AlbumVotingSchema.nullable().describe('Owner-controlled community voting settings'),
     contributorCounts: z.array(ContributorCountResponseSchema).optional(),
   })
   .meta({ id: 'AlbumResponseDto' });
@@ -245,6 +259,7 @@ export type MapAlbumDto = {
   isActivityEnabled: boolean;
   order: AssetOrder;
   presentation: unknown | null;
+  voting: unknown | null;
 };
 
 export const mapAlbum = (entity: MaybeDehydrated<MapAlbumDto>): AlbumResponseDto => {
@@ -288,5 +303,6 @@ export const mapAlbum = (entity: MaybeDehydrated<MapAlbumDto>): AlbumResponseDto
     isActivityEnabled: entity.isActivityEnabled,
     order: entity.order,
     presentation: (entity.presentation as AlbumPresentation | null) ?? null,
+    voting: (entity.voting as AlbumVoting | null) ?? null,
   };
 };

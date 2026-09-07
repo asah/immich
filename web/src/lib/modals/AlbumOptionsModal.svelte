@@ -87,6 +87,13 @@
   let sharedLinks: SharedLinkResponseDto[] = $state([]);
 
   const presentationSettings = $derived(getAlbumPresentationSettings(album.presentation));
+  const votingSettings = $derived({
+    enabled: album.voting?.enabled ?? false,
+    sampleSize: album.voting?.sampleSize ?? 20,
+    allowAnonymous: album.voting?.allowAnonymous ?? true,
+    leaderboardVisible: album.voting?.leaderboardVisible ?? true,
+    downvotesAffectRanking: album.voting?.downvotesAffectRanking ?? false,
+  });
   const sortCriteria = $derived.by(() => {
     const criteria = presentationSettings.sortCriteria?.length
       ? presentationSettings.sortCriteria
@@ -177,6 +184,12 @@
     const settings = { ...presentationSettings, ...update };
     album = { ...album, presentation: toAlbumPresentation(settings) };
     void handleUpdateAlbum(album, { presentation: album.presentation });
+  };
+
+  const updateVoting = (update: Partial<typeof votingSettings>) => {
+    if (readOnly) return;
+    album = { ...album, voting: { ...votingSettings, ...update } };
+    void handleUpdateAlbum(album, { voting: album.voting });
   };
 
   onMount(async () => {
@@ -286,6 +299,24 @@
             onCheckedChange={(instantCameraStyle) => updatePresentation({ instantCameraStyle })}
           />
         </Field>
+        <Field label="Collect votes" description="Let visitors help choose this album’s favorites.">
+          <Switch checked={votingSettings.enabled} disabled={readOnly} onCheckedChange={(enabled) => updateVoting({ enabled })} />
+        </Field>
+        {#if votingSettings.enabled}
+          <Field label="Voting sample" description="Each voter sees a shuffled set of photos.">
+            <Select
+              value={String(votingSettings.sampleSize)}
+              options={[10, 20, 40].map((value) => ({ label: `${value} photos`, value: String(value) }))}
+              onChange={(sampleSize) => updateVoting({ sampleSize: Number(sampleSize) as 10 | 20 | 40 })}
+            />
+          </Field>
+          <Field label="Anonymous voters" description="Allow people using an album shared link to vote without an account.">
+            <Switch checked={votingSettings.allowAnonymous} disabled={readOnly} onCheckedChange={(allowAnonymous) => updateVoting({ allowAnonymous })} />
+          </Field>
+          <Field label="Show community favorites" description="Reveal the aggregate leaderboard after people rate photos.">
+            <Switch checked={votingSettings.leaderboardVisible} disabled={readOnly} onCheckedChange={(leaderboardVisible) => updateVoting({ leaderboardVisible })} />
+          </Field>
+        {/if}
         <div>
           <Text size="small" fontWeight="medium">{$t('display_file_info')}:</Text>
           <div class="grid grid-cols-2 gap-x-4 gap-y-2 pt-1">

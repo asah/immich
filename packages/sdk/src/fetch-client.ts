@@ -554,6 +554,13 @@ export type AlbumPresentationDto = {
     }[];
     version: Version;
 };
+export type AlbumVotingDto = {
+    allowAnonymous?: boolean;
+    downvotesAffectRanking?: boolean;
+    enabled: boolean;
+    leaderboardVisible?: boolean;
+    sampleSize?: 10 | 20 | 40;
+};
 export type AlbumResponseDto = {
     /** Album name */
     albumName: string;
@@ -587,6 +594,8 @@ export type AlbumResponseDto = {
     startDate?: string;
     /** Last update date */
     updatedAt: string;
+    /** Owner-controlled community voting settings */
+    voting: (AlbumVotingDto) | null;
 };
 export type AlbumUserCreateDto = {
     role: AlbumUserRole;
@@ -634,6 +643,8 @@ export type UpdateAlbumDto = {
     order?: AssetOrder;
     /** Owner-published album presentation */
     presentation?: (AlbumPresentationDto) | null;
+    /** Owner-controlled community voting settings */
+    voting?: (AlbumVotingDto) | null;
 };
 export type BulkIdsDto = {
     /** IDs to process */
@@ -686,6 +697,32 @@ export type AlbumUserAddDto = {
 export type AddUsersDto = {
     /** Album users to add */
     albumUsers: AlbumUserAddDto[];
+};
+export type AlbumVoteLeaderboardItemDto = {
+    assetId: string;
+    positiveVotes: number;
+    ratings: number;
+    score: number;
+};
+export type AlbumVoteLeaderboardDto = {
+    items: AlbumVoteLeaderboardItemDto[];
+    voters: number;
+};
+export type AlbumVoteCandidateDto = {
+    assetId: string;
+    height: number | null;
+    value: (-1 | 1) | null;
+    width: number | null;
+};
+export type AlbumVoteSessionDto = {
+    candidates: AlbumVoteCandidateDto[];
+    leaderboardVisible: boolean;
+    requiredCount: number;
+    sampleSize: number;
+    submittedCount: number;
+};
+export type AlbumVoteDto = {
+    value: (-1 | 1) | null;
 };
 export type ApiKeyResponseDto = {
     /** Creation date */
@@ -5218,6 +5255,61 @@ export function addUsersToAlbum({ id, addUsersDto }: {
         ...opts,
         method: "PUT",
         body: addUsersDto
+    })));
+}
+/**
+ * Get album voting leaderboard
+ */
+export function getAlbumVotingLeaderboard({ id, key, slug }: {
+    id: string;
+    key?: string;
+    slug?: string;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 200;
+        data: AlbumVoteLeaderboardDto;
+    }>(`/albums/${encodeURIComponent(id)}/voting/leaderboard${QS.query(QS.explode({
+        key,
+        slug
+    }))}`, {
+        ...opts
+    }));
+}
+/**
+ * Get a personal album voting sample
+ */
+export function getAlbumVotingSession({ id, key, slug }: {
+    id: string;
+    key?: string;
+    slug?: string;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 200;
+        data: AlbumVoteSessionDto;
+    }>(`/albums/${encodeURIComponent(id)}/voting/session${QS.query(QS.explode({
+        key,
+        slug
+    }))}`, {
+        ...opts
+    }));
+}
+/**
+ * Cast or remove an album vote
+ */
+export function voteForAlbum({ assetId, id, key, slug, albumVoteDto }: {
+    assetId: string;
+    id: string;
+    key?: string;
+    slug?: string;
+    albumVoteDto: AlbumVoteDto;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchText(`/albums/${encodeURIComponent(id)}/voting/votes/${encodeURIComponent(assetId)}${QS.query(QS.explode({
+        key,
+        slug
+    }))}`, oazapfts.json({
+        ...opts,
+        method: "PUT",
+        body: albumVoteDto
     })));
 }
 /**

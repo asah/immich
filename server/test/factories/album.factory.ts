@@ -32,6 +32,7 @@ export class AlbumFactory {
       isActivityEnabled: false,
       order: AssetOrder.Desc,
       presentation: null,
+      voting: null,
       updatedAt: newDate(),
       updateId: newUuidV7(),
       ...dto,
