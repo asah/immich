@@ -121,7 +121,7 @@
     </div>
     <div
       bind:this={editor}
-      class="min-h-24 p-3 text-immich-fg outline-none dark:text-immich-dark-fg"
+      class="rich-text-editor min-h-24 p-3 text-immich-fg outline-none dark:text-immich-dark-fg"
       contenteditable="true"
       role="textbox"
       tabindex="0"
@@ -147,3 +147,14 @@
     ></div>
   </div>
 </Field>
+
+<style>
+  .rich-text-editor :global(a) {
+    color: #2563eb;
+    text-decoration: underline;
+  }
+
+  :global(.dark) .rich-text-editor :global(a) {
+    color: #60a5fa;
+  }
+</style>

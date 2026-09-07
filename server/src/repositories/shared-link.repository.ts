@@ -10,6 +10,7 @@ import { DB } from 'src/schema';
 import { AssetExifTable } from 'src/schema/tables/asset-exif.table';
 import { AssetTable } from 'src/schema/tables/asset.table';
 import { SharedLinkTable } from 'src/schema/tables/shared-link.table';
+import { withTags } from 'src/utils/database';
 
 export type SharedLinkSearchOptions = {
   userId: string;
@@ -85,6 +86,7 @@ export class SharedLinkRepository {
                 eb
                   .selectFrom('asset')
                   .selectAll('asset')
+                  .select(withTags)
                   .whereRef('album_asset.assetId', '=', 'asset.id')
                   .where('asset.deletedAt', 'is', null)
                   .innerJoinLateral(withExifInfo, (join) => join.onTrue())

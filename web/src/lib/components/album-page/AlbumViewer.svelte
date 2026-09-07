@@ -1,14 +1,12 @@
 <script lang="ts">
   import { shortcut } from '$lib/actions/shortcut';
   import AlbumMap from '$lib/components/album-page/AlbumMap.svelte';
+  import GalleryViewer from '$lib/components/shared-components/gallery-viewer/GalleryViewer.svelte';
   import DownloadAction from '$lib/components/timeline/actions/DownloadAction.svelte';
-  import SelectAllAssets from '$lib/components/timeline/actions/SelectAllAction.svelte';
   import AssetSelectControlBar from '$lib/components/timeline/AssetSelectControlBar.svelte';
-  import Timeline from '$lib/components/timeline/Timeline.svelte';
   import { assetMultiSelectManager } from '$lib/managers/asset-multi-select-manager.svelte';
   import { assetViewerManager } from '$lib/managers/asset-viewer-manager.svelte';
   import { featureFlagsManager } from '$lib/managers/feature-flags-manager.svelte';
-  import { TimelineManager } from '$lib/managers/timeline-manager/timeline-manager.svelte';
   import { handleDownloadAlbum } from '$lib/services/album.service';
   import { getGlobalActions } from '$lib/services/app.service';
   import { openSlideshowAtAsset } from '$lib/services/slideshow.service';
@@ -19,13 +17,17 @@
   import { sanitizeRichText } from '$lib/utils/sanitize-rich-text';
   import { handlePromiseError } from '$lib/utils';
   import { fileUploadHandler, openFileUploadDialog } from '$lib/utils/file-uploader';
-  import type { AlbumResponseDto, SharedLinkResponseDto } from '@immich/sdk';
+  import { AssetOrder, type AlbumResponseDto, type AssetResponseDto, type SharedLinkResponseDto } from '@immich/sdk';
   import { ActionButton, IconButton, Logo } from '@immich/ui';
   import { mdiDownload, mdiFileImagePlusOutline, mdiPresentationPlay } from '@mdi/js';
   import { t } from 'svelte-i18n';
   import ControlAppBar from '../shared-components/ControlAppBar.svelte';
   import ThemeButton from '../shared-components/ThemeButton.svelte';
   import AlbumSummary from './AlbumSummary.svelte';
+  import { AlbumAssetSortBy, SortOrder, defaultAlbumAssetDisplayInfo } from '$lib/stores/preferences.store';
+  import type { Viewport } from '$lib/managers/timeline-manager/types';
+  import { DateTime } from 'luxon';
+  import { toTimelineAsset } from '$lib/utils/timeline-util';
 
   interface Props {
     sharedLink: SharedLinkResponseDto;
@@ -38,8 +40,65 @@
 
   let { slideshowNavigation } = slideshowStore;
 
-  const options = $derived({ albumId: album.id, order: album.order });
-  let timelineManager = $state<TimelineManager>() as TimelineManager;
+  const galleryViewport: Viewport = $state({ width: 0, height: 0 });
+  let galleryScrollTop = $state(0);
+  let galleryElement = $state<HTMLElement>();
+
+  const sortCriteria = $derived(
+    presentationSettings.sortCriteria?.length
+      ? presentationSettings.sortCriteria
+      : [{ sortBy: AlbumAssetSortBy.DateTaken, sortOrder: album.order === AssetOrder.Asc ? SortOrder.Asc : SortOrder.Desc }],
+  );
+  const assetLabel = (asset: AssetResponseDto, sortBy: AlbumAssetSortBy): string | number => {
+    const exif = asset.exifInfo;
+    switch (sortBy) {
+      case AlbumAssetSortBy.FileName:
+        return asset.originalFileName;
+      case AlbumAssetSortBy.FileSize:
+        return exif?.fileSizeInByte ?? -1;
+      case AlbumAssetSortBy.Tag:
+        return asset.tags?.[0]?.name ?? 'Untagged';
+      case AlbumAssetSortBy.Camera:
+        return [exif?.make, exif?.model].filter(Boolean).join(' ') || 'Unknown camera';
+      case AlbumAssetSortBy.Lens:
+        return exif?.lensModel ?? 'Unknown lens';
+      case AlbumAssetSortBy.Location:
+        return [exif?.city, exif?.state, exif?.country].filter(Boolean).join(', ') || 'Unknown location';
+      case AlbumAssetSortBy.Time:
+        return DateTime.fromISO(asset.localDateTime, { zone: 'utc' }).hour;
+      case AlbumAssetSortBy.Description:
+        return exif?.description ?? '';
+      case AlbumAssetSortBy.CameraSettings:
+        return [exif?.focalLength && `${exif.focalLength}mm`, exif?.fNumber && `f/${exif.fNumber}`, exif?.iso && `ISO ${exif.iso}`]
+          .filter(Boolean)
+          .join(' ');
+      case AlbumAssetSortBy.LensSettings:
+        return [exif?.focalLength && `${exif.focalLength}mm`, exif?.fNumber && `f/${exif.fNumber}`].filter(Boolean).join(' ');
+      case AlbumAssetSortBy.Engagement:
+        return 0;
+      case AlbumAssetSortBy.DateTaken:
+      default:
+        return asset.localDateTime;
+    }
+  };
+  const galleryAssets = $derived.by(() => {
+    const assets = [...(sharedLink.assets as AssetResponseDto[])];
+    assets.sort((left, right) => {
+      for (const { sortBy, sortOrder } of sortCriteria) {
+        const a = assetLabel(left, sortBy);
+        const b = assetLabel(right, sortBy);
+        const comparison = typeof a === 'number' && typeof b === 'number' ? a - b : String(a).localeCompare(String(b));
+        if (comparison) return (sortOrder === SortOrder.Desc ? -1 : 1) * comparison;
+      }
+      return left.id.localeCompare(right.id);
+    });
+    return assets;
+  });
+  const galleryGroupKeys = $derived.by(() => {
+    if (!presentationSettings.showSortDividers) return undefined;
+    const sortBy = sortCriteria[0]?.sortBy ?? AlbumAssetSortBy.DateTaken;
+    return galleryAssets.map((asset) => String(assetLabel(asset, sortBy)));
+  });
 
   dragAndDropFilesStore.subscribe((value) => {
     if (!(value.isDragging && value.files.length > 0)) {
@@ -53,9 +112,8 @@
   const handleStartSlideshow = async () => {
     const asset =
       $slideshowNavigation === SlideshowNavigation.Shuffle
-        ? await timelineManager.getRandomAsset()
-        : (timelineManager.months[0]?.timelineDays[0]?.viewerAssets[0]?.asset ??
-          (await timelineManager.getRandomAsset()));
+        ? galleryAssets[Math.floor(Math.random() * galleryAssets.length)]
+        : galleryAssets[0];
     if (!asset) {
       return;
     }
@@ -83,14 +141,11 @@
   class:dark={presentationSettings.instantCameraStyle}
 >
   <div class:instant-camera={presentationSettings.instantCameraStyle} class="h-full">
-    <Timeline
-      enableRouting={true}
-      {album}
-      bind:timelineManager
-      {options}
-      assetInteraction={assetMultiSelectManager}
-      rowHeight={presentationSettings.rowHeight}
-      imageClass={presentationSettings.instantCameraStyle ? 'box-border border-4 border-white' : ''}
+    <section
+      class="h-full overflow-y-auto"
+      bind:clientHeight={galleryViewport.height}
+      bind:clientWidth={galleryViewport.width}
+      onscroll={(event) => (galleryScrollTop = event.currentTarget.scrollTop)}
     >
       <section
         class={presentationSettings.instantCameraStyle
@@ -113,14 +168,35 @@
           </div>
         {/if}
       </section>
-    </Timeline>
+      <div bind:this={galleryElement} class:mt-8={!presentationSettings.instantCameraStyle} class:bg-black={presentationSettings.instantCameraStyle}>
+        <GalleryViewer
+          assets={galleryAssets}
+          assetInteraction={assetMultiSelectManager}
+          disableAssetSelect={!sharedLink.allowDownload}
+          {album}
+          viewport={galleryViewport}
+          viewportScrollTop={galleryScrollTop}
+          slidingWindowOffset={galleryElement?.offsetTop ?? 0}
+          rowHeight={presentationSettings.rowHeight}
+          displayAssetInfo={{ ...defaultAlbumAssetDisplayInfo, ...presentationSettings.displayInfo }}
+          primarySortGroupKeys={galleryGroupKeys}
+          primarySortGroupDescriptions={galleryGroupKeys ? {} : undefined}
+          captionsBelow={true}
+          instantCameraStyle={presentationSettings.instantCameraStyle}
+        />
+      </div>
+    </section>
   </div>
 </main>
 
 <header class:dark={presentationSettings.instantCameraStyle}>
   {#if assetMultiSelectManager.selectionActive}
     <AssetSelectControlBar>
-      <SelectAllAssets {timelineManager} assetInteraction={assetMultiSelectManager} />
+      <button
+        type="button"
+        class="rounded px-3 py-2 text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800"
+        onclick={() => assetMultiSelectManager.selectAssets(galleryAssets.map(toTimelineAsset))}>Select all</button
+      >
       {#if sharedLink.allowDownload}
         <DownloadAction filename="{album.albumName}.zip" />
       {/if}
