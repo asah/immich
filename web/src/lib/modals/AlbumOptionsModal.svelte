@@ -279,7 +279,7 @@
             <output class="w-12 text-right text-sm tabular-nums">{presentationSettings.rowHeight ?? 235}px</output>
           </div>
         </Field>
-        <Field label="Instant camera" description="Use white photo cards on a black gallery surface.">
+        <Field label="Instant camera" description="Use white photo cards on a black gallery surface (overrides light/dark mode).">
           <Switch
             checked={presentationSettings.instantCameraStyle ?? false}
             disabled={readOnly}

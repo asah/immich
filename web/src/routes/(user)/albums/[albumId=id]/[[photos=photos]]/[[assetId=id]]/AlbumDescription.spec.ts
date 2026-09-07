@@ -4,15 +4,13 @@ import { describe } from 'vitest';
 import AlbumDescription from './AlbumDescription.svelte';
 
 describe('AlbumDescription component', () => {
-  it('shows an AutogrowTextarea component when isOwned is true', () => {
+  it('shows the rich text editor when isOwned is true', () => {
     render(AlbumDescription, { isOwned: true, id: '', description: '' });
-    const autogrowTextarea = screen.getByTestId('autogrow-textarea');
-    expect(autogrowTextarea).toBeInTheDocument();
+    expect(screen.getByRole('textbox')).toBeInTheDocument();
   });
 
-  it('does not show an AutogrowTextarea component when isOwned is false', () => {
+  it('does not show the rich text editor when isOwned is false', () => {
     render(AlbumDescription, { isOwned: false, id: '', description: '' });
-    const autogrowTextarea = screen.queryByTestId('autogrow-textarea');
-    expect(autogrowTextarea).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
   });
 });

@@ -16,6 +16,7 @@
   import { mediaQueryManager } from '$lib/stores/media-query-manager.svelte';
   import { SlideshowNavigation, slideshowStore } from '$lib/stores/slideshow.store';
   import { getAlbumPresentationSettings } from '$lib/utils/album-presentation';
+  import { sanitizeRichText } from '$lib/utils/sanitize-rich-text';
   import { handlePromiseError } from '$lib/utils';
   import { fileUploadHandler, openFileUploadDialog } from '$lib/utils/file-uploader';
   import type { AlbumResponseDto, SharedLinkResponseDto } from '@immich/sdk';
@@ -79,6 +80,7 @@
 <main
   class="relative h-dvh overflow-hidden px-2 pt-(--navbar-height) max-md:pt-(--navbar-height-md) md:px-6"
   class:bg-black={presentationSettings.instantCameraStyle}
+  class:dark={presentationSettings.instantCameraStyle}
 >
   <div class:instant-camera={presentationSettings.instantCameraStyle} class="h-full">
     <Timeline
@@ -106,18 +108,16 @@
 
         <!-- ALBUM DESCRIPTION -->
         {#if album.description}
-          <p
-            class="mt-6 mb-12 w-full pb-2 text-start text-base font-medium whitespace-pre-line text-black dark:text-gray-300"
-          >
-            {album.description}
-          </p>
+          <div class="album-description mt-6 mb-12 w-full pb-2 text-start text-base font-medium text-black dark:text-gray-300">
+            {@html sanitizeRichText(album.description)}
+          </div>
         {/if}
       </section>
     </Timeline>
   </div>
 </main>
 
-<header>
+<header class:dark={presentationSettings.instantCameraStyle}>
   {#if assetMultiSelectManager.selectionActive}
     <AssetSelectControlBar>
       <SelectAllAssets {timelineManager} assetInteraction={assetMultiSelectManager} />
@@ -177,5 +177,15 @@
 <style>
   .instant-camera :global([data-group] > div:first-child) {
     color: white;
+  }
+
+  .album-description :global(p),
+  .album-description :global(div) {
+    margin-block: 0.5rem;
+  }
+
+  .album-description :global(a) {
+    color: var(--color-immich-primary);
+    text-decoration: underline;
   }
 </style>

@@ -50,7 +50,12 @@
   import { openSlideshowAtAsset } from '$lib/services/slideshow.service';
   import { getAssetBulkActions } from '$lib/services/asset.service';
   import { SlideshowNavigation, slideshowStore } from '$lib/stores/slideshow.store';
-  import { AlbumAssetSortBy, defaultAlbumAssetDisplayInfo, SortOrder } from '$lib/stores/preferences.store';
+  import {
+    AlbumAssetSortBy,
+    defaultAlbumAssetDisplayInfo,
+    SortOrder,
+    type AlbumAssetSortCriterion,
+  } from '$lib/stores/preferences.store';
   import { getAlbumPresentationSettings } from '$lib/utils/album-presentation';
   import { handlePromiseError } from '$lib/utils';
   import { handleError } from '$lib/utils/handle-error';
@@ -92,6 +97,7 @@
     mdiLink,
     mdiPlus,
     mdiPresentationPlay,
+    mdiSort,
     mdiUpload,
   } from '@mdi/js';
   import { onDestroy, onMount, untrack } from 'svelte';
@@ -123,6 +129,7 @@
   let availableTags: TagResponseDto[] = $state([]);
   let engagementFilter: string | 'comments' | undefined = $state();
   let showPhotoCaptions = $state(true);
+  let temporarySort = $state<AlbumAssetSortCriterion>();
   let showAlbumUsers = $derived(timelineManager?.showAssetOwners ?? false);
 
   const timelineMultiSelectManager = new AssetMultiSelectManager();
@@ -322,7 +329,7 @@
     if (size < 500_000_000) return '100–500 MB';
     return '500 MB and over';
   };
-  const sortCriteria = $derived.by(() => {
+  const albumSortCriteria = $derived.by(() => {
     const criteria = presentationSettings.sortCriteria?.length
       ? presentationSettings.sortCriteria
       : [{ sortBy: presentationSettings.sortBy, sortOrder: presentationSettings.sortOrder }];
@@ -330,6 +337,7 @@
       ? [{ ...criteria[0], sortOrder: album.order === AssetOrder.Asc ? SortOrder.Asc : SortOrder.Desc }]
       : criteria;
   });
+  const sortCriteria = $derived(temporarySort ? [temporarySort] : albumSortCriteria);
   const engagementByAsset = $derived.by(() => {
     const engagement: Record<string, { reactions: Record<string, number>; comments: number }> = {};
     for (const activity of activityManager.activities) {
@@ -411,7 +419,10 @@
         };
         const a = value(left);
         const b = value(right);
-        comparison = typeof a === 'number' && typeof b === 'number' ? a - b : String(a).localeCompare(String(b));
+        comparison =
+          typeof a === 'number' && typeof b === 'number'
+            ? a - b
+            : String(a).localeCompare(String(b), undefined, { sensitivity: 'variant', caseFirst: 'upper' });
       }
       if (comparison !== 0) return direction * comparison;
     }
@@ -419,7 +430,8 @@
   };
   let isAlternateSort = $derived(
     viewMode === AlbumPageViewMode.VIEW &&
-      (sortCriteria.length > 1 ||
+      (!!temporarySort ||
+        sortCriteria.length > 1 ||
         sortCriteria[0].sortBy !== AlbumAssetSortBy.DateTaken ||
         !!engagementFilter ||
         presentationSettings.showSortDividers ||
@@ -427,7 +439,7 @@
   );
 
   const primarySortGroupKeys = $derived.by(() => {
-    if (!presentationSettings.showSortDividers) {
+    if (!temporarySort && !presentationSettings.showSortDividers) {
       return undefined;
     }
 
@@ -555,7 +567,9 @@
       });
       if (request === filenameRequest) {
         const incoming = [...(reset ? [] : filenameAssets), ...assets.items];
-        if (hasClientSort) incoming.sort(compareAssets);
+        // Section labels and file names use a case-sensitive comparison. Do it
+        // client-side even when the server can provide an initial ordering.
+        if (isAlternateSort) incoming.sort(compareAssets);
         filenameAssets = incoming;
         filenameNextPage = Number(assets.nextPage) || null;
       }
@@ -695,6 +709,13 @@
     $if: () => !assetViewerManager.isViewing,
     shortcuts: { key: 'Escape' },
   });
+
+  const setTemporarySort = (sortBy?: AlbumAssetSortBy, sortOrder: SortOrder = SortOrder.Desc) => {
+    temporarySort = sortBy ? { sortBy, sortOrder } : undefined;
+    filenameAssets = [];
+    filenameNextPage = 1;
+    void loadFilenameAssets(true);
+  };
 </script>
 
 <svelte:window
@@ -977,6 +998,26 @@
       {#if viewMode === AlbumPageViewMode.VIEW}
         <ControlAppBar backIcon={mdiArrowLeft} onClose={() => goto(Route.albums())}>
           {#snippet trailing()}
+            {#if album.assetCount > 0}
+              <ButtonContextMenu icon={mdiSort} title="Sort" color="secondary" offset={{ x: 175, y: 25 }}>
+                <MenuOption
+                  text="Album default"
+                  subtitle="Use the owner’s published sections and ordering"
+                  onClick={() => setTemporarySort()}
+                />
+                <MenuOption text="Date & time — newest first" onClick={() => setTemporarySort(AlbumAssetSortBy.DateTaken, SortOrder.Desc)} />
+                <MenuOption text="Date & time — oldest first" onClick={() => setTemporarySort(AlbumAssetSortBy.DateTaken, SortOrder.Asc)} />
+                <MenuOption text="Filename — A to Z" onClick={() => setTemporarySort(AlbumAssetSortBy.FileName, SortOrder.Asc)} />
+                <MenuOption text="Filename — Z to A" onClick={() => setTemporarySort(AlbumAssetSortBy.FileName, SortOrder.Desc)} />
+                <MenuOption text="Description — A to Z" onClick={() => setTemporarySort(AlbumAssetSortBy.Description, SortOrder.Asc)} />
+                <MenuOption text="Location — A to Z" onClick={() => setTemporarySort(AlbumAssetSortBy.Location, SortOrder.Asc)} />
+                <MenuOption text="Camera — A to Z" onClick={() => setTemporarySort(AlbumAssetSortBy.Camera, SortOrder.Asc)} />
+                <MenuOption text="Lens — A to Z" onClick={() => setTemporarySort(AlbumAssetSortBy.Lens, SortOrder.Asc)} />
+                <MenuOption text="File size — largest first" onClick={() => setTemporarySort(AlbumAssetSortBy.FileSize, SortOrder.Desc)} />
+                <MenuOption text="Most activity" onClick={() => setTemporarySort(AlbumAssetSortBy.Engagement, SortOrder.Desc)} />
+              </ButtonContextMenu>
+            {/if}
+
             {#if isAlternateSort && album.assetCount > 0}
               <Tooltip text={showPhotoCaptions ? 'Hide descriptions (I)' : 'Show descriptions (I)'}>
                 {#snippet child({ props })}

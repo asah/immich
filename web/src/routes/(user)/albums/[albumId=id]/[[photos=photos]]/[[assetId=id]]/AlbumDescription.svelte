@@ -1,11 +1,10 @@
 <script lang="ts">
-  import { shortcut } from '$lib/actions/shortcut';
+  import RichTextEditor from '$lib/components/shared-components/RichTextEditor.svelte';
   import { eventManager } from '$lib/managers/event-manager.svelte';
   import { handleError } from '$lib/utils/handle-error';
+  import { sanitizeRichText } from '$lib/utils/sanitize-rich-text';
   import { updateAlbumInfo } from '@immich/sdk';
-  import { Textarea } from '@immich/ui';
   import { t } from 'svelte-i18n';
-  import { fromAction } from 'svelte/attachments';
 
   interface Props {
     id: string;
@@ -31,20 +30,26 @@
 </script>
 
 {#if isOwned}
-  <Textarea
+  <RichTextEditor
+    label={$t('description')}
     bind:value={description}
-    variant="ghost"
-    onfocusout={handleFocusOut}
-    placeholder={$t('add_a_description')}
-    data-testid="autogrow-textarea"
-    class="max-h-32"
-    {@attach fromAction(shortcut, () => ({
-      shortcut: { key: 'Enter', ctrl: true },
-      onShortcut: (e) => e.currentTarget.blur(),
-    }))}
+    onBlur={() => void handleFocusOut()}
+    onSubmit={() => void handleFocusOut()}
   />
 {:else if description}
-  <p class="wrap-break-words w-full text-base whitespace-pre-line text-black dark:text-white">
-    {description}
-  </p>
+  <div class="album-description wrap-break-words w-full text-base text-black dark:text-white">
+    {@html sanitizeRichText(description)}
+  </div>
 {/if}
+
+<style>
+  .album-description :global(p),
+  .album-description :global(div) {
+    margin-block: 0.5rem;
+  }
+
+  .album-description :global(a) {
+    color: var(--color-immich-primary);
+    text-decoration: underline;
+  }
+</style>
