@@ -3,7 +3,7 @@ import { SharedLink } from 'src/database';
 import { HistoryBuilder } from 'src/decorators';
 import { AlbumResponseSchema, mapAlbum } from 'src/dtos/album.dto';
 import { AssetResponseSchema, mapAsset } from 'src/dtos/asset-response.dto';
-import { SharedLinkTypeSchema } from 'src/enum';
+import { SharedLinkType, SharedLinkTypeSchema } from 'src/enum';
 import { isoDatetimeToDate } from 'src/validation';
 import z from 'zod';
 
@@ -98,7 +98,10 @@ export class SharedLinkLoginDto extends createZodDto(SharedLinkLoginSchema) {}
 export class SharedLinkResponseDto extends createZodDto(SharedLinkResponseSchema) {}
 
 export function mapSharedLink(sharedLink: SharedLink, options: { stripAssetMetadata: boolean }): SharedLinkResponseDto {
-  const assets = sharedLink.assets || [];
+  // Album links do not use the shared_link_asset join table. Their assets are
+  // loaded on the album relation instead, but clients consume the top-level
+  // `assets` field for every shared-link type.
+  const assets = sharedLink.type === SharedLinkType.Album ? sharedLink.album?.assets || [] : sharedLink.assets || [];
 
   const response = {
     id: sharedLink.id,

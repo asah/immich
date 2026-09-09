@@ -53,6 +53,19 @@ describe(SharedLinkService.name, () => {
       expect(mocks.sharedLink.get).toHaveBeenCalledWith(authDto.user.id, authDto.sharedLink?.id);
     });
 
+    it('should return album assets in the shared link assets field', async () => {
+      const authDto = authStub.adminSharedLink;
+      const sharedLink = SharedLinkFactory.from({ type: SharedLinkType.Album })
+        .album({}, (album) => album.asset())
+        .build();
+      mocks.sharedLink.get.mockResolvedValue(getForSharedLink(sharedLink));
+
+      const response = await sut.getMine(authDto, []);
+
+      expect(response.assets).toHaveLength(1);
+      expect(response.assets[0].id).toBe(sharedLink.album!.assets[0].id);
+    });
+
     it('should not return metadata', async () => {
       const authDto = factory.auth({
         sharedLink: {
