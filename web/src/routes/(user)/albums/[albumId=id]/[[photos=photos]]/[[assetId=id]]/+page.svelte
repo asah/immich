@@ -240,7 +240,16 @@
 
   const handleRemoveAssets = async (assetIds: string[]) => {
     timelineManager.removeAssets(assetIds);
+    // Albums with published sorting render the separate gallery data source. Keep
+    // it in sync immediately so it cannot try to display thumbnails that were
+    // just deleted, then reload its server-backed page for a complete refresh.
+    filenameAssets = filenameAssets.filter((asset) => !assetIds.includes(asset.id));
     await refreshAlbum();
+    if (isAlternateSort) {
+      await loadFilenameAssets(true);
+    } else {
+      await timelineManager.reload();
+    }
   };
 
   const handleUndoRemoveAssets = async (assets: TimelineAsset[]) => {
@@ -376,6 +385,9 @@
       ].includes(sortBy),
     ),
   );
+  // Do not delegate section ordering to the browser locale. Album tag sections
+  // need a stable, case-sensitive order (for example, "Apple" before "apple").
+  const compareCaseSensitive = (left: string, right: string) => (left === right ? 0 : left < right ? -1 : 1);
   const compareAssets = (left: AssetResponseDto, right: AssetResponseDto) => {
     for (const { sortBy, sortOrder } of sortCriteria) {
       const direction = sortOrder === SortOrder.Desc ? -1 : 1;
@@ -422,11 +434,11 @@
         comparison =
           typeof a === 'number' && typeof b === 'number'
             ? a - b
-            : String(a).localeCompare(String(b), undefined, { sensitivity: 'variant', caseFirst: 'upper' });
+            : compareCaseSensitive(String(a), String(b));
       }
       if (comparison !== 0) return direction * comparison;
     }
-    return left.id.localeCompare(right.id);
+    return compareCaseSensitive(left.id, right.id);
   };
   let isAlternateSort = $derived(
     viewMode === AlbumPageViewMode.VIEW &&

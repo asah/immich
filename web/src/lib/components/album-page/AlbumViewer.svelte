@@ -87,10 +87,11 @@
       for (const { sortBy, sortOrder } of sortCriteria) {
         const a = assetLabel(left, sortBy);
         const b = assetLabel(right, sortBy);
-        const comparison = typeof a === 'number' && typeof b === 'number' ? a - b : String(a).localeCompare(String(b));
+        const comparison =
+          typeof a === 'number' && typeof b === 'number' ? a - b : String(a) === String(b) ? 0 : String(a) < String(b) ? -1 : 1;
         if (comparison) return (sortOrder === SortOrder.Desc ? -1 : 1) * comparison;
       }
-      return left.id.localeCompare(right.id);
+      return left.id === right.id ? 0 : left.id < right.id ? -1 : 1;
     });
     return assets;
   });
