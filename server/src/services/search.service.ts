@@ -98,10 +98,11 @@ export class SearchService extends BaseService {
 
     const page = dto.page ?? 1;
     const size = dto.size;
+    const { orderBy: _orderBy, ...legacyDto } = dto;
     const { hasNextPage, items } = await this.searchRepository.searchMetadata(
       { page, size },
       {
-        ...dto,
+        ...legacyDto,
         checksum,
         visibility: dto.visibility ?? (auth.session?.hasElevatedPermission ? undefined : 'not-locked'),
         userIds,

@@ -226,7 +226,7 @@ export class AuthService extends BaseService {
   ): Promise<AlbumInviteAcceptResponseDto> {
     const config = await this.getConfig({ withCache: false });
     if (!config.passwordLogin.enabled) throw new BadRequestException('Password login has been disabled');
-    const quota = config.user.defaultStorageQuota;
+    const quota = config.oauth.defaultStorageQuota;
     let result;
     try {
       result = await this.albumInviteRepository.redeem(this.cryptoRepository.hashSha256(dto.token), {

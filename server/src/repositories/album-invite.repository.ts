@@ -100,6 +100,7 @@ export class AlbumInviteRepository {
         .executeTakeFirst();
       if (existing) return { status: 'existing' };
 
+      const clusterGroup = await trx.insertInto('cluster_group').values({}).returning('id').executeTakeFirstOrThrow();
       const user = await trx
         .insertInto('user')
         .values({
@@ -108,6 +109,7 @@ export class AlbumInviteRepository {
           password: dto.password,
           quotaSizeInBytes: dto.quotaSizeInBytes,
           shouldChangePassword: false,
+          clusterGroupId: clusterGroup.id,
         })
         .returning('id')
         .executeTakeFirstOrThrow();
