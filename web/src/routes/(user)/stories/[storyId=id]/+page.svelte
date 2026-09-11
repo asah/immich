@@ -143,7 +143,7 @@
     }
   };
   const addMedia = async () => {
-    const albums = await modalManager.show(AlbumPickerModal);
+    const albums = await modalManager.show(AlbumPickerModal, {});
     if (!albums?.length) return;
     try {
       await storyService.importAlbums(

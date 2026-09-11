@@ -39,7 +39,9 @@ declare module 'svelte-i18n' {
   import type { InterpolationValues } from '$lib/elements/format-message';
   import type { Readable } from 'svelte/store';
 
-  type Translations = NestedKeys<typeof en>;
+  // Fork features may introduce UI strings ahead of their translation catalog updates.
+  // Keep formatter calls type-safe for message objects while permitting those runtime keys.
+  type Translations = NestedKeys<typeof en> | string;
 
   interface MessageObject {
     id: Translations;

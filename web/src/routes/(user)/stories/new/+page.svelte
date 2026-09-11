@@ -18,7 +18,7 @@
   let assetIds = $state<string[]>([]);
   let aiPrompt = $state('');
   const chooseAlbums = async () => {
-    const albums = await modalManager.show(AlbumPickerModal);
+    const albums = await modalManager.show(AlbumPickerModal, {});
     if (albums) albumIds = albums.map(({ id }) => id);
   };
   const choosePhotos = async () => {
