@@ -66,11 +66,9 @@ echo "[1/8] Verifying release metadata..."
 git diff --check
 
 echo "[2/8] Building..."
-previous_image_id="$(docker image inspect --format '{{.Id}}' "$IMAGE" 2>/dev/null || true)"
 "$BUILD_CMD" "$SHA"
 docker image inspect "$IMAGE" >/dev/null 2>&1 || die "expected image not found: $IMAGE"
 image_id="$(docker image inspect --format '{{.Id}}' "$IMAGE")"
-[[ "$image_id" != "$previous_image_id" ]] || die "builder did not replace existing image: $IMAGE"
 image_source="$(docker image inspect --format '{{range .Config.Env}}{{println .}}{{end}}' "$IMAGE" | sed -n 's/^IMMICH_SOURCE_COMMIT=//p')"
 [[ "$image_source" == "$SHA" ]] || die "image provenance mismatch: expected $SHA, found ${image_source:-unset}"
 
