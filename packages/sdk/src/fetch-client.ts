@@ -30,12 +30,20 @@ export type UserResponseDto = {
 export type ActivityResponseDto = {
     /** Asset ID (if activity is for an asset) */
     assetId: string | null;
+    /** Photo attachments referenced by this activity */
+    assetIds?: string[];
     /** Comment text (for comment activities) */
     comment?: string | null;
+    /** Sanitized rich comment document */
+    commentDocument?: string | null;
     /** Creation date */
     createdAt: string;
     /** Activity ID */
     id: string;
+    /** Comment activity receiving a reaction */
+    parentActivityId?: string | null;
+    /** Reaction key */
+    reactionKey?: string | null;
     "type": ReactionType;
     user: UserResponseDto;
 };
@@ -44,8 +52,16 @@ export type ActivityCreateDto = {
     albumId: string;
     /** Asset ID (if activity is for an asset) */
     assetId?: string;
+    /** Photo attachments referenced by this activity */
+    assetIds?: string[];
     /** Comment text (required if type is comment) */
     comment?: string;
+    /** Rich comment document */
+    commentDocument?: string;
+    /** Comment activity receiving a reaction */
+    parentActivityId?: string;
+    /** Reaction key */
+    reactionKey?: string;
     "type": ReactionType;
 };
 export type ActivityStatisticsResponseDto = {
@@ -660,12 +676,22 @@ export type DownloadResponse = {
     includeEmbeddedVideos: boolean;
 };
 export type EmailNotificationsResponse = {
+    /** Whether to receive email notifications for activity on shared media */
+    activity: boolean;
     /** Whether to receive email notifications for album invites */
     albumInvite: boolean;
     /** Whether to receive email notifications for album updates */
     albumUpdate: boolean;
+    /** Whether to receive email notifications for comments */
+    comments: boolean;
+    /** Whether to receive email notifications for photo description changes */
+    descriptions: boolean;
     /** Whether email notifications are enabled */
     enabled: boolean;
+    /** Email notification delivery frequency */
+    frequency: Frequency;
+    /** Whether to receive email notifications for reactions */
+    reactions: boolean;
 };
 export type FoldersResponse = {
     /** Whether folders are enabled */
@@ -746,12 +772,22 @@ export type DownloadUpdate = {
     includeEmbeddedVideos?: boolean;
 };
 export type EmailNotificationsUpdate = {
+    /** Whether to receive email notifications for activity on shared media */
+    activity?: boolean;
     /** Whether to receive email notifications for album invites */
     albumInvite?: boolean;
     /** Whether to receive email notifications for album updates */
     albumUpdate?: boolean;
+    /** Whether to receive email notifications for comments */
+    comments?: boolean;
+    /** Whether to receive email notifications for photo description changes */
+    descriptions?: boolean;
     /** Whether email notifications are enabled */
     enabled?: boolean;
+    /** Email notification delivery frequency */
+    frequency?: Frequency;
+    /** Whether to receive email notifications for reactions */
+    reactions?: boolean;
 };
 export type FoldersUpdate = {
     /** Whether folders are enabled */
@@ -854,6 +890,36 @@ export type ContributorCountResponseDto = {
     /** User ID */
     userId: string;
 };
+export type AlbumPresentationDto = {
+    displayInfo: {
+        camera: boolean;
+        cameraSettings: boolean;
+        date: boolean;
+        description: boolean;
+        fileSize: boolean;
+        filename: boolean;
+        lens: boolean;
+        lensSettings: boolean;
+        location: boolean;
+        reactions: boolean;
+        time: boolean;
+    };
+    instantCameraStyle: boolean;
+    rowHeight?: number;
+    showSortDividers: boolean;
+    sortCriteria: {
+        sortBy: SortBy;
+        sortOrder: SortOrder;
+    }[];
+    version: Version;
+};
+export type AlbumVotingDto = {
+    allowAnonymous?: boolean;
+    downvotesAffectRanking?: boolean;
+    enabled: boolean;
+    leaderboardVisible?: boolean;
+    sampleSize?: 10 | 20 | 40;
+};
 export type AlbumResponseDto = {
     /** Album name */
     albumName: string;
@@ -879,12 +945,16 @@ export type AlbumResponseDto = {
     /** Last modified asset timestamp */
     lastModifiedAssetTimestamp?: string;
     order?: AssetOrder;
+    /** Owner-published album presentation */
+    presentation: (AlbumPresentationDto) | null;
     /** Is shared album */
     shared: boolean;
     /** UTC representation of (local) start date (earliest asset) */
     startDate?: string;
     /** Last update date */
     updatedAt: string;
+    /** Owner-controlled community voting settings */
+    voting: (AlbumVotingDto) | null;
 };
 export type AlbumUserCreateDto = {
     role: AlbumUserRole;
@@ -930,6 +1000,10 @@ export type UpdateAlbumDto = {
     /** Enable activity feed */
     isActivityEnabled?: boolean;
     order?: AssetOrder;
+    /** Owner-published album presentation */
+    presentation?: (AlbumPresentationDto) | null;
+    /** Owner-controlled community voting settings */
+    voting?: (AlbumVotingDto) | null;
 };
 export type BulkIdsDto = {
     /** IDs to process */
@@ -942,6 +1016,19 @@ export type BulkIdResponseDto = {
     id: string;
     /** Whether operation succeeded */
     success: boolean;
+};
+export type AlbumInviteResponseDto = {
+    /** Invitation creation time */
+    createdAt: string;
+    /** Invitation email */
+    email: string;
+    /** Invitation expiry time */
+    expiresAt: string;
+    /** Invitation ID */
+    id: string;
+};
+export type InviteUsersDto = {
+    emails: string[];
 };
 export type MapMarkerResponseDto = {
     /** City name */
@@ -969,6 +1056,32 @@ export type AlbumUserAddDto = {
 export type AddUsersDto = {
     /** Album users to add */
     albumUsers: AlbumUserAddDto[];
+};
+export type AlbumVoteLeaderboardItemDto = {
+    assetId: string;
+    positiveVotes: number;
+    ratings: number;
+    score: number;
+};
+export type AlbumVoteLeaderboardDto = {
+    items: AlbumVoteLeaderboardItemDto[];
+    voters: number;
+};
+export type AlbumVoteCandidateDto = {
+    assetId: string;
+    height: number | null;
+    value: (-1 | 1) | null;
+    width: number | null;
+};
+export type AlbumVoteSessionDto = {
+    candidates: AlbumVoteCandidateDto[];
+    leaderboardVisible: boolean;
+    requiredCount: number;
+    sampleSize: number;
+    submittedCount: number;
+};
+export type AlbumVoteDto = {
+    value: (-1 | 1) | null;
 };
 export type ApiKeyResponseDto = {
     /** Creation date */
@@ -1081,6 +1194,8 @@ export type AssetBulkUpdateDto = {
     isFavorite?: boolean;
     /** Latitude coordinate */
     latitude?: number;
+    /** Lens model */
+    lensModel?: string | null;
     /** Longitude coordinate */
     longitude?: number;
     /** Rating in range [1-5] (starred), -1 (rejected), or null (unrated) */
@@ -1133,6 +1248,15 @@ export type AssetJobsDto = {
     /** Asset IDs */
     assetIds: string[];
     name: AssetJobName;
+};
+export type LocationSuggestionResponseDto = {
+    accuracyMeters: number;
+    assetIds: string[];
+    confidence: number;
+    latitude: number;
+    locality: string;
+    longitude: number;
+    timeWindowMinutes: number;
 };
 export type AssetMetadataBulkDeleteItemDto = {
     /** Asset ID */
@@ -1326,6 +1450,8 @@ export type UpdateAssetDto = {
     isFavorite?: boolean;
     /** Latitude coordinate */
     latitude?: number;
+    /** Lens model */
+    lensModel?: string | null;
     /** Live photo video ID */
     livePhotoVideoId?: string | null;
     /** Longitude coordinate */
@@ -1420,6 +1546,48 @@ export type SignUpDto = {
     name: string;
     /** User password */
     password: string;
+};
+export type AlbumInviteAcceptDto = {
+    name: string;
+    password: string;
+    token: string;
+};
+export type AlbumInviteAcceptResponseDto = {
+    /** Access token */
+    accessToken: string;
+    /** Album ID */
+    albumId: string;
+    /** Is admin user */
+    isAdmin: boolean;
+    /** Is onboarded */
+    isOnboarded: boolean;
+    /** User name */
+    name: string;
+    /** Profile image path */
+    profileImagePath: string;
+    /** Should change password */
+    shouldChangePassword: boolean;
+    /** User email */
+    userEmail: string;
+    /** User ID */
+    userId: string;
+};
+export type AlbumInviteTokenDto = {
+    token: string;
+};
+export type AlbumInviteClaimDto = {
+    /** Album ID */
+    albumId: string;
+};
+export type AlbumInvitePreviewDto = {
+    /** Album ID */
+    albumId: string;
+    /** Album name */
+    albumName: string;
+    /** Masked email address the invitation was sent to */
+    recipientEmail: string;
+    /** Name of the person who shared the album */
+    senderName: string;
 };
 export type ChangePasswordDto = {
     /** Invalidate all other sessions */
@@ -2908,6 +3076,9 @@ export type SharedLinkResponseDto = {
     showMetadata: boolean;
     /** Custom URL slug */
     slug: string | null;
+    startOffsetMs: number | null;
+    startPageId: string | null;
+    storyId: string | null;
     "type": SharedLinkType;
     /** Owner user ID */
     userId: string;
@@ -2931,6 +3102,12 @@ export type SharedLinkCreateDto = {
     showMetadata?: boolean;
     /** Custom URL slug */
     slug?: string | null;
+    /** Story playback offset in milliseconds */
+    startOffsetMs?: number | null;
+    /** Story page where playback starts */
+    startPageId?: string | null;
+    /** Story ID (for story sharing) */
+    storyId?: string;
     "type": SharedLinkType;
 };
 export type SharedLinkLoginDto = {
@@ -2952,6 +3129,10 @@ export type SharedLinkEditDto = {
     showMetadata?: boolean;
     /** Custom URL slug */
     slug?: string | null;
+    /** Story playback offset in milliseconds */
+    startOffsetMs?: number | null;
+    /** Story page where playback starts */
+    startPageId?: string | null;
 };
 export type AssetIdsDto = {
     /** Asset IDs */
@@ -2978,6 +3159,1010 @@ export type StackCreateDto = {
 export type StackUpdateDto = {
     /** Primary asset ID */
     primaryAssetId?: string;
+};
+export type StoryResponseDto = {
+    aspectRatio: StoryAspectRatio;
+    createdAt: string;
+    description: string;
+    draftRevision: number;
+    draftRevisionId: string;
+    hasUnpublishedChanges: boolean;
+    id: string;
+    publishedRevisionId: string | null;
+    role: AlbumUserRole;
+    title: string;
+    updatedAt: string;
+};
+export type StoryCreateDto = {
+    aspectRatio?: StoryAspectRatio;
+    description?: string;
+    title?: string;
+};
+export type StoryAiConsentDto = {
+    providerId: string;
+    textAllowed: boolean;
+    thumbnailAllowed?: boolean;
+};
+export type StoryAiConsentResponseDto = {
+    providerId: string;
+    textAllowed: boolean;
+    thumbnailAllowed: boolean;
+    updatedAt: string;
+};
+export type StoryAiProviderUpdateDto = {
+    adapter?: Adapter;
+    approvedEndpointId: ApprovedEndpointId;
+    credential?: string;
+    enabled?: boolean;
+    model: string;
+};
+export type StoryAiProviderResponseDto = {
+    adapter: Adapter;
+    approvedEndpointId: string;
+    credentialFingerprint: string | null;
+    enabled: boolean;
+    id: string;
+    model: string;
+    scope: Scope;
+};
+export type StoryAiDraftCreateDto = {
+    baseRevision: number;
+    instruction: string;
+};
+export type StoryAiDraftResponseDto = {
+    actorId: string;
+    appliedRevisionId: string | null;
+    baseRevision: number;
+    commandSchemaVersion: number;
+    commands: ({
+        op: Op;
+        id: string;
+        version: number;
+    } | {
+        op: Op2;
+        page: {
+            id: string;
+            template?: string;
+            background?: string;
+            durationMs?: number;
+            elements?: {
+                id: string;
+                "type": Type;
+                frame: {
+                    x: number;
+                    y: number;
+                    width: number;
+                    height: number;
+                };
+                rotation?: number;
+                assetId?: string;
+                text?: string;
+                style?: {
+                    [key: string]: any;
+                };
+                border?: {
+                    width: number;
+                    style: Style;
+                    color: string;
+                    opacity: number;
+                } | null;
+                animation?: {
+                    preset: Preset;
+                    startMs: number;
+                    durationMs: number;
+                    easing: Easing;
+                    reducedMotion: ReducedMotion;
+                } | null;
+                videoPlayback?: {
+                    mode: Mode;
+                    delayMs: number;
+                };
+                ariaHidden?: boolean;
+                altText?: string;
+            }[];
+            readingOrder?: string[];
+        };
+        afterPageId?: string | null;
+    } | {
+        op: Op3;
+        pageId: string;
+    } | {
+        op: Op4;
+        pageId: string;
+        afterPageId: string | null;
+    } | {
+        op: Op5;
+        sceneId: string;
+        template: string;
+    } | {
+        op: Op6;
+        sceneId: string;
+        background: string;
+    } | {
+        op: Op7;
+        sceneId: string;
+        durationMs: number;
+    } | {
+        op: Op8;
+        sceneId: string;
+        elementId: string;
+        border: {
+            width: number;
+            style: Style;
+            color: string;
+            opacity: number;
+        } | null;
+    } | {
+        op: Op9;
+        sceneId: string;
+        elementId: string;
+        animation: {
+            preset: Preset;
+            startMs: number;
+            durationMs: number;
+            easing: Easing;
+            reducedMotion: ReducedMotion;
+        } | null;
+    } | {
+        op: Op10;
+        sceneId: string;
+        elementId: string;
+        style: {
+            [key: string]: string | number | boolean;
+        };
+    } | {
+        op: Op11;
+        sceneId: string;
+        elementId: string;
+        mode: Mode;
+        delayMs?: number;
+    } | {
+        op: Op12;
+        sceneId: string;
+        element: {
+            id: string;
+            "type": Type;
+            frame: {
+                x: number;
+                y: number;
+                width: number;
+                height: number;
+            };
+            rotation?: number;
+            assetId?: string;
+            text?: string;
+            style?: {
+                [key: string]: any;
+            };
+            border?: {
+                width: number;
+                style: Style;
+                color: string;
+                opacity: number;
+            } | null;
+            animation?: {
+                preset: Preset;
+                startMs: number;
+                durationMs: number;
+                easing: Easing;
+                reducedMotion: ReducedMotion;
+            } | null;
+            videoPlayback?: {
+                mode: Mode;
+                delayMs: number;
+            };
+            ariaHidden?: boolean;
+            altText?: string;
+        };
+        afterElementId?: string | null;
+    } | {
+        op: Op13;
+        sceneId: string;
+        elementId: string;
+    } | {
+        op: Op14;
+        sceneId: string;
+        elementId: string;
+        frame: {
+            x: number;
+            y: number;
+            width: number;
+            height: number;
+        };
+        rotation?: number;
+    } | {
+        op: Op15;
+        sceneId: string;
+        elementId: string;
+        text: string;
+    } | {
+        op: Op16;
+        sceneId: string;
+        elementId: string;
+        ariaHidden: boolean;
+        altText?: string;
+    } | {
+        op: Op17;
+        sceneId: string;
+        elementId: string;
+        afterElementId: string | null;
+    } | {
+        op: Op18;
+        sceneId: string;
+        elementIds: string[];
+    } | {
+        op: Op19;
+        assetIds: string[];
+    } | {
+        op: Op20;
+        assetIds: string[];
+    } | {
+        op: Op21;
+        states: {
+            assetId: string;
+            state: State;
+        }[];
+    })[];
+    createdAt: string;
+    diff: {
+        [key: string]: any;
+    };
+    expiresAt: string;
+    id: string;
+    storyId: string;
+};
+export type StoryAiDraftApplyDto = {
+    clientMutationId: string;
+    clientSequence: number;
+    sessionId: string;
+};
+export type StoryAiApplyResponseDto = {
+    document: {
+        cover: {
+            background?: string;
+            durationMs?: number;
+            elements?: {
+                altText?: string;
+                animation?: {
+                    durationMs: number;
+                    easing: Easing;
+                    preset: Preset;
+                    reducedMotion: ReducedMotion;
+                    startMs: number;
+                } | null;
+                ariaHidden?: boolean;
+                assetId?: string;
+                border?: {
+                    color: string;
+                    opacity: number;
+                    style: Style;
+                    width: number;
+                } | null;
+                frame: {
+                    height: number;
+                    width: number;
+                    x: number;
+                    y: number;
+                };
+                id: string;
+                rotation?: number;
+                style?: {
+                    [key: string]: any;
+                };
+                text?: string;
+                "type": Type;
+                videoPlayback?: {
+                    delayMs: number;
+                    mode: Mode;
+                };
+            }[];
+            id: string;
+            readingOrder?: string[];
+            template?: string;
+        };
+        curation?: {
+            [key: string]: "include" | "must_include" | "maybe" | "exclude";
+        };
+        pages: {
+            background?: string;
+            durationMs?: number;
+            elements?: {
+                altText?: string;
+                animation?: {
+                    durationMs: number;
+                    easing: Easing;
+                    preset: Preset;
+                    reducedMotion: ReducedMotion;
+                    startMs: number;
+                } | null;
+                ariaHidden?: boolean;
+                assetId?: string;
+                border?: {
+                    color: string;
+                    opacity: number;
+                    style: Style;
+                    width: number;
+                } | null;
+                frame: {
+                    height: number;
+                    width: number;
+                    x: number;
+                    y: number;
+                };
+                id: string;
+                rotation?: number;
+                style?: {
+                    [key: string]: any;
+                };
+                text?: string;
+                "type": Type;
+                videoPlayback?: {
+                    delayMs: number;
+                    mode: Mode;
+                };
+            }[];
+            id: string;
+            readingOrder?: string[];
+            template?: string;
+        }[];
+        schemaVersion: SchemaVersion;
+        theme: {
+            id: string;
+            version: number;
+        };
+        unplacedAssetIds?: string[];
+    };
+    revision: number;
+    revisionId: string;
+};
+export type SharedStoryResponseDto = {
+    document: {
+        cover: {
+            background?: string;
+            durationMs?: number;
+            elements?: {
+                altText?: string;
+                animation?: {
+                    durationMs: number;
+                    easing: Easing;
+                    preset: Preset;
+                    reducedMotion: ReducedMotion;
+                    startMs: number;
+                } | null;
+                ariaHidden?: boolean;
+                assetId?: string;
+                border?: {
+                    color: string;
+                    opacity: number;
+                    style: Style;
+                    width: number;
+                } | null;
+                frame: {
+                    height: number;
+                    width: number;
+                    x: number;
+                    y: number;
+                };
+                id: string;
+                rotation?: number;
+                style?: {
+                    [key: string]: any;
+                };
+                text?: string;
+                "type": Type;
+                videoPlayback?: {
+                    delayMs: number;
+                    mode: Mode;
+                };
+            }[];
+            id: string;
+            readingOrder?: string[];
+            template?: string;
+        };
+        curation?: {
+            [key: string]: "include" | "must_include" | "maybe" | "exclude";
+        };
+        pages: {
+            background?: string;
+            durationMs?: number;
+            elements?: {
+                altText?: string;
+                animation?: {
+                    durationMs: number;
+                    easing: Easing;
+                    preset: Preset;
+                    reducedMotion: ReducedMotion;
+                    startMs: number;
+                } | null;
+                ariaHidden?: boolean;
+                assetId?: string;
+                border?: {
+                    color: string;
+                    opacity: number;
+                    style: Style;
+                    width: number;
+                } | null;
+                frame: {
+                    height: number;
+                    width: number;
+                    x: number;
+                    y: number;
+                };
+                id: string;
+                rotation?: number;
+                style?: {
+                    [key: string]: any;
+                };
+                text?: string;
+                "type": Type;
+                videoPlayback?: {
+                    delayMs: number;
+                    mode: Mode;
+                };
+            }[];
+            id: string;
+            readingOrder?: string[];
+            template?: string;
+        }[];
+        schemaVersion: SchemaVersion;
+        theme: {
+            id: string;
+            version: number;
+        };
+        unplacedAssetIds?: string[];
+    };
+    resolvedStart?: {
+        offsetMs: number;
+        pageId: string;
+    };
+    revisionId: string;
+    story: {
+        aspectRatio: StoryAspectRatio;
+        description: string;
+        id: string;
+        title: string;
+    };
+};
+export type StoryUpdateDto = {
+    aspectRatio?: StoryAspectRatio;
+    description?: string;
+    title?: string;
+};
+export type StoryCommandBatchDto = {
+    baseRevision: number;
+    clientMutationId: string;
+    clientSequence: number;
+    commands: ({
+        op: Op22;
+        id: string;
+        version: number;
+    } | {
+        op: Op23;
+        page: {
+            id: string;
+            template?: string;
+            background?: string;
+            durationMs?: number;
+            elements?: {
+                id: string;
+                "type": Type;
+                frame: {
+                    x: number;
+                    y: number;
+                    width: number;
+                    height: number;
+                };
+                rotation?: number;
+                assetId?: string;
+                text?: string;
+                style?: {
+                    [key: string]: any;
+                };
+                border?: {
+                    width: number;
+                    style: Style;
+                    color: string;
+                    opacity: number;
+                } | null;
+                animation?: {
+                    preset: Preset;
+                    startMs: number;
+                    durationMs: number;
+                    easing: Easing;
+                    reducedMotion: ReducedMotion;
+                } | null;
+                videoPlayback?: {
+                    mode: Mode;
+                    delayMs: number;
+                };
+                ariaHidden?: boolean;
+                altText?: string;
+            }[];
+            readingOrder?: string[];
+        };
+        afterPageId?: string | null;
+    } | {
+        op: Op24;
+        pageId: string;
+    } | {
+        op: Op25;
+        pageId: string;
+        afterPageId: string | null;
+    } | {
+        op: Op26;
+        sceneId: string;
+        template: string;
+    } | {
+        op: Op27;
+        sceneId: string;
+        background: string;
+    } | {
+        op: Op28;
+        sceneId: string;
+        durationMs: number;
+    } | {
+        op: Op29;
+        sceneId: string;
+        elementId: string;
+        border: {
+            width: number;
+            style: Style;
+            color: string;
+            opacity: number;
+        } | null;
+    } | {
+        op: Op30;
+        sceneId: string;
+        elementId: string;
+        animation: {
+            preset: Preset;
+            startMs: number;
+            durationMs: number;
+            easing: Easing;
+            reducedMotion: ReducedMotion;
+        } | null;
+    } | {
+        op: Op31;
+        sceneId: string;
+        elementId: string;
+        style: {
+            [key: string]: string | number | boolean;
+        };
+    } | {
+        op: Op32;
+        sceneId: string;
+        elementId: string;
+        mode: Mode;
+        delayMs?: number;
+    } | {
+        op: Op33;
+        sceneId: string;
+        element: {
+            id: string;
+            "type": Type;
+            frame: {
+                x: number;
+                y: number;
+                width: number;
+                height: number;
+            };
+            rotation?: number;
+            assetId?: string;
+            text?: string;
+            style?: {
+                [key: string]: any;
+            };
+            border?: {
+                width: number;
+                style: Style;
+                color: string;
+                opacity: number;
+            } | null;
+            animation?: {
+                preset: Preset;
+                startMs: number;
+                durationMs: number;
+                easing: Easing;
+                reducedMotion: ReducedMotion;
+            } | null;
+            videoPlayback?: {
+                mode: Mode;
+                delayMs: number;
+            };
+            ariaHidden?: boolean;
+            altText?: string;
+        };
+        afterElementId?: string | null;
+    } | {
+        op: Op34;
+        sceneId: string;
+        elementId: string;
+    } | {
+        op: Op35;
+        sceneId: string;
+        elementId: string;
+        frame: {
+            x: number;
+            y: number;
+            width: number;
+            height: number;
+        };
+        rotation?: number;
+    } | {
+        op: Op36;
+        sceneId: string;
+        elementId: string;
+        text: string;
+    } | {
+        op: Op37;
+        sceneId: string;
+        elementId: string;
+        ariaHidden: boolean;
+        altText?: string;
+    } | {
+        op: Op38;
+        sceneId: string;
+        elementId: string;
+        afterElementId: string | null;
+    } | {
+        op: Op39;
+        sceneId: string;
+        elementIds: string[];
+    } | {
+        op: Op40;
+        assetIds: string[];
+    } | {
+        op: Op41;
+        assetIds: string[];
+    } | {
+        op: Op42;
+        states: {
+            assetId: string;
+            state: State;
+        }[];
+    })[];
+    sessionId: string;
+};
+export type StoryCommandResponseDto = {
+    document: {
+        cover: {
+            background?: string;
+            durationMs?: number;
+            elements?: {
+                altText?: string;
+                animation?: {
+                    durationMs: number;
+                    easing: Easing;
+                    preset: Preset;
+                    reducedMotion: ReducedMotion;
+                    startMs: number;
+                } | null;
+                ariaHidden?: boolean;
+                assetId?: string;
+                border?: {
+                    color: string;
+                    opacity: number;
+                    style: Style;
+                    width: number;
+                } | null;
+                frame: {
+                    height: number;
+                    width: number;
+                    x: number;
+                    y: number;
+                };
+                id: string;
+                rotation?: number;
+                style?: {
+                    [key: string]: any;
+                };
+                text?: string;
+                "type": Type;
+                videoPlayback?: {
+                    delayMs: number;
+                    mode: Mode;
+                };
+            }[];
+            id: string;
+            readingOrder?: string[];
+            template?: string;
+        };
+        curation?: {
+            [key: string]: "include" | "must_include" | "maybe" | "exclude";
+        };
+        pages: {
+            background?: string;
+            durationMs?: number;
+            elements?: {
+                altText?: string;
+                animation?: {
+                    durationMs: number;
+                    easing: Easing;
+                    preset: Preset;
+                    reducedMotion: ReducedMotion;
+                    startMs: number;
+                } | null;
+                ariaHidden?: boolean;
+                assetId?: string;
+                border?: {
+                    color: string;
+                    opacity: number;
+                    style: Style;
+                    width: number;
+                } | null;
+                frame: {
+                    height: number;
+                    width: number;
+                    x: number;
+                    y: number;
+                };
+                id: string;
+                rotation?: number;
+                style?: {
+                    [key: string]: any;
+                };
+                text?: string;
+                "type": Type;
+                videoPlayback?: {
+                    delayMs: number;
+                    mode: Mode;
+                };
+            }[];
+            id: string;
+            readingOrder?: string[];
+            template?: string;
+        }[];
+        schemaVersion: SchemaVersion;
+        theme: {
+            id: string;
+            version: number;
+        };
+        unplacedAssetIds?: string[];
+    };
+    revision: number;
+    revisionId: string;
+};
+export type StoryDocumentResponseDto = {
+    document: {
+        cover: {
+            background?: string;
+            durationMs?: number;
+            elements?: {
+                altText?: string;
+                animation?: {
+                    durationMs: number;
+                    easing: Easing;
+                    preset: Preset;
+                    reducedMotion: ReducedMotion;
+                    startMs: number;
+                } | null;
+                ariaHidden?: boolean;
+                assetId?: string;
+                border?: {
+                    color: string;
+                    opacity: number;
+                    style: Style;
+                    width: number;
+                } | null;
+                frame: {
+                    height: number;
+                    width: number;
+                    x: number;
+                    y: number;
+                };
+                id: string;
+                rotation?: number;
+                style?: {
+                    [key: string]: any;
+                };
+                text?: string;
+                "type": Type;
+                videoPlayback?: {
+                    delayMs: number;
+                    mode: Mode;
+                };
+            }[];
+            id: string;
+            readingOrder?: string[];
+            template?: string;
+        };
+        curation?: {
+            [key: string]: "include" | "must_include" | "maybe" | "exclude";
+        };
+        pages: {
+            background?: string;
+            durationMs?: number;
+            elements?: {
+                altText?: string;
+                animation?: {
+                    durationMs: number;
+                    easing: Easing;
+                    preset: Preset;
+                    reducedMotion: ReducedMotion;
+                    startMs: number;
+                } | null;
+                ariaHidden?: boolean;
+                assetId?: string;
+                border?: {
+                    color: string;
+                    opacity: number;
+                    style: Style;
+                    width: number;
+                } | null;
+                frame: {
+                    height: number;
+                    width: number;
+                    x: number;
+                    y: number;
+                };
+                id: string;
+                rotation?: number;
+                style?: {
+                    [key: string]: any;
+                };
+                text?: string;
+                "type": Type;
+                videoPlayback?: {
+                    delayMs: number;
+                    mode: Mode;
+                };
+            }[];
+            id: string;
+            readingOrder?: string[];
+            template?: string;
+        }[];
+        schemaVersion: SchemaVersion;
+        theme: {
+            id: string;
+            version: number;
+        };
+        unplacedAssetIds?: string[];
+    };
+    revision: number;
+    revisionId: string;
+};
+export type StoryImportDto = {
+    albumIds?: string[];
+    assetIds?: string[];
+    mode?: Mode2;
+};
+export type StoryRevisionResponseDto = {
+    actorId: string | null;
+    createdAt: string;
+    id: string;
+    name: string | null;
+    revision: number;
+    schemaVersion: number;
+    source: string;
+    summary: string;
+};
+export type StoryRevisionDetailResponseDto = {
+    actorId: string | null;
+    createdAt: string;
+    document: {
+        cover: {
+            background?: string;
+            durationMs?: number;
+            elements?: {
+                altText?: string;
+                animation?: {
+                    durationMs: number;
+                    easing: Easing;
+                    preset: Preset;
+                    reducedMotion: ReducedMotion;
+                    startMs: number;
+                } | null;
+                ariaHidden?: boolean;
+                assetId?: string;
+                border?: {
+                    color: string;
+                    opacity: number;
+                    style: Style;
+                    width: number;
+                } | null;
+                frame: {
+                    height: number;
+                    width: number;
+                    x: number;
+                    y: number;
+                };
+                id: string;
+                rotation?: number;
+                style?: {
+                    [key: string]: any;
+                };
+                text?: string;
+                "type": Type;
+                videoPlayback?: {
+                    delayMs: number;
+                    mode: Mode3;
+                };
+            }[];
+            id: string;
+            readingOrder?: string[];
+            template?: string;
+        };
+        curation?: {
+            [key: string]: "include" | "must_include" | "maybe" | "exclude";
+        };
+        pages: {
+            background?: string;
+            durationMs?: number;
+            elements?: {
+                altText?: string;
+                animation?: {
+                    durationMs: number;
+                    easing: Easing;
+                    preset: Preset;
+                    reducedMotion: ReducedMotion;
+                    startMs: number;
+                } | null;
+                ariaHidden?: boolean;
+                assetId?: string;
+                border?: {
+                    color: string;
+                    opacity: number;
+                    style: Style;
+                    width: number;
+                } | null;
+                frame: {
+                    height: number;
+                    width: number;
+                    x: number;
+                    y: number;
+                };
+                id: string;
+                rotation?: number;
+                style?: {
+                    [key: string]: any;
+                };
+                text?: string;
+                "type": Type;
+                videoPlayback?: {
+                    delayMs: number;
+                    mode: Mode3;
+                };
+            }[];
+            id: string;
+            readingOrder?: string[];
+            template?: string;
+        }[];
+        schemaVersion: SchemaVersion;
+        theme: {
+            id: string;
+            version: number;
+        };
+        unplacedAssetIds?: string[];
+    };
+    id: string;
+    name: string | null;
+    revision: number;
+    schemaVersion: number;
+    source: string;
+    storyId: string;
+    summary: string;
+};
+export type StoryRevisionNameDto = {
+    name: string | null;
+};
+export type StoryRevisionCompareResponseDto = {
+    assetCountDelta: number;
+    changed: boolean;
+    fromRevision: number;
+    pageCountDelta: number;
+    themeChanged: boolean;
+    toRevision: number;
+};
+export type StoryUserResponseDto = {
+    role: AlbumUserRole;
+    userId: string;
+};
+export type StoryUserAddDto = {
+    role?: AlbumUserRole;
+    userId: string;
+};
+export type StoryUserUpdateDto = {
+    role: AlbumUserRole;
 };
 export type SyncAckDeleteDto = {
     /** Sync entity types to delete acks for */
@@ -3731,10 +4916,11 @@ export type SyncUserV1 = {
 /**
  * List all activities
  */
-export function getActivities({ albumId, assetId, level, $type, userId }: {
+export function getActivities({ albumId, assetId, level, parentActivityId, $type, userId }: {
     albumId: string;
     assetId?: string;
     level?: ReactionLevel;
+    parentActivityId?: string | null;
     $type?: ReactionType;
     userId?: string;
 }, opts?: Oazapfts.RequestOpts) {
@@ -3745,6 +4931,7 @@ export function getActivities({ albumId, assetId, level, $type, userId }: {
         albumId,
         assetId,
         level,
+        parentActivityId,
         "type": $type,
         userId
     }))}`, {
@@ -4374,6 +5561,44 @@ export function addAssetsToAlbum({ id, bulkIdsDto }: {
     })));
 }
 /**
+ * List pending email invitations sent by the current user
+ */
+export function getPendingInvites({ id }: {
+    id: string;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 200;
+        data: AlbumInviteResponseDto[];
+    }>(`/albums/${encodeURIComponent(id)}/invites`, {
+        ...opts
+    }));
+}
+/**
+ * Invite email addresses to an album
+ */
+export function inviteUsersToAlbum({ id, inviteUsersDto }: {
+    id: string;
+    inviteUsersDto: InviteUsersDto;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchText(`/albums/${encodeURIComponent(id)}/invites`, oazapfts.json({
+        ...opts,
+        method: "POST",
+        body: inviteUsersDto
+    })));
+}
+/**
+ * Revoke a pending email invitation
+ */
+export function revokeInvite({ id, inviteId }: {
+    id: string;
+    inviteId: string;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchText(`/albums/${encodeURIComponent(id)}/invites/${encodeURIComponent(inviteId)}`, {
+        ...opts,
+        method: "DELETE"
+    }));
+}
+/**
  * Retrieve album map markers
  */
 export function getAlbumMapMarkers({ id, key, slug }: {
@@ -4431,6 +5656,61 @@ export function addUsersToAlbum({ id, addUsersDto }: {
         ...opts,
         method: "PUT",
         body: addUsersDto
+    })));
+}
+/**
+ * Get album voting leaderboard
+ */
+export function getAlbumVotingLeaderboard({ id, key, slug }: {
+    id: string;
+    key?: string;
+    slug?: string;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 200;
+        data: AlbumVoteLeaderboardDto;
+    }>(`/albums/${encodeURIComponent(id)}/voting/leaderboard${QS.query(QS.explode({
+        key,
+        slug
+    }))}`, {
+        ...opts
+    }));
+}
+/**
+ * Get a personal album voting sample
+ */
+export function getAlbumVotingSession({ id, key, slug }: {
+    id: string;
+    key?: string;
+    slug?: string;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 200;
+        data: AlbumVoteSessionDto;
+    }>(`/albums/${encodeURIComponent(id)}/voting/session${QS.query(QS.explode({
+        key,
+        slug
+    }))}`, {
+        ...opts
+    }));
+}
+/**
+ * Cast or remove an album vote
+ */
+export function voteForAlbum({ assetId, id, key, slug, albumVoteDto }: {
+    assetId: string;
+    id: string;
+    key?: string;
+    slug?: string;
+    albumVoteDto: AlbumVoteDto;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchText(`/albums/${encodeURIComponent(id)}/voting/votes/${encodeURIComponent(assetId)}${QS.query(QS.explode({
+        key,
+        slug
+    }))}`, oazapfts.json({
+        ...opts,
+        method: "PUT",
+        body: albumVoteDto
     })));
 }
 /**
@@ -4673,6 +5953,17 @@ export function runAssetJobs({ assetJobsDto }: {
         method: "POST",
         body: assetJobsDto
     })));
+}
+/**
+ * Get conservative location suggestions
+ */
+export function getLocationSuggestions(opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 200;
+        data: LocationSuggestionResponseDto[];
+    }>("/assets/location-suggestions", {
+        ...opts
+    }));
 }
 /**
  * Delete asset metadata
@@ -5019,6 +6310,51 @@ export function signUpAdmin({ signUpDto }: {
         ...opts,
         method: "POST",
         body: signUpDto
+    })));
+}
+/**
+ * Accept an email album invitation
+ */
+export function acceptAlbumInvite({ albumInviteAcceptDto }: {
+    albumInviteAcceptDto: AlbumInviteAcceptDto;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 201;
+        data: AlbumInviteAcceptResponseDto;
+    }>("/auth/album-invite/accept", oazapfts.json({
+        ...opts,
+        method: "POST",
+        body: albumInviteAcceptDto
+    })));
+}
+/**
+ * Claim an email album invitation with an existing account
+ */
+export function claimAlbumInvite({ albumInviteTokenDto }: {
+    albumInviteTokenDto: AlbumInviteTokenDto;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 201;
+        data: AlbumInviteClaimDto;
+    }>("/auth/album-invite/claim", oazapfts.json({
+        ...opts,
+        method: "POST",
+        body: albumInviteTokenDto
+    })));
+}
+/**
+ * Preview an email album invitation
+ */
+export function getAlbumInvitePreview({ albumInviteTokenDto }: {
+    albumInviteTokenDto: AlbumInviteTokenDto;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 200;
+        data: AlbumInvitePreviewDto;
+    }>("/auth/album-invite/preview", oazapfts.json({
+        ...opts,
+        method: "POST",
+        body: albumInviteTokenDto
     })));
 }
 /**
@@ -6999,6 +8335,537 @@ export function removeAssetFromStack({ assetId, id }: {
     }));
 }
 /**
+ * Retrieve stories
+ */
+export function getAllStories(opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 200;
+        data: StoryResponseDto[];
+    }>("/stories", {
+        ...opts
+    }));
+}
+/**
+ * Create a story
+ */
+export function createStory({ storyCreateDto }: {
+    storyCreateDto: StoryCreateDto;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 201;
+        data: StoryResponseDto;
+    }>("/stories", oazapfts.json({
+        ...opts,
+        method: "POST",
+        body: storyCreateDto
+    })));
+}
+/**
+ * Retrieve Story AI transmission consent
+ */
+export function getStoryAiConsent(opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 200;
+        data: object;
+    }>("/stories/ai/consent", {
+        ...opts
+    }));
+}
+/**
+ * Set Story AI transmission consent
+ */
+export function setStoryAiConsent({ storyAiConsentDto }: {
+    storyAiConsentDto: StoryAiConsentDto;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 200;
+        data: StoryAiConsentResponseDto;
+    }>("/stories/ai/consent", oazapfts.json({
+        ...opts,
+        method: "PUT",
+        body: storyAiConsentDto
+    })));
+}
+/**
+ * Remove a personal Story AI provider
+ */
+export function deleteStoryAiProvider(opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchText("/stories/ai/provider", {
+        ...opts,
+        method: "DELETE"
+    }));
+}
+/**
+ * Retrieve the effective Story AI provider
+ */
+export function getStoryAiProvider(opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 200;
+        data: object;
+    }>("/stories/ai/provider", {
+        ...opts
+    }));
+}
+/**
+ * Configure a personal Story AI provider
+ */
+export function updateStoryAiProvider({ storyAiProviderUpdateDto }: {
+    storyAiProviderUpdateDto: StoryAiProviderUpdateDto;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 200;
+        data: StoryAiProviderResponseDto;
+    }>("/stories/ai/provider", oazapfts.json({
+        ...opts,
+        method: "PUT",
+        body: storyAiProviderUpdateDto
+    })));
+}
+/**
+ * Remove the server Story AI provider
+ */
+export function deleteServerStoryAiProvider(opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchText("/stories/ai/server-provider", {
+        ...opts,
+        method: "DELETE"
+    }));
+}
+/**
+ * Configure the server Story AI provider
+ */
+export function updateServerStoryAiProvider({ storyAiProviderUpdateDto }: {
+    storyAiProviderUpdateDto: StoryAiProviderUpdateDto;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 200;
+        data: StoryAiProviderResponseDto;
+    }>("/stories/ai/server-provider", oazapfts.json({
+        ...opts,
+        method: "PUT",
+        body: storyAiProviderUpdateDto
+    })));
+}
+/**
+ * Create an immutable Story AI draft
+ */
+export function createStoryAiDraft({ storyId, storyAiDraftCreateDto }: {
+    storyId: string;
+    storyAiDraftCreateDto: StoryAiDraftCreateDto;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 201;
+        data: StoryAiDraftResponseDto;
+    }>(`/stories/ai/${encodeURIComponent(storyId)}/drafts`, oazapfts.json({
+        ...opts,
+        method: "POST",
+        body: storyAiDraftCreateDto
+    })));
+}
+/**
+ * Delete a Story AI draft
+ */
+export function deleteStoryAiDraft({ draftId, storyId }: {
+    draftId: string;
+    storyId: string;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchText(`/stories/ai/${encodeURIComponent(storyId)}/drafts/${encodeURIComponent(draftId)}`, {
+        ...opts,
+        method: "DELETE"
+    }));
+}
+/**
+ * Retrieve a Story AI draft
+ */
+export function getStoryAiDraft({ draftId, storyId }: {
+    draftId: string;
+    storyId: string;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 200;
+        data: StoryAiDraftResponseDto;
+    }>(`/stories/ai/${encodeURIComponent(storyId)}/drafts/${encodeURIComponent(draftId)}`, {
+        ...opts
+    }));
+}
+/**
+ * Apply an immutable Story AI draft
+ */
+export function applyStoryAiDraft({ draftId, storyId, storyAiDraftApplyDto }: {
+    draftId: string;
+    storyId: string;
+    storyAiDraftApplyDto: StoryAiDraftApplyDto;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 201;
+        data: StoryAiApplyResponseDto;
+    }>(`/stories/ai/${encodeURIComponent(storyId)}/drafts/${encodeURIComponent(draftId)}/apply`, oazapfts.json({
+        ...opts,
+        method: "POST",
+        body: storyAiDraftApplyDto
+    })));
+}
+/**
+ * Retrieve the published shared Story
+ */
+export function getSharedStory({ key, slug }: {
+    key?: string;
+    slug?: string;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 200;
+        data: SharedStoryResponseDto;
+    }>(`/stories/shared${QS.query(QS.explode({
+        key,
+        slug
+    }))}`, {
+        ...opts
+    }));
+}
+/**
+ * Download a story-scoped original
+ */
+export function downloadSharedStoryOriginal({ id, key, slug }: {
+    id: string;
+    key?: string;
+    slug?: string;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchText(`/stories/shared/assets/${encodeURIComponent(id)}/original${QS.query(QS.explode({
+        key,
+        slug
+    }))}`, {
+        ...opts
+    }));
+}
+/**
+ * View a story-scoped asset rendition
+ */
+export function getSharedStoryRendition({ id, key, slug }: {
+    id: string;
+    key?: string;
+    slug?: string;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchText(`/stories/shared/assets/${encodeURIComponent(id)}/rendition${QS.query(QS.explode({
+        key,
+        slug
+    }))}`, {
+        ...opts
+    }));
+}
+/**
+ * Play a story-scoped video
+ */
+export function getSharedStoryVideo({ id, key, slug }: {
+    id: string;
+    key?: string;
+    slug?: string;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchText(`/stories/shared/assets/${encodeURIComponent(id)}/video${QS.query(QS.explode({
+        key,
+        slug
+    }))}`, {
+        ...opts
+    }));
+}
+/**
+ * Delete a story
+ */
+export function deleteStory({ id }: {
+    id: string;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchText(`/stories/${encodeURIComponent(id)}`, {
+        ...opts,
+        method: "DELETE"
+    }));
+}
+/**
+ * Retrieve a story
+ */
+export function getStory({ id }: {
+    id: string;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 200;
+        data: StoryResponseDto;
+    }>(`/stories/${encodeURIComponent(id)}`, {
+        ...opts
+    }));
+}
+/**
+ * Update story metadata
+ */
+export function updateStory({ id, storyUpdateDto }: {
+    id: string;
+    storyUpdateDto: StoryUpdateDto;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 200;
+        data: StoryResponseDto;
+    }>(`/stories/${encodeURIComponent(id)}`, oazapfts.json({
+        ...opts,
+        method: "PATCH",
+        body: storyUpdateDto
+    })));
+}
+/**
+ * Apply story commands
+ */
+export function applyStoryCommands({ id, storyCommandBatchDto }: {
+    id: string;
+    storyCommandBatchDto: StoryCommandBatchDto;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 201;
+        data: StoryCommandResponseDto;
+    }>(`/stories/${encodeURIComponent(id)}/commands`, oazapfts.json({
+        ...opts,
+        method: "POST",
+        body: storyCommandBatchDto
+    })));
+}
+/**
+ * Retrieve the current story document
+ */
+export function getStoryDocument({ id }: {
+    id: string;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 200;
+        data: StoryDocumentResponseDto;
+    }>(`/stories/${encodeURIComponent(id)}/document`, {
+        ...opts
+    }));
+}
+/**
+ * Duplicate a story
+ */
+export function duplicateStory({ id }: {
+    id: string;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 201;
+        data: StoryResponseDto;
+    }>(`/stories/${encodeURIComponent(id)}/duplicate`, {
+        ...opts,
+        method: "POST"
+    }));
+}
+/**
+ * Import assets into a story
+ */
+export function importStoryAssets({ id, storyImportDto }: {
+    id: string;
+    storyImportDto: StoryImportDto;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 201;
+        data: StoryCommandResponseDto;
+    }>(`/stories/${encodeURIComponent(id)}/import`, oazapfts.json({
+        ...opts,
+        method: "POST",
+        body: storyImportDto
+    })));
+}
+/**
+ * Unpublish a story
+ */
+export function unpublishStory({ id }: {
+    id: string;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchText(`/stories/${encodeURIComponent(id)}/publish`, {
+        ...opts,
+        method: "DELETE"
+    }));
+}
+/**
+ * Publish a story
+ */
+export function publishStory({ id }: {
+    id: string;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 201;
+        data: StoryResponseDto;
+    }>(`/stories/${encodeURIComponent(id)}/publish`, {
+        ...opts,
+        method: "POST"
+    }));
+}
+/**
+ * Restore a deleted story
+ */
+export function restoreDeletedStory({ id }: {
+    id: string;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 201;
+        data: StoryResponseDto;
+    }>(`/stories/${encodeURIComponent(id)}/restore`, {
+        ...opts,
+        method: "POST"
+    }));
+}
+/**
+ * Retrieve story revisions
+ */
+export function getStoryRevisions({ before, id, limit }: {
+    before?: number;
+    id: string;
+    limit?: number;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 200;
+        data: StoryRevisionResponseDto[];
+    }>(`/stories/${encodeURIComponent(id)}/revisions${QS.query(QS.explode({
+        before,
+        limit
+    }))}`, {
+        ...opts
+    }));
+}
+/**
+ * Retrieve a story revision
+ */
+export function getStoryRevision({ id, revisionId }: {
+    id: string;
+    revisionId: string;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 200;
+        data: StoryRevisionDetailResponseDto;
+    }>(`/stories/${encodeURIComponent(id)}/revisions/${encodeURIComponent(revisionId)}`, {
+        ...opts
+    }));
+}
+/**
+ * Name a story revision
+ */
+export function nameStoryRevision({ id, revisionId, storyRevisionNameDto }: {
+    id: string;
+    revisionId: string;
+    storyRevisionNameDto: StoryRevisionNameDto;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 200;
+        data: StoryRevisionDetailResponseDto;
+    }>(`/stories/${encodeURIComponent(id)}/revisions/${encodeURIComponent(revisionId)}`, oazapfts.json({
+        ...opts,
+        method: "PATCH",
+        body: storyRevisionNameDto
+    })));
+}
+/**
+ * View a story revision asset rendition
+ */
+export function getStoryRevisionRendition({ assetId, id, revisionId }: {
+    assetId: string;
+    id: string;
+    revisionId: string;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchText(`/stories/${encodeURIComponent(id)}/revisions/${encodeURIComponent(revisionId)}/assets/${encodeURIComponent(assetId)}/rendition`, {
+        ...opts
+    }));
+}
+/**
+ * Play a story revision video
+ */
+export function getStoryRevisionVideo({ assetId, id, revisionId }: {
+    assetId: string;
+    id: string;
+    revisionId: string;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchText(`/stories/${encodeURIComponent(id)}/revisions/${encodeURIComponent(revisionId)}/assets/${encodeURIComponent(assetId)}/video`, {
+        ...opts
+    }));
+}
+/**
+ * Compare story revisions
+ */
+export function compareStoryRevisions({ id, revisionId, toRevisionId }: {
+    id: string;
+    revisionId: string;
+    toRevisionId: string;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 200;
+        data: StoryRevisionCompareResponseDto;
+    }>(`/stories/${encodeURIComponent(id)}/revisions/${encodeURIComponent(revisionId)}/compare/${encodeURIComponent(toRevisionId)}`, {
+        ...opts
+    }));
+}
+/**
+ * Restore a story revision
+ */
+export function restoreStoryRevision({ id, revisionId }: {
+    id: string;
+    revisionId: string;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 201;
+        data: StoryCommandResponseDto;
+    }>(`/stories/${encodeURIComponent(id)}/revisions/${encodeURIComponent(revisionId)}/restore`, {
+        ...opts,
+        method: "POST"
+    }));
+}
+/**
+ * Retrieve story collaborators
+ */
+export function getStoryUsers({ id }: {
+    id: string;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 200;
+        data: StoryUserResponseDto[];
+    }>(`/stories/${encodeURIComponent(id)}/users`, {
+        ...opts
+    }));
+}
+/**
+ * Add a story collaborator
+ */
+export function addStoryUser({ id, storyUserAddDto }: {
+    id: string;
+    storyUserAddDto: StoryUserAddDto;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 200;
+        data: StoryUserResponseDto[];
+    }>(`/stories/${encodeURIComponent(id)}/users`, oazapfts.json({
+        ...opts,
+        method: "PUT",
+        body: storyUserAddDto
+    })));
+}
+/**
+ * Remove a story collaborator
+ */
+export function removeStoryUser({ id, userId }: {
+    id: string;
+    userId: string;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchText(`/stories/${encodeURIComponent(id)}/users/${encodeURIComponent(userId)}`, {
+        ...opts,
+        method: "DELETE"
+    }));
+}
+/**
+ * Update a story collaborator
+ */
+export function updateStoryUser({ id, userId, storyUserUpdateDto }: {
+    id: string;
+    userId: string;
+    storyUserUpdateDto: StoryUserUpdateDto;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 200;
+        data: StoryUserResponseDto[];
+    }>(`/stories/${encodeURIComponent(id)}/users/${encodeURIComponent(userId)}`, oazapfts.json({
+        ...opts,
+        method: "PATCH",
+        body: storyUserUpdateDto
+    })));
+}
+/**
  * Delete acknowledgements
  */
 export function deleteSyncAck({ syncAckDeleteDto }: {
@@ -7870,6 +9737,8 @@ export enum NotificationType {
     SystemMessage = "SystemMessage",
     AlbumInvite = "AlbumInvite",
     AlbumUpdate = "AlbumUpdate",
+    Activity = "Activity",
+    AssetUpdate = "AssetUpdate",
     ClusterGroupRequest = "ClusterGroupRequest",
     Custom = "Custom"
 }
@@ -7886,6 +9755,11 @@ export enum AssetOrder {
     Asc = "asc",
     Desc = "desc"
 }
+export enum Frequency {
+    Immediate = "immediate",
+    Hourly = "hourly",
+    Daily = "daily"
+}
 export enum AssetVisibility {
     Archive = "archive",
     Timeline = "timeline",
@@ -7896,6 +9770,27 @@ export enum AlbumUserRole {
     Editor = "editor",
     Owner = "owner",
     Viewer = "viewer"
+}
+export enum SortBy {
+    DateTaken = "dateTaken",
+    FileName = "fileName",
+    FileSize = "fileSize",
+    Tag = "tag",
+    Camera = "camera",
+    Lens = "lens",
+    Engagement = "engagement",
+    Location = "location",
+    Time = "time",
+    Description = "description",
+    CameraSettings = "cameraSettings",
+    LensSettings = "lensSettings"
+}
+export enum SortOrder {
+    Asc = "asc",
+    Desc = "desc"
+}
+export enum Version {
+    $1 = 1
 }
 export enum BulkIdErrorReason {
     Duplicate = "duplicate",
@@ -7944,6 +9839,11 @@ export enum Permission {
     AlbumUserCreate = "albumUser.create",
     AlbumUserUpdate = "albumUser.update",
     AlbumUserDelete = "albumUser.delete",
+    StoryCreate = "story.create",
+    StoryRead = "story.read",
+    StoryUpdate = "story.update",
+    StoryDelete = "story.delete",
+    StoryShare = "story.share",
     AuthChangePassword = "auth.changePassword",
     AuthDeviceDelete = "authDevice.delete",
     ArchiveRead = "archive.read",
@@ -8243,6 +10143,8 @@ export enum JobName {
     PersonGenerateThumbnail = "PersonGenerateThumbnail",
     SessionCleanup = "SessionCleanup",
     SendMail = "SendMail",
+    NotifyActivity = "NotifyActivity",
+    NotifyAssetDescription = "NotifyAssetDescription",
     SidecarQueueAll = "SidecarQueueAll",
     SidecarCheck = "SidecarCheck",
     SidecarWrite = "SidecarWrite",
@@ -8282,12 +10184,210 @@ export enum SearchSuggestionType {
 }
 export enum SharedLinkType {
     Album = "ALBUM",
+    Story = "STORY",
     Individual = "INDIVIDUAL"
 }
 export enum AssetIdErrorReason {
     Duplicate = "duplicate",
     NoPermission = "no_permission",
     NotFound = "not_found"
+}
+export enum StoryAspectRatio {
+    Portrait45 = "portrait_4_5",
+    Landscape169 = "landscape_16_9",
+    Square11 = "square_1_1"
+}
+export enum Adapter {
+    Openai = "openai"
+}
+export enum ApprovedEndpointId {
+    OpenaiPublic = "openai_public",
+    LocalAdmin = "local_admin"
+}
+export enum Scope {
+    Server = "server",
+    User = "user"
+}
+export enum Op {
+    StorySetTheme = "story.setTheme"
+}
+export enum Op2 {
+    PageInsert = "page.insert"
+}
+export enum Type {
+    Image = "image",
+    Video = "video",
+    Text = "text",
+    Sticker = "sticker",
+    Shape = "shape"
+}
+export enum Style {
+    Solid = "solid",
+    Dashed = "dashed",
+    Double = "double"
+}
+export enum Preset {
+    Fade = "fade",
+    Rise = "rise",
+    Slide = "slide",
+    Scale = "scale",
+    PanZoom = "pan_zoom"
+}
+export enum Easing {
+    Linear = "linear",
+    Ease = "ease",
+    EaseIn = "ease_in",
+    EaseOut = "ease_out",
+    EaseInOut = "ease_in_out"
+}
+export enum ReducedMotion {
+    Omit = "omit",
+    Fade = "fade",
+    Instant = "instant"
+}
+export enum Mode {
+    Click = "click",
+    Autoplay = "autoplay",
+    Delayed = "delayed"
+}
+export enum Op3 {
+    PageRemove = "page.remove"
+}
+export enum Op4 {
+    PageMove = "page.move"
+}
+export enum Op5 {
+    SceneSetTemplate = "scene.setTemplate"
+}
+export enum Op6 {
+    SceneSetBackground = "scene.setBackground"
+}
+export enum Op7 {
+    SceneSetTiming = "scene.setTiming"
+}
+export enum Op8 {
+    ElementSetBorder = "element.setBorder"
+}
+export enum Op9 {
+    ElementSetAnimation = "element.setAnimation"
+}
+export enum Op10 {
+    ElementSetTextStyle = "element.setTextStyle"
+}
+export enum Op11 {
+    ElementSetVideoPlayback = "element.setVideoPlayback"
+}
+export enum Op12 {
+    ElementAdd = "element.add"
+}
+export enum Op13 {
+    ElementRemove = "element.remove"
+}
+export enum Op14 {
+    ElementPatchGeometry = "element.patchGeometry"
+}
+export enum Op15 {
+    ElementSetText = "element.setText"
+}
+export enum Op16 {
+    ElementSetAccessibility = "element.setAccessibility"
+}
+export enum Op17 {
+    ElementMoveLayer = "element.moveLayer"
+}
+export enum Op18 {
+    SceneSetReadingOrder = "scene.setReadingOrder"
+}
+export enum Op19 {
+    TrayAddAssets = "tray.addAssets"
+}
+export enum Op20 {
+    TrayRemoveAssets = "tray.removeAssets"
+}
+export enum Op21 {
+    CurationSetStates = "curation.setStates"
+}
+export enum State {
+    Include = "include",
+    MustInclude = "must_include",
+    Maybe = "maybe",
+    Exclude = "exclude"
+}
+export enum SchemaVersion {
+    $1 = 1
+}
+export enum Op22 {
+    StorySetTheme = "story.setTheme"
+}
+export enum Op23 {
+    PageInsert = "page.insert"
+}
+export enum Op24 {
+    PageRemove = "page.remove"
+}
+export enum Op25 {
+    PageMove = "page.move"
+}
+export enum Op26 {
+    SceneSetTemplate = "scene.setTemplate"
+}
+export enum Op27 {
+    SceneSetBackground = "scene.setBackground"
+}
+export enum Op28 {
+    SceneSetTiming = "scene.setTiming"
+}
+export enum Op29 {
+    ElementSetBorder = "element.setBorder"
+}
+export enum Op30 {
+    ElementSetAnimation = "element.setAnimation"
+}
+export enum Op31 {
+    ElementSetTextStyle = "element.setTextStyle"
+}
+export enum Op32 {
+    ElementSetVideoPlayback = "element.setVideoPlayback"
+}
+export enum Op33 {
+    ElementAdd = "element.add"
+}
+export enum Op34 {
+    ElementRemove = "element.remove"
+}
+export enum Op35 {
+    ElementPatchGeometry = "element.patchGeometry"
+}
+export enum Op36 {
+    ElementSetText = "element.setText"
+}
+export enum Op37 {
+    ElementSetAccessibility = "element.setAccessibility"
+}
+export enum Op38 {
+    ElementMoveLayer = "element.moveLayer"
+}
+export enum Op39 {
+    SceneSetReadingOrder = "scene.setReadingOrder"
+}
+export enum Op40 {
+    TrayAddAssets = "tray.addAssets"
+}
+export enum Op41 {
+    TrayRemoveAssets = "tray.removeAssets"
+}
+export enum Op42 {
+    CurationSetStates = "curation.setStates"
+}
+export enum Mode2 {
+    Tray = "tray",
+    OnePerPage = "one_per_page",
+    AutomaticDraft = "automatic_draft"
+}
+export enum Mode3 {
+    Click = "click",
+    Autoplay = "autoplay",
+    Delayed = "delayed"
 }
 export enum SyncEntityType {
     AuthUserV1 = "AuthUserV1",

@@ -1,4 +1,4 @@
-import { AssetOrder, type UserPreferencesResponseDto } from '@immich/sdk';
+import { AssetOrder, Frequency, type UserPreferencesResponseDto } from '@immich/sdk';
 import { Sync } from 'factory.ts';
 
 export const preferencesFactory = Sync.makeFactory<UserPreferencesResponseDto>({
@@ -19,7 +19,7 @@ export const preferencesFactory = Sync.makeFactory<UserPreferencesResponseDto>({
     comments: false,
     descriptions: false,
     enabled: false,
-    frequency: 'immediate',
+    frequency: Frequency.Immediate,
     reactions: false,
   },
   folders: {

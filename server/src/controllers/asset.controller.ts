@@ -44,7 +44,7 @@ export class AssetController {
 
   @Get('location-suggestions')
   @Authenticated({ permission: Permission.AssetRead })
-  @Endpoint({ summary: 'Get conservative location suggestions' })
+  @Endpoint({ summary: 'Get conservative location suggestions', history: new HistoryBuilder().added('v3') })
   getLocationSuggestions(@Auth() auth: AuthDto): Promise<LocationSuggestionResponseDto[]> {
     return this.service.getLocationSuggestions(auth);
   }

@@ -53,11 +53,11 @@ const AssetBulkUpdateSchema = AssetBulkUpdateBaseSchema.pipe(
 const LocationSuggestionSchema = z
   .object({
     assetIds: z.array(z.uuidv4()),
-    latitude: z.number(),
-    longitude: z.number(),
+    latitude: z.number().meta({ format: 'double' }),
+    longitude: z.number().meta({ format: 'double' }),
     locality: z.string(),
     accuracyMeters: z.number().int().positive(),
-    confidence: z.number().min(0).max(1),
+    confidence: z.number().min(0).max(1).meta({ format: 'double' }),
     timeWindowMinutes: z.number().int().positive(),
   })
   .meta({ id: 'LocationSuggestionResponseDto' });

@@ -119,7 +119,7 @@ const AlbumPresentationSortCriterionSchema = z.object({
 
 export const AlbumPresentationSchema = z
   .object({
-    version: z.literal(1),
+    version: z.literal(1).meta({ format: 'int32' }),
     sortCriteria: z.array(AlbumPresentationSortCriterionSchema).min(1).max(4),
     showSortDividers: z.boolean(),
     rowHeight: z.int().min(100).max(400).optional(),

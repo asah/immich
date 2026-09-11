@@ -1,9 +1,7 @@
 import { authenticate } from '$lib/utils/auth';
-import { getFormatter } from '$lib/utils/i18n';
 import type { PageLoad } from './$types';
 
 export const load = (async ({ url }) => {
   await authenticate(url);
-  const $t = await getFormatter();
-  return { albumId: url.searchParams.get('albumId'), meta: { title: $t('create_story') } };
+  return { albumId: url.searchParams.get('albumId'), meta: { title: 'Create story' } };
 }) satisfies PageLoad;
