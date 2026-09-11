@@ -58,11 +58,12 @@ require_hook IMMICH_POST_DEPLOY_CHECK_CMD "$CHECK_CMD"
 echo "Commit: $SHA"
 echo "Image : $IMAGE"
 
-echo "[1/8] Verifying candidate..."
-pnpm --dir server run migrations:verify-order
-pnpm --dir server exec tsc --noEmit
-pnpm --dir web run check:typescript
-pnpm --dir web run check:svelte
+echo "[1/8] Verifying release metadata..."
+# The production host need not (and commonly must not) have the development
+# Node/Pnpm toolchain. The candidate Docker build performs server and web
+# compilation in its pinned build environment; migration validation runs in
+# the candidate image at step 6.
+git diff --check
 
 echo "[2/8] Building..."
 previous_image_id="$(docker image inspect --format '{{.Id}}' "$IMAGE" 2>/dev/null || true)"
