@@ -30,3 +30,4 @@ vite.config.js.timestamp-*
 .devcontainer/server/container-compose-overrides.yml.backup
 .devcontainer/server/container-compose-overrides.yml.pre-codex-volume
 .env
+.prod-release.env

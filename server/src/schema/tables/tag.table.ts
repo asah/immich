@@ -39,8 +39,10 @@ export class TagTable {
   @Column({ type: 'character varying', nullable: true, default: null })
   color!: string | null;
 
-  @Column({ type: 'character varying', nullable: true, default: null })
-  description?: string | null;
+  // Existing fork databases created this column as text. Keep the canonical
+  // schema text-based so upgrading preserves descriptions without a rebuild.
+  @Column({ type: 'text', nullable: true, default: null })
+  description!: string | null;
 
   @ForeignKeyColumn(() => TagTable, { nullable: true, onDelete: 'CASCADE' })
   parentId!: string | null;

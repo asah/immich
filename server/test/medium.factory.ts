@@ -803,6 +803,7 @@ const tagInsert = (tag: Partial<Insertable<TagTable>>) => {
     createdAt: newDate(),
     updatedAt: newDate(),
     color: '',
+    description: null,
     parentId: null,
     updateId: newUuid(),
   };

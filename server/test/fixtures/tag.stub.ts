@@ -8,6 +8,7 @@ const parent = Object.freeze<Tag>({
   updatedAt: new Date('2021-01-01T00:00:00Z'),
   value: 'Parent',
   color: null,
+  description: null,
   parentId: null,
 });
 
@@ -17,6 +18,7 @@ const child = Object.freeze<Tag>({
   updatedAt: new Date('2021-01-01T00:00:00Z'),
   value: 'Parent/Child',
   color: null,
+  description: null,
   parentId: parent.id,
 });
 
@@ -26,6 +28,7 @@ const tag = {
   updatedAt: new Date('2021-01-01T00:00:00Z'),
   value: 'Tag1',
   color: null,
+  description: null,
   parentId: null,
 };
 
@@ -35,6 +38,7 @@ const color = {
   updatedAt: new Date('2021-01-01T00:00:00Z'),
   value: 'Tag1',
   color: '#000000',
+  description: null,
   parentId: null,
 };
 

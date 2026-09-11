@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { DateTime } from 'luxon';
 import {
   AddUsersDto,
@@ -203,6 +203,15 @@ export class AlbumService extends BaseService {
 
     const album = await this.findOrFail(id, auth.user.id, { withAssets: true });
 
+    // Presentation and voting change an album's public behavior. Editors can
+    // manage its contents, but only the owner may change these settings.
+    if (
+      (dto.presentation !== undefined || dto.voting !== undefined) &&
+      !album.albumUsers.some(({ user, role }) => user.id === auth.user.id && role === AlbumUserRole.Owner)
+    ) {
+      throw new ForbiddenException('Only the album owner can update presentation or voting settings');
+    }
+
     if (dto.albumThumbnailAssetId) {
       const results = await this.albumRepository.getAssetIds(id, [dto.albumThumbnailAssetId]);
       if (results.size === 0) {
@@ -218,6 +227,8 @@ export class AlbumService extends BaseService {
         albumThumbnailAssetId: dto.albumThumbnailAssetId,
         isActivityEnabled: dto.isActivityEnabled,
         order: dto.order,
+        presentation: dto.presentation,
+        voting: dto.voting,
       },
       auth.user.id,
     );

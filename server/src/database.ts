@@ -91,7 +91,7 @@ export type Tag = {
   updatedAt: Date;
   color: string | null;
   parentId: string | null;
-  description?: string | null;
+  description: string | null;
 };
 
 export type Memory = {
@@ -400,7 +400,7 @@ export const columns = {
     'quotaSizeInBytes',
     'quotaUsageInBytes',
   ],
-  tag: ['tag.id', 'tag.value', 'tag.createdAt', 'tag.updatedAt', 'tag.color', 'tag.parentId'],
+  tag: ['tag.id', 'tag.value', 'tag.createdAt', 'tag.updatedAt', 'tag.color', 'tag.description', 'tag.parentId'],
   apiKey: ['id', 'name', 'userId', 'createdAt', 'updatedAt', 'permissions'],
   notification: ['id', 'createdAt', 'level', 'type', 'title', 'description', 'data', 'readAt'],
   pluginMethod: [

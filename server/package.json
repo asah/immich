@@ -30,6 +30,7 @@
     "migrations:generate": "sql-tools -u ${DB_URL:-postgres://postgres:postgres@localhost:5432/immich} migrations generate",
     "migrations:create": "sql-tools -u ${DB_URL:-postgres://postgres:postgres@localhost:5432/immich} migrations create",
     "migrations:run": "sql-tools -u ${DB_URL:-postgres://postgres:postgres@localhost:5432/immich} migrations run",
+    "migrations:reconcile-v3-history": "node dist/bin/reconcile-v3-migration-history.js",
     "migrations:revert": "sql-tools -u ${DB_URL:-postgres://postgres:postgres@localhost:5432/immich} migrations revert",
     "migrations:sync-order": "sql-tools migrations sync-order",
     "migrations:verify-order": "sql-tools migrations verify-order",

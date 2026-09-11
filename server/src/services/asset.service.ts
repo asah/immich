@@ -125,7 +125,7 @@ export class AssetService extends BaseService {
   async update(auth: AuthDto, id: string, dto: UpdateAssetDto): Promise<AssetResponseDto> {
     await this.requireAccess({ auth, permission: Permission.AssetUpdate, ids: [id] });
 
-    const { description, dateTimeOriginal, latitude, longitude, rating, ...rest } = dto;
+    const { description, dateTimeOriginal, latitude, longitude, lensModel, rating, ...rest } = dto;
     const repos = { asset: this.assetRepository, event: this.eventRepository };
 
     let previousMotion: { id: string } | null = null;
@@ -138,7 +138,7 @@ export class AssetService extends BaseService {
       }
     }
 
-    await this.updateExif({ id, description, dateTimeOriginal, latitude, longitude, rating });
+    await this.updateExif({ id, description, dateTimeOriginal, latitude, longitude, lensModel, rating });
 
     const asset = await this.assetRepository.update({ id, ...rest });
 
@@ -165,6 +165,7 @@ export class AssetService extends BaseService {
       dateTimeOriginal,
       latitude,
       longitude,
+      lensModel,
       rating,
       description,
       duplicateId,
@@ -178,6 +179,7 @@ export class AssetService extends BaseService {
       {
         latitude,
         longitude,
+        lensModel,
         rating,
         description,
         dateTimeOriginal,
@@ -517,9 +519,10 @@ export class AssetService extends BaseService {
     dateTimeOriginal?: string;
     latitude?: number;
     longitude?: number;
+    lensModel?: string | null;
     rating?: number | null;
   }) {
-    const { id, description, dateTimeOriginal, latitude, longitude, rating } = dto;
+    const { id, description, dateTimeOriginal, latitude, longitude, lensModel, rating } = dto;
     const writes = _.omitBy(
       {
         description,
@@ -527,6 +530,7 @@ export class AssetService extends BaseService {
         timeZone: extractTimeZone(dateTimeOriginal)?.name,
         latitude,
         longitude,
+        lensModel,
         rating,
       },
       _.isUndefined,
