@@ -129,7 +129,19 @@
   let availableTags: TagResponseDto[] = $state([]);
   let engagementFilter: string | 'comments' | undefined = $state();
   let showPhotoCaptions = $state(true);
-  let temporarySort = $state<AlbumAssetSortCriterion>();
+  const temporarySort = $derived.by<AlbumAssetSortCriterion | undefined>(() => {
+    const sortBy = page.url.searchParams.get('sortBy') as AlbumAssetSortBy | null;
+    const sortOrder = page.url.searchParams.get('sortOrder') as SortOrder | null;
+    if (
+      !sortBy ||
+      !sortOrder ||
+      !Object.values(AlbumAssetSortBy).includes(sortBy) ||
+      !Object.values(SortOrder).includes(sortOrder)
+    ) {
+      return undefined;
+    }
+    return { sortBy, sortOrder };
+  });
   let showAlbumUsers = $derived(timelineManager?.showAssetOwners ?? false);
 
   const timelineMultiSelectManager = new AssetMultiSelectManager();
@@ -432,9 +444,7 @@
         const a = value(left);
         const b = value(right);
         comparison =
-          typeof a === 'number' && typeof b === 'number'
-            ? a - b
-            : compareCaseSensitive(String(a), String(b));
+          typeof a === 'number' && typeof b === 'number' ? a - b : compareCaseSensitive(String(a), String(b));
       }
       if (comparison !== 0) return direction * comparison;
     }
@@ -722,8 +732,16 @@
     shortcuts: { key: 'Escape' },
   });
 
-  const setTemporarySort = (sortBy?: AlbumAssetSortBy, sortOrder: SortOrder = SortOrder.Desc) => {
-    temporarySort = sortBy ? { sortBy, sortOrder } : undefined;
+  const setTemporarySort = async (sortBy?: AlbumAssetSortBy, sortOrder: SortOrder = SortOrder.Desc) => {
+    const url = new URL(page.url);
+    if (sortBy) {
+      url.searchParams.set('sortBy', sortBy);
+      url.searchParams.set('sortOrder', sortOrder);
+    } else {
+      url.searchParams.delete('sortBy');
+      url.searchParams.delete('sortOrder');
+    }
+    await goto(url, { keepFocus: true, noScroll: true });
     filenameAssets = [];
     filenameNextPage = 1;
     void loadFilenameAssets(true);
@@ -757,11 +775,15 @@
 />
 <CommandPaletteDefaultProvider name={$t('album')} actions={[AddAssets, Upload, Close]} />
 
-<div class="flex overflow-hidden" use:scrollMemoryClearer={{ routeStartsWith: Route.albums() }}>
+<div
+  class="flex overflow-hidden"
+  class:dark={presentationSettings.instantCameraStyle}
+  use:scrollMemoryClearer={{ routeStartsWith: Route.albums() }}
+>
   <div class="relative w-full shrink">
     <main
       class="relative h-dvh overflow-hidden px-2 pt-(--navbar-height) max-md:pt-(--navbar-height-md) md:px-6"
-      class:bg-black={isAlternateSort && presentationSettings.instantCameraStyle}
+      class:bg-black={presentationSettings.instantCameraStyle}
     >
       {#if isAlternateSort}
         <section
@@ -1017,16 +1039,46 @@
                   subtitle="Use the owner’s published sections and ordering"
                   onClick={() => setTemporarySort()}
                 />
-                <MenuOption text="Date & time — newest first" onClick={() => setTemporarySort(AlbumAssetSortBy.DateTaken, SortOrder.Desc)} />
-                <MenuOption text="Date & time — oldest first" onClick={() => setTemporarySort(AlbumAssetSortBy.DateTaken, SortOrder.Asc)} />
-                <MenuOption text="Filename — A to Z" onClick={() => setTemporarySort(AlbumAssetSortBy.FileName, SortOrder.Asc)} />
-                <MenuOption text="Filename — Z to A" onClick={() => setTemporarySort(AlbumAssetSortBy.FileName, SortOrder.Desc)} />
-                <MenuOption text="Description — A to Z" onClick={() => setTemporarySort(AlbumAssetSortBy.Description, SortOrder.Asc)} />
-                <MenuOption text="Location — A to Z" onClick={() => setTemporarySort(AlbumAssetSortBy.Location, SortOrder.Asc)} />
-                <MenuOption text="Camera — A to Z" onClick={() => setTemporarySort(AlbumAssetSortBy.Camera, SortOrder.Asc)} />
-                <MenuOption text="Lens — A to Z" onClick={() => setTemporarySort(AlbumAssetSortBy.Lens, SortOrder.Asc)} />
-                <MenuOption text="File size — largest first" onClick={() => setTemporarySort(AlbumAssetSortBy.FileSize, SortOrder.Desc)} />
-                <MenuOption text="Most activity" onClick={() => setTemporarySort(AlbumAssetSortBy.Engagement, SortOrder.Desc)} />
+                <MenuOption
+                  text="Date & time — newest first"
+                  onClick={() => setTemporarySort(AlbumAssetSortBy.DateTaken, SortOrder.Desc)}
+                />
+                <MenuOption
+                  text="Date & time — oldest first"
+                  onClick={() => setTemporarySort(AlbumAssetSortBy.DateTaken, SortOrder.Asc)}
+                />
+                <MenuOption
+                  text="Filename — A to Z"
+                  onClick={() => setTemporarySort(AlbumAssetSortBy.FileName, SortOrder.Asc)}
+                />
+                <MenuOption
+                  text="Filename — Z to A"
+                  onClick={() => setTemporarySort(AlbumAssetSortBy.FileName, SortOrder.Desc)}
+                />
+                <MenuOption
+                  text="Description — A to Z"
+                  onClick={() => setTemporarySort(AlbumAssetSortBy.Description, SortOrder.Asc)}
+                />
+                <MenuOption
+                  text="Location — A to Z"
+                  onClick={() => setTemporarySort(AlbumAssetSortBy.Location, SortOrder.Asc)}
+                />
+                <MenuOption
+                  text="Camera — A to Z"
+                  onClick={() => setTemporarySort(AlbumAssetSortBy.Camera, SortOrder.Asc)}
+                />
+                <MenuOption
+                  text="Lens — A to Z"
+                  onClick={() => setTemporarySort(AlbumAssetSortBy.Lens, SortOrder.Asc)}
+                />
+                <MenuOption
+                  text="File size — largest first"
+                  onClick={() => setTemporarySort(AlbumAssetSortBy.FileSize, SortOrder.Desc)}
+                />
+                <MenuOption
+                  text="Most activity"
+                  onClick={() => setTemporarySort(AlbumAssetSortBy.Engagement, SortOrder.Desc)}
+                />
               </ButtonContextMenu>
             {/if}
 
@@ -1049,7 +1101,10 @@
             <ActionButton action={Cast} />
 
             {#if album.voting?.enabled}
-              <a class="rounded-full px-3 py-2 text-sm font-semibold text-primary hover:bg-primary/10" href={`/albums/${album.id}/vote`}>Vote</a>
+              <a
+                class="rounded-full px-3 py-2 text-sm font-semibold text-primary hover:bg-primary/10"
+                href={`/albums/${album.id}/vote`}>Vote</a
+              >
             {/if}
 
             {#if isEditor}

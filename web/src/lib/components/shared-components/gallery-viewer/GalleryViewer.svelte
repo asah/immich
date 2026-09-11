@@ -608,6 +608,7 @@
                 expanded={expandedCaptionAssetId === asset.id}
                 onToggleExpanded={() =>
                   (expandedCaptionAssetId = expandedCaptionAssetId === asset.id ? undefined : asset.id)}
+                onViewDetails={() => void navigateToAsset(asset)}
                 {instantCameraStyle}
               />
             </div>

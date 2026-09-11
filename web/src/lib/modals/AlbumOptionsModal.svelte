@@ -292,7 +292,10 @@
             <output class="w-12 text-right text-sm tabular-nums">{presentationSettings.rowHeight ?? 235}px</output>
           </div>
         </Field>
-        <Field label="Instant camera" description="Use white photo cards on a black gallery surface (overrides light/dark mode).">
+        <Field
+          label="Instant camera"
+          description="Use white photo cards on a black gallery surface (overrides light/dark mode)."
+        >
           <Switch
             checked={presentationSettings.instantCameraStyle ?? false}
             disabled={readOnly}
@@ -300,7 +303,11 @@
           />
         </Field>
         <Field label="Collect votes" description="Let visitors help choose this album’s favorites.">
-          <Switch checked={votingSettings.enabled} disabled={readOnly} onCheckedChange={(enabled) => updateVoting({ enabled })} />
+          <Switch
+            checked={votingSettings.enabled}
+            disabled={readOnly}
+            onCheckedChange={(enabled) => updateVoting({ enabled })}
+          />
         </Field>
         {#if votingSettings.enabled}
           <Field label="Voting sample" description="Each voter sees a shuffled set of photos.">
@@ -310,11 +317,25 @@
               onChange={(sampleSize) => updateVoting({ sampleSize: Number(sampleSize) as 10 | 20 | 40 })}
             />
           </Field>
-          <Field label="Anonymous voters" description="Allow people using an album shared link to vote without an account.">
-            <Switch checked={votingSettings.allowAnonymous} disabled={readOnly} onCheckedChange={(allowAnonymous) => updateVoting({ allowAnonymous })} />
+          <Field
+            label="Anonymous voters"
+            description="Allow people using an album shared link to vote without an account."
+          >
+            <Switch
+              checked={votingSettings.allowAnonymous}
+              disabled={readOnly}
+              onCheckedChange={(allowAnonymous) => updateVoting({ allowAnonymous })}
+            />
           </Field>
-          <Field label="Show community favorites" description="Reveal the aggregate leaderboard after people rate photos.">
-            <Switch checked={votingSettings.leaderboardVisible} disabled={readOnly} onCheckedChange={(leaderboardVisible) => updateVoting({ leaderboardVisible })} />
+          <Field
+            label="Show community favorites"
+            description="Reveal the aggregate leaderboard after people rate photos."
+          >
+            <Switch
+              checked={votingSettings.leaderboardVisible}
+              disabled={readOnly}
+              onCheckedChange={(leaderboardVisible) => updateVoting({ leaderboardVisible })}
+            />
           </Field>
         {/if}
         <div>
@@ -385,7 +406,7 @@
         <div class="ps-2">
           <Stack gap={4}>
             {#each sharedLinks as sharedLink (sharedLink.id)}
-              <AlbumSharedLink {album} {sharedLink} />
+              <AlbumSharedLink {sharedLink} />
             {/each}
           </Stack>
         </div>

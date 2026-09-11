@@ -10,6 +10,7 @@
     placement?: 'overlay' | 'below';
     expanded?: boolean;
     onToggleExpanded?: (() => void) | undefined;
+    onViewDetails?: (() => void) | undefined;
     instantCameraStyle?: boolean;
   };
 
@@ -19,6 +20,7 @@
     placement = 'overlay',
     expanded = false,
     onToggleExpanded = undefined,
+    onViewDetails = undefined,
     instantCameraStyle = false,
   }: Props = $props();
   const dateTime = $derived(DateTime.fromISO(asset.localDateTime, { locale: $locale }));
@@ -80,14 +82,19 @@
   <div
     class={`flex min-h-8 items-center gap-1 border-x border-b px-2 text-left text-xs ${instantCameraStyle ? 'border-white bg-white text-black' : 'border-subtle bg-subtle text-immich-fg dark:text-immich-dark-fg'}`}
   >
-    <span class:line-clamp-3={expanded} class="min-w-0 flex-1" title={description}>{description}</span>
+    <span class:line-clamp-1={!expanded} class:line-clamp-3={expanded} class="min-w-0 flex-1" title={description}
+      >{description}</span
+    >
     {#if hasMore && onToggleExpanded}
       <button
         type="button"
         class="shrink-0 text-primary hover:underline"
         aria-expanded={expanded}
-        onclick={onToggleExpanded}
-      >{expanded ? 'Less' : 'More…'}</button>
+        onclick={onToggleExpanded}>{expanded ? 'Less' : 'More…'}</button
+      >
+    {/if}
+    {#if expanded && onViewDetails}
+      <button type="button" class="shrink-0 text-primary hover:underline" onclick={onViewDetails}>See details…</button>
     {/if}
   </div>
 {:else if placement === 'overlay' && values.length > 0}
