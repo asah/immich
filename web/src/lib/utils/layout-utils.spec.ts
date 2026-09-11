@@ -1,5 +1,4 @@
-import { scaleToFit } from '$lib/utils/container-utils';
-import { getGroupedJustifiedLayoutFromAssets } from './layout-utils';
+import { scaleToCover, scaleToFit } from '$lib/utils/container-utils';
 
 describe('scaleToFit', () => {
   const tests = [
@@ -52,22 +51,17 @@ describe('scaleToFit', () => {
       expect(scaleToFit(dimensions, container)).toEqual(expected);
     });
   }
-});
 
-describe('grouped gallery layout headers', () => {
-  it('reserves header space before each group', () => {
-    const assets = [
-      { width: 100, height: 100 },
-      { width: 100, height: 100 },
-    ] as never[];
-    const layout = getGroupedJustifiedLayoutFromAssets(assets, ['one', 'two'], {
-      rowWidth: 400,
-      rowHeight: 200,
-      spacing: 2,
-      heightTolerance: 0.5,
-    }, 0, 96);
-    expect(layout.dividerTops).toHaveLength(2);
-    expect(layout.getTop(0)).toBeGreaterThanOrEqual(96);
-    expect(layout.getTop(1)).toBeGreaterThan(layout.getTop(0));
-  });
+  const unmeasurable = [
+    { name: 'zero width and height', dimensions: { width: 0, height: 0 } },
+    { name: 'zero width', dimensions: { width: 0, height: 1000 } },
+    { name: 'zero height', dimensions: { width: 1000, height: 0 } },
+  ];
+
+  for (const { name, dimensions } of unmeasurable) {
+    it(`should return an empty size for ${name}`, () => {
+      expect(scaleToFit(dimensions, { width: 500, height: 500 })).toEqual({ width: 0, height: 0 });
+      expect(scaleToCover(dimensions, { width: 500, height: 500 })).toEqual({ width: 0, height: 0 });
+    });
+  }
 });

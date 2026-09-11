@@ -11,7 +11,6 @@
   import ChangeDate from '$lib/components/timeline/actions/ChangeDateAction.svelte';
   import ChangeDescription from '$lib/components/timeline/actions/ChangeDescriptionAction.svelte';
   import ChangeLocation from '$lib/components/timeline/actions/ChangeLocationAction.svelte';
-  import ChangeLens from '$lib/components/timeline/actions/ChangeLensAction.svelte';
   import CreateSharedLink from '$lib/components/timeline/actions/CreateSharedLinkAction.svelte';
   import DeleteAssets from '$lib/components/timeline/actions/DeleteAssetsAction.svelte';
   import DownloadAction from '$lib/components/timeline/actions/DownloadAction.svelte';
@@ -23,6 +22,7 @@
   import { assetMultiSelectManager } from '$lib/managers/asset-multi-select-manager.svelte';
   import { authManager } from '$lib/managers/auth-manager.svelte';
   import { featureFlagsManager } from '$lib/managers/feature-flags-manager.svelte';
+  import { searchManager } from '$lib/managers/search-manager.svelte';
   import type { Viewport } from '$lib/managers/timeline-manager/types';
   import { Route } from '$lib/route';
   import { getAssetBulkActions } from '$lib/services/asset.service';
@@ -36,7 +36,6 @@
     type AlbumResponseDto,
     type AssetResponseDto,
     AssetVisibility,
-    getAllAlbums,
     getPerson,
     getTagById,
     type MetadataSearchDto,
@@ -46,7 +45,7 @@
   } from '@immich/sdk';
   import { ActionButton, CommandPaletteDefaultProvider, Icon, IconButton, LoadingSpinner } from '@immich/ui';
   import { mdiArrowLeft, mdiClose, mdiDotsVertical, mdiImageOffOutline, mdiSelectAll } from '@mdi/js';
-  import { tick, untrack } from 'svelte';
+  import { onMount, tick, untrack } from 'svelte';
   import { t } from 'svelte-i18n';
 
   const viewport: Viewport = $state({ width: 0, height: 0 });
@@ -64,7 +63,7 @@
   let scrollY = $state(0);
   let scrollYHistory = 0;
 
-  type SearchTerms = Omit<MetadataSearchDto, 'sort'> & Pick<SmartSearchDto, 'query' | 'queryAssetId'>;
+  type SearchTerms = MetadataSearchDto & Pick<SmartSearchDto, 'query' | 'queryAssetId'>;
   let searchQuery = $derived(page.url.searchParams.get(QueryParameter.QUERY));
   let smartSearchEnabled = $derived(featureFlagsManager.value.smartSearch);
   let terms = $derived<SearchTerms>(searchQuery ? JSON.parse(searchQuery) : {});
@@ -125,9 +124,6 @@
     nextPage = 1;
     searchResultAssets = [];
     searchResultAlbums = [];
-    if (terms.query?.trim()) {
-      searchResultAlbums = await getAllAlbums({ name: terms.query.trim() });
-    }
     await loadNextPage(true);
   }
 
@@ -206,7 +202,7 @@
       personIds.map(async (personId) => {
         const person = await getPerson({ id: personId });
 
-        if (person.name == '') {
+        if (person.name === '') {
           return $t('no_name');
         }
 
@@ -249,7 +245,10 @@
     delete terms[key];
     assetMultiSelectManager.clear();
     void goto(Route.search(terms));
+    searchManager.setQuery(terms);
   }
+
+  onMount(() => searchManager.setQuery(terms));
 </script>
 
 <svelte:window bind:scrollY />
@@ -258,7 +257,7 @@
 
 {#if searchTermKeys.length > 0}
   <section id="search-chips" class="mx-auto mt-24 w-full max-w-7xl px-4 sm:px-8 lg:px-12">
-    <div class="flex w-full flex-wrap items-center justify-start gap-2.5 sm:gap-3">
+    <div class="flex w-full flex-wrap place-content-center place-items-center gap-2.5 sm:gap-3">
       {#each searchTermKeys as searchKey (searchKey)}
         {@const value = terms[searchKey]}
         <div
@@ -303,19 +302,6 @@
           </button>
         </div>
       {/each}
-      {#if searchResultAlbums.length > 0}
-        <span class="ms-1 text-sm text-immich-fg/70 dark:text-immich-dark-fg/70">
-          {$t('also_matches_albums')}:
-          {#each searchResultAlbums as album, index (album.id)}
-            <a
-              class="font-medium text-primary hover:underline dark:text-immich-dark-primary"
-              href={Route.viewAlbum({ id: album.id })}
-            >
-              {album.albumName}</a
-            >{index < searchResultAlbums.length - 1 ? ', ' : ''}
-          {/each}
-        </span>
-      {/if}
     </div>
   </section>
 {/if}
@@ -390,7 +376,6 @@
               <ChangeDate menuItem />
               <ChangeDescription menuItem />
               <ChangeLocation menuItem />
-              <ChangeLens menuItem />
               <ArchiveAction menuItem unarchive={assetMultiSelectManager.isAllArchived} />
               <SetVisibilityAction menuItem onVisibilitySet={handleSetVisibility} />
               {#if authManager.preferences.tags.enabled}
@@ -410,8 +395,8 @@
     {:else}
       <div class="fixed inset-s-0 top-0 z-2 w-full">
         <ControlAppBar onClose={() => goto(previousRoute)} backIcon={mdiArrowLeft}>
-          <div class="w-full max-w-2xl pe-2">
-            <SearchBar grayTheme={false} value={terms?.query ?? ''} searchQuery={terms} />
+          <div class="mx-auto w-full max-w-2xl pe-2">
+            <SearchBar grayTheme={false} />
           </div>
         </ControlAppBar>
       </div>

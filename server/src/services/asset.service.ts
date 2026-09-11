@@ -1,7 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import _ from 'lodash';
 import { DateTime, Duration } from 'luxon';
-import { JOBS_ASSET_PAGINATION_SIZE } from 'src/constants';
 import { AssetFile } from 'src/database';
 import { OnJob } from 'src/decorators';
 import { AssetResponseDto, SanitizedAssetResponseDto, mapAsset } from 'src/dtos/asset-response.dto';
@@ -17,7 +16,6 @@ import {
   AssetMetadataResponseDto,
   AssetMetadataUpsertDto,
   AssetStatsDto,
-  LocationSuggestionResponseDto,
   UpdateAssetDto,
   mapStats,
 } from 'src/dtos/asset.dto';
@@ -47,56 +45,11 @@ import {
 } from 'src/utils/asset.util';
 import { updateLockedColumns } from 'src/utils/database';
 import { extractTimeZone } from 'src/utils/date';
+import { batched, findOrFail } from 'src/utils/misc';
 import { transformOcrBoundingBox } from 'src/utils/transform';
 
 @Injectable()
 export class AssetService extends BaseService {
-  async getLocationSuggestions(auth: AuthDto): Promise<LocationSuggestionResponseDto[]> {
-    const assets = await this.assetRepository.getLocationInferenceCandidates(auth.user.id);
-    const sources = assets.filter((asset) => asset.latitude !== null && asset.longitude !== null);
-    const groups = new Map<string, LocationSuggestionResponseDto>();
-    const thirtyMinutes = 30 * 60 * 1000;
-    const distance = (a: { latitude: number; longitude: number }, b: { latitude: number; longitude: number }) => {
-      const radians = Math.PI / 180;
-      const lat = (b.latitude - a.latitude) * radians;
-      const lon = (b.longitude - a.longitude) * radians;
-      const h =
-        Math.sin(lat / 2) ** 2 +
-        Math.cos(a.latitude * radians) * Math.cos(b.latitude * radians) * Math.sin(lon / 2) ** 2;
-      return 6_371_000 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
-    };
-    for (const target of assets) {
-      if (target.latitude !== null || target.longitude !== null) continue;
-      const candidates = sources.filter(
-        (source) => Math.abs(source.localDateTime.getTime() - target.localDateTime.getTime()) <= thirtyMinutes,
-      );
-      if (candidates.length < 2) continue;
-      const latitude = candidates.reduce((sum, source) => sum + Number(source.latitude), 0) / candidates.length;
-      const longitude = candidates.reduce((sum, source) => sum + Number(source.longitude), 0) / candidates.length;
-      const spread = Math.max(
-        ...candidates.map((source) =>
-          distance({ latitude, longitude }, { latitude: Number(source.latitude), longitude: Number(source.longitude) }),
-        ),
-      );
-      if (spread > 500) continue;
-      const locality =
-        [candidates[0].city, candidates[0].state, candidates[0].country].filter(Boolean).join(', ') ||
-        'Suggested location';
-      const key = `${latitude.toFixed(3)}:${longitude.toFixed(3)}:${Math.floor(target.localDateTime.getTime() / thirtyMinutes)}`;
-      const group = groups.get(key) ?? {
-        assetIds: [],
-        latitude,
-        longitude,
-        locality,
-        accuracyMeters: Math.max(100, Math.ceil(spread)),
-        confidence: 0.95,
-        timeWindowMinutes: 30,
-      };
-      group.assetIds.push(target.id);
-      groups.set(key, group);
-    }
-    return [...groups.values()];
-  }
   async getStatistics(auth: AuthDto, dto: AssetStatsDto) {
     if (dto.visibility === AssetVisibility.Locked) {
       requireElevatedPermission(auth);
@@ -112,7 +65,7 @@ export class AssetService extends BaseService {
     const asset = await this.assetRepository.getById(id, {
       exifInfo: true,
       owner: true,
-      faces: { person: true },
+      faces: { person: true, viewingUserId: auth.user.id },
       stack: { assets: true },
       edits: true,
       tags: true,
@@ -132,7 +85,7 @@ export class AssetService extends BaseService {
       delete data.owner;
     }
 
-    if (data.ownerId !== auth.user.id || auth.sharedLink) {
+    if (auth.sharedLink) {
       data.people = [];
     }
 
@@ -142,7 +95,7 @@ export class AssetService extends BaseService {
   async update(auth: AuthDto, id: string, dto: UpdateAssetDto): Promise<AssetResponseDto> {
     await this.requireAccess({ auth, permission: Permission.AssetUpdate, ids: [id] });
 
-    const { description, dateTimeOriginal, latitude, longitude, lensModel, rating, ...rest } = dto;
+    const { description, dateTimeOriginal, latitude, longitude, rating, ...rest } = dto;
     const repos = { asset: this.assetRepository, event: this.eventRepository };
 
     let previousMotion: { id: string } | null = null;
@@ -155,7 +108,7 @@ export class AssetService extends BaseService {
       }
     }
 
-    await this.updateExif({ id, description, dateTimeOriginal, latitude, longitude, lensModel, rating });
+    await this.updateExif({ id, description, dateTimeOriginal, latitude, longitude, rating });
 
     const asset = await this.assetRepository.update({ id, ...rest });
 
@@ -171,11 +124,7 @@ export class AssetService extends BaseService {
       throw new BadRequestException('Asset not found');
     }
 
-    if (description !== undefined) {
-      await this.eventRepository.emit('AssetDescriptionUpdate', { assetId: id, actorId: auth.user.id });
-    }
-
-    return mapAsset(asset, { auth });
+    return this.get(auth, id) as Promise<AssetResponseDto>;
   }
 
   async updateAll(auth: AuthDto, dto: AssetBulkUpdateDto): Promise<void> {
@@ -186,7 +135,6 @@ export class AssetService extends BaseService {
       dateTimeOriginal,
       latitude,
       longitude,
-      lensModel,
       rating,
       description,
       duplicateId,
@@ -200,7 +148,6 @@ export class AssetService extends BaseService {
       {
         latitude,
         longitude,
-        lensModel,
         rating,
         description,
         dateTimeOriginal,
@@ -331,30 +278,11 @@ export class AssetService extends BaseService {
       .minus(Duration.fromObject({ days: trashedDays }))
       .toJSDate();
 
-    let chunk: Array<{ id: string; isOffline: boolean }> = [];
-    const queueChunk = async () => {
-      if (chunk.length === 0) {
-        return;
-      }
-
+    for await (const assets of batched(this.assetJobRepository.streamForDeletedJob(trashedBefore))) {
       await this.jobRepository.queueAll(
-        chunk.map(({ id, isOffline }) => ({
-          name: JobName.AssetDelete,
-          data: { id, deleteOnDisk: !isOffline },
-        })),
+        assets.map(({ id, isOffline }) => ({ name: JobName.AssetDelete, data: { id, deleteOnDisk: !isOffline } })),
       );
-      chunk = [];
-    };
-
-    const assets = this.assetJobRepository.streamForDeletedJob(trashedBefore);
-    for await (const asset of assets) {
-      chunk.push(asset);
-      if (chunk.length >= JOBS_ASSET_PAGINATION_SIZE) {
-        await queueChunk();
-      }
     }
-
-    await queueChunk();
 
     return JobStatus.Success;
   }
@@ -549,12 +477,8 @@ export class AssetService extends BaseService {
     await this.jobRepository.queueAll(jobs);
   }
 
-  private async findOrFail(id: string) {
-    const asset = await this.assetRepository.getById(id);
-    if (!asset) {
-      throw new BadRequestException('Asset not found');
-    }
-    return asset;
+  private findOrFail(id: string) {
+    return findOrFail(() => this.assetRepository.getById(id), 'Asset');
   }
 
   private async updateExif(dto: {
@@ -563,10 +487,9 @@ export class AssetService extends BaseService {
     dateTimeOriginal?: string;
     latitude?: number;
     longitude?: number;
-    lensModel?: string | null;
     rating?: number | null;
   }) {
-    const { id, description, dateTimeOriginal, latitude, longitude, lensModel, rating } = dto;
+    const { id, description, dateTimeOriginal, latitude, longitude, rating } = dto;
     const writes = _.omitBy(
       {
         description,
@@ -574,7 +497,6 @@ export class AssetService extends BaseService {
         timeZone: extractTimeZone(dateTimeOriginal)?.name,
         latitude,
         longitude,
-        lensModel,
         rating,
       },
       _.isUndefined,

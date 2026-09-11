@@ -253,7 +253,7 @@
         onclick={() => assetMultiSelectManager.selectAssets(galleryAssets.map(toTimelineAsset))}>Select all</button
       >
       {#if sharedLink.allowDownload}
-        <DownloadAction filename="{album.albumName}.zip" />
+        <DownloadAction filename={album.albumName} />
       {/if}
     </AssetSelectControlBar>
   {:else}

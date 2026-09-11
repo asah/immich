@@ -1,4 +1,5 @@
 import js from '@eslint/js';
+import tslintPluginCompat from '@koddsson/eslint-plugin-tscompat';
 import prettier from 'eslint-config-prettier';
 import eslintPluginBetterTailwindcss from 'eslint-plugin-better-tailwindcss';
 import eslintPluginCompat from 'eslint-plugin-compat';
@@ -7,19 +8,47 @@ import eslintPluginUnicorn from 'eslint-plugin-unicorn';
 import globals from 'globals';
 import parser from 'svelte-eslint-parser';
 import typescriptEslint from 'typescript-eslint';
+import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import './lint-env.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const ROUTE_CONTINUE = "CallExpression[callee.object.name='Route'][callee.property.name='continue']";
+const NAVIGATION_PARAM_READ = [
+  "CallExpression[callee.property.name='get']",
+  ":matches([arguments.0.value='continue'], [arguments.0.value='previousRoute'],",
+  " [arguments.0.property.name='PREVIOUS_ROUTE'])",
+].join('');
 
 export default typescriptEslint.config(
   ...eslintPluginSvelte.configs.recommended,
   eslintPluginUnicorn.configs.recommended,
   js.configs.recommended,
-  // @koddsson/eslint-plugin-tscompat resolves the root TypeScript 7 peer rather
-  // than this workspace's TypeScript 6 compiler and crashes before linting.
-  // Keep eslint-plugin-compat below enabled while this rule is repaired or pinned.
+  prettier,
+  {
+    plugins: {
+      tscompat: tslintPluginCompat,
+    },
+    rules: {
+      'tscompat/tscompat': [
+        'error',
+        {
+          browserslist: fs
+            .readFileSync(path.join(import.meta.dirname, '.browserslistrc'), 'utf8')
+            .split('\n')
+            .map((line) => line.trim())
+            .filter((line) => line && !line.startsWith('#')),
+        },
+      ],
+    },
+    languageOptions: {
+      parser,
+      parserOptions: {
+        project: ['./tsconfig.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+    // ignores: ['**/service-worker/**'],
+  },
   {
     plugins: {
       compat: eslintPluginCompat,
@@ -47,6 +76,7 @@ export default typescriptEslint.config(
       '**/yarn.lock',
       '**/svelte.config.js',
       'eslint.config.js',
+      'lint-env.js',
       'tailwind.config.js',
       'coverage',
       'vite.config.ts',
@@ -71,7 +101,7 @@ export default typescriptEslint.config(
 
       parserOptions: {
         extraFileExtensions: ['.svelte'],
-        tsconfigRootDir: __dirname,
+        tsconfigRootDir: import.meta.dirname,
         project: ['./tsconfig.json'],
       },
     },
@@ -88,6 +118,14 @@ export default typescriptEslint.config(
       ],
 
       curly: 2,
+      // navigation-target query params must be origin-checked at the read site, not at the goto/redirect sink
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: `${NAVIGATION_PARAM_READ}:not(${ROUTE_CONTINUE} > ${NAVIGATION_PARAM_READ})`,
+          message: 'Pass this navigation-target query param through Route.continue() to reject cross-origin values.',
+        },
+      ],
       'unicorn/no-array-reverse': 'off', // toReversed() is not supported in Chrome 109 or Safari 15.4
       'unicorn/no-useless-undefined': 'off',
       'unicorn/prefer-spread': 'off',
@@ -123,6 +161,7 @@ export default typescriptEslint.config(
       'unicorn/prefer-minimal-ternary': 'off',
       'unicorn/no-empty-file': 'off',
       'unicorn/prefer-simple-condition-first': 'off',
+      'unicorn/single-line-block-comment-style': ['error', 'single-line'],
       // prefer the typescript-eslint type-aware version
       'unicorn/require-array-sort-compare': 'off',
       '@typescript-eslint/require-array-sort-compare': 'error',
@@ -134,6 +173,7 @@ export default typescriptEslint.config(
       'svelte/button-has-type': 'error',
       'object-shorthand': ['error', 'always'],
       'svelte/no-navigation-without-resolve': 'off',
+      eqeqeq: 'error',
     },
   },
   {

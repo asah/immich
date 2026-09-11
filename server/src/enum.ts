@@ -62,6 +62,8 @@ export enum AssetFileType {
   EncodedVideo = 'encoded_video',
 }
 
+export const AssetFileTypeSchema = z.enum(AssetFileType).describe('Type of file').meta({ id: 'AssetFileType' });
+
 export enum AlbumUserRole {
   Editor = 'editor',
   Owner = 'owner',
@@ -117,6 +119,7 @@ export enum Permission {
   ApiKeyRead = 'apiKey.read',
   ApiKeyUpdate = 'apiKey.update',
   ApiKeyDelete = 'apiKey.delete',
+  ApiKeyRotate = 'apiKey.rotate',
 
   // ASSET_CREATE = 'asset.create',
   AssetRead = 'asset.read',
@@ -129,6 +132,10 @@ export enum Permission {
   AssetUpload = 'asset.upload',
   AssetCopy = 'asset.copy',
   AssetDerive = 'asset.derive',
+
+  AssetFileRead = 'assetFile.read',
+  AssetFileDelete = 'assetFile.delete',
+  AssetFileDownload = 'assetFile.download',
 
   AssetEditGet = 'asset.edit.get',
   AssetEditCreate = 'asset.edit.create',
@@ -149,12 +156,6 @@ export enum Permission {
   AlbumUserUpdate = 'albumUser.update',
   AlbumUserDelete = 'albumUser.delete',
 
-  StoryCreate = 'story.create',
-  StoryRead = 'story.read',
-  StoryUpdate = 'story.update',
-  StoryDelete = 'story.delete',
-  StoryShare = 'story.share',
-
   AuthChangePassword = 'auth.changePassword',
 
   AuthDeviceDelete = 'authDevice.delete',
@@ -165,6 +166,17 @@ export enum Permission {
   BackupDownload = 'backup.download',
   BackupUpload = 'backup.upload',
   BackupDelete = 'backup.delete',
+
+  ClusterGroupRead = 'clusterGroup.read',
+  ClusterGroupLeave = 'clusterGroup.leave',
+  ClusterGroupRequestCreate = 'clusterGroupRequest.create',
+  ClusterGroupRequestRead = 'clusterGroupRequest.read',
+  ClusterGroupRequestDelete = 'clusterGroupRequest.delete',
+
+  AdminConfigRead = 'adminConfig.read',
+  AdminConfigUpdate = 'adminConfig.update',
+
+  UserConfigRead = 'userConfig.read',
 
   DuplicateRead = 'duplicate.read',
   DuplicateDelete = 'duplicate.delete',
@@ -304,6 +316,7 @@ export enum Permission {
   WorkflowRead = 'workflow.read',
   WorkflowUpdate = 'workflow.update',
   WorkflowDelete = 'workflow.delete',
+  WorkflowLogs = 'workflow.logs',
 
   AdminUserCreate = 'adminUser.create',
   AdminUserRead = 'adminUser.read',
@@ -318,46 +331,11 @@ export enum Permission {
 export enum SharedLinkType {
   Album = 'ALBUM',
 
-  Story = 'STORY',
-
   /**
    * Individual asset
    * or group of assets that are not in an album
    */
   Individual = 'INDIVIDUAL',
-}
-
-export enum StoryAspectRatio {
-  Portrait = 'portrait_4_5',
-  Landscape = 'landscape_16_9',
-  Square = 'square_1_1',
-}
-
-export const StoryAspectRatioSchema = z
-  .enum(StoryAspectRatio)
-  .describe('Story aspect ratio')
-  .meta({ id: 'StoryAspectRatio' });
-
-export enum StoryRevisionSource {
-  Create = 'create',
-  Manual = 'manual',
-  Import = 'import',
-  AutomaticDraft = 'automatic_draft',
-  Ai = 'ai',
-  Undo = 'undo',
-  Redo = 'redo',
-  Restore = 'restore',
-  Migration = 'migration',
-}
-
-export enum AiProviderAdapter {
-  OpenAI = 'openai',
-}
-
-export enum AiCredentialTestStatus {
-  Untested = 'untested',
-  Success = 'success',
-  Failed = 'failed',
 }
 
 export const SharedLinkTypeSchema = z.enum(SharedLinkType).describe('Shared link type').meta({ id: 'SharedLinkType' });
@@ -625,6 +603,7 @@ export enum ApiCustomExtension {
   AdminOnly = 'x-immich-admin-only',
   History = 'x-immich-history',
   State = 'x-immich-state',
+  Required = 'x-immich-required',
 }
 
 export enum MetadataKey {
@@ -911,8 +890,6 @@ export enum JobName {
   NotifyUserSignup = 'NotifyUserSignup',
   NotifyAlbumInvite = 'NotifyAlbumInvite',
   NotifyAlbumUpdate = 'NotifyAlbumUpdate',
-  NotifyActivity = 'NotifyActivity',
-  NotifyAssetDescription = 'NotifyAssetDescription',
 
   UserDelete = 'UserDelete',
   UserDeleteCheck = 'UserDeleteCheck',
@@ -1172,8 +1149,7 @@ export enum NotificationType {
   SystemMessage = 'SystemMessage',
   AlbumInvite = 'AlbumInvite',
   AlbumUpdate = 'AlbumUpdate',
-  Activity = 'Activity',
-  AssetUpdate = 'AssetUpdate',
+  ClusterGroupRequest = 'ClusterGroupRequest',
   Custom = 'Custom',
 }
 
@@ -1208,10 +1184,23 @@ export const AssetVisibilitySchema = z
   .describe('Asset visibility')
   .meta({ id: 'AssetVisibility' });
 
+export enum ReleaseChannel {
+  Stable = 'stable',
+  ReleaseCandidate = 'releaseCandidate',
+}
+
+export const ReleaseChannelSchema = z.enum(ReleaseChannel).describe('Release channel').meta({ id: 'ReleaseChannel' });
+
 export enum CronJob {
   LibraryScan = 'LibraryScan',
   NightlyJobs = 'NightlyJobs',
   VersionCheck = 'VersionCheck',
+}
+
+export enum ConfigVisibility {
+  Public = 'Public',
+  User = 'User',
+  Admin = 'Admin',
 }
 
 export enum ApiTag {
@@ -1221,6 +1210,10 @@ export enum ApiTag {
   Authentication = 'Authentication',
   AuthenticationAdmin = 'Authentication (admin)',
   Assets = 'Assets',
+  AssetFiles = 'Asset files',
+  ConfigUser = 'Config (user)',
+  ConfigAdmin = 'Config (admin)',
+  ConfigPublic = 'Config (public)',
   DatabaseBackups = 'Database Backups (admin)',
   Deprecated = 'Deprecated',
   Download = 'Download',
@@ -1234,6 +1227,7 @@ export enum ApiTag {
   Memories = 'Memories',
   Notifications = 'Notifications',
   NotificationsAdmin = 'Notifications (admin)',
+  ClusterGroups = 'Cluster groups',
   Partners = 'Partners',
   People = 'People',
   Plugins = 'Plugins',
@@ -1243,7 +1237,6 @@ export enum ApiTag {
   Sessions = 'Sessions',
   SharedLinks = 'Shared links',
   Stacks = 'Stacks',
-  Stories = 'Stories',
   Sync = 'Sync',
   SystemConfig = 'System config',
   SystemMetadata = 'System metadata',
@@ -1255,14 +1248,6 @@ export enum ApiTag {
   Views = 'Views',
   Workflows = 'Workflows',
 }
-
-export enum PluginContext {
-  Asset = 'asset',
-  Album = 'album',
-  Person = 'person',
-}
-
-export const PluginContextSchema = z.enum(PluginContext).describe('Plugin context').meta({ id: 'PluginContextType' });
 
 export const WorkflowTriggerSchema = z
   .enum(WorkflowTrigger)
@@ -1280,6 +1265,17 @@ export enum CalendarHeatmapType {
   Upload = 'Upload',
   Taken = 'Taken',
 }
+
+export enum WorkflowResult {
+  Completed = 'completed',
+  Halted = 'halted',
+  Error = 'error',
+}
+
+export const WorkflowResultSchema = z
+  .enum(WorkflowResult)
+  .describe('Workflow run result')
+  .meta({ id: 'WorkflowResult' });
 
 export enum SearchOrderField {
   FileCreatedAt = 'fileCreatedAt',

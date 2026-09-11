@@ -1,8 +1,6 @@
-import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
-import { DateTime } from 'luxon';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   AddUsersDto,
-  AlbumInviteResponseDto,
   AlbumResponseDto,
   AlbumsAddAssetsDto,
   AlbumsAddAssetsResponseDto,
@@ -16,13 +14,12 @@ import {
 import { BulkIdErrorReason, BulkIdResponseDto, BulkIdsDto } from 'src/dtos/asset-ids.response.dto';
 import { AuthDto } from 'src/dtos/auth.dto';
 import { MapMarkerResponseDto } from 'src/dtos/map.dto';
-import { AlbumUserRole, JobName, Permission } from 'src/enum';
+import { AlbumUserRole, Permission } from 'src/enum';
 import { AlbumAssetCount, AlbumInfoOptions } from 'src/repositories/album.repository';
-import { EmailTemplate } from 'src/repositories/email.repository';
 import { BaseService } from 'src/services/base.service';
 import { addAssets, removeAssets } from 'src/utils/asset.util';
 import { asDateTimeString } from 'src/utils/date';
-import { getExternalDomain } from 'src/utils/misc';
+import { findOrFail } from 'src/utils/misc';
 import { getPreferences } from 'src/utils/preferences';
 
 @Injectable()
@@ -145,13 +142,6 @@ export class AlbumService extends BaseService {
 
     const album = await this.findOrFail(id, auth.user.id, { withAssets: true });
 
-    if (
-      (dto.presentation !== undefined || dto.voting !== undefined) &&
-      !album.albumUsers.some(({ user, role }) => user.id === auth.user.id && role === AlbumUserRole.Owner)
-    ) {
-      throw new ForbiddenException('Only the album owner can publish presentation or voting settings');
-    }
-
     if (dto.albumThumbnailAssetId) {
       const results = await this.albumRepository.getAssetIds(id, [dto.albumThumbnailAssetId]);
       if (results.size === 0) {
@@ -167,8 +157,6 @@ export class AlbumService extends BaseService {
         albumThumbnailAssetId: dto.albumThumbnailAssetId,
         isActivityEnabled: dto.isActivityEnabled,
         order: dto.order,
-        presentation: dto.presentation,
-        voting: dto.voting,
       },
       auth.user.id,
     );
@@ -188,7 +176,7 @@ export class AlbumService extends BaseService {
     const results = await addAssets(
       auth,
       { access: this.accessRepository, bulk: this.albumRepository },
-      { parentId: id, assetIds: dto.ids },
+      { parentId: id, assetIds: dto.ids, permission: Permission.AssetShare },
     );
 
     const { id: firstNewAssetId } = results.find(({ success }) => success) || {};
@@ -324,69 +312,6 @@ export class AlbumService extends BaseService {
     return mapAlbum(await this.findOrFail(id, auth.user.id, { withAssets: true }));
   }
 
-  async inviteUsers(auth: AuthDto, id: string, emails: string[]): Promise<void> {
-    await this.requireAccess({ auth, permission: Permission.AlbumShare, ids: [id] });
-    const config = await this.getConfig({ withCache: false });
-    if (!config.passwordLogin.enabled || !config.notifications.smtp.enabled || !config.server.externalDomain) {
-      throw new BadRequestException('Email album invitations require password login, SMTP, and an external domain');
-    }
-
-    const album = await this.findOrFail(id, auth.user.id, { withAssets: false });
-    for (const email of new Set(emails.map((email) => email.trim().toLowerCase()))) {
-      const user = await this.userRepository.getByEmail(email);
-      if (user) {
-        if (!album.albumUsers.some(({ user: member }) => member.id === user.id)) {
-          await this.albumUserRepository.create({ albumId: id, userId: user.id, role: AlbumUserRole.Viewer });
-          await this.eventRepository.emit('AlbumInvite', { id, userId: user.id, senderName: auth.user.name });
-        }
-        continue;
-      }
-
-      const token = this.cryptoRepository.randomBytes(32).toString('base64url');
-      await this.albumInviteRepository.createOrReplace({
-        albumId: id,
-        inviterId: auth.user.id,
-        email,
-        tokenHash: this.cryptoRepository.hashSha256(token),
-        role: AlbumUserRole.Viewer,
-        expiresAt: DateTime.now().plus({ days: 7 }).toJSDate(),
-        acceptedAt: null,
-        revokedAt: null,
-      });
-      const inviteUrl = `${getExternalDomain(config.server)}/auth/album-invite#token=${encodeURIComponent(token)}`;
-      const { html, text } = await this.emailRepository.renderEmail({
-        template: EmailTemplate.ALBUM_ACCOUNT_INVITE,
-        data: {
-          albumName: album.albumName,
-          senderName: auth.user.name,
-          inviteUrl,
-          baseUrl: getExternalDomain(config.server),
-        },
-        customTemplate: '',
-      });
-      await this.jobRepository.queue({
-        name: JobName.SendMail,
-        data: { to: email, subject: `${auth.user.name} invited you to a shared album`, html, text },
-      });
-    }
-  }
-
-  async getPendingInvites(auth: AuthDto, id: string): Promise<AlbumInviteResponseDto[]> {
-    await this.requireAccess({ auth, permission: Permission.AlbumShare, ids: [id] });
-    const invites = await this.albumInviteRepository.getPending(id, auth.user.id);
-    return invites.map((invite) => ({
-      id: invite.id,
-      email: invite.email,
-      createdAt: asDateTimeString(invite.createdAt),
-      expiresAt: asDateTimeString(invite.expiresAt),
-    }));
-  }
-
-  async revokeInvite(auth: AuthDto, albumId: string, inviteId: string): Promise<void> {
-    await this.requireAccess({ auth, permission: Permission.AlbumShare, ids: [albumId] });
-    await this.albumInviteRepository.revoke(inviteId, albumId, auth.user.id);
-  }
-
   async removeUser(auth: AuthDto, id: string, userId: string | 'me'): Promise<void> {
     if (userId === 'me') {
       userId = auth.user.id;
@@ -427,11 +352,7 @@ export class AlbumService extends BaseService {
     await this.albumUserRepository.update({ albumId: id, userId }, { role: dto.role });
   }
 
-  private async findOrFail(id: string, authUserId: string, options: AlbumInfoOptions) {
-    const album = await this.albumRepository.getById(id, options, authUserId);
-    if (!album) {
-      throw new BadRequestException('Album not found');
-    }
-    return album;
+  private findOrFail(id: string, authUserId: string, options: AlbumInfoOptions) {
+    return findOrFail(() => this.albumRepository.getById(id, options, authUserId), 'Album');
   }
 }

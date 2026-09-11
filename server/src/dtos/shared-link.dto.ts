@@ -40,6 +40,29 @@ const SharedLinkCreateSchema = z
     allowDownload: z.boolean().default(true).optional().describe('Allow downloads'),
     showMetadata: z.boolean().default(true).optional().describe('Show metadata'),
   })
+  .superRefine(({ type, albumId, assetIds }, ctx) => {
+    switch (type) {
+      case SharedLinkType.Album: {
+        if (!albumId) {
+          ctx.addIssue(`albumId is required for type ${SharedLinkType.Album}`);
+        }
+        if (assetIds && assetIds.length > 0) {
+          ctx.addIssue(`assetIds can only be used with type ${SharedLinkType.Individual}`);
+        }
+        return;
+      }
+      case SharedLinkType.Individual: {
+        if (!assetIds || assetIds.length === 0) {
+          ctx.addIssue(`assetIds are required for type ${SharedLinkType.Individual}`);
+        }
+
+        if (albumId) {
+          ctx.addIssue(`albumId can only be used with type ${SharedLinkType.Album}`);
+        }
+        return;
+      }
+    }
+  })
   .meta({ id: 'SharedLinkCreateDto' });
 
 const SharedLinkEditSchema = z
