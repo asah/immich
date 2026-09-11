@@ -1371,6 +1371,8 @@ export type TagResponseDto = {
     color?: string;
     /** Creation date */
     createdAt: string;
+    /** Optional tag description */
+    description?: string | null;
     /** Tag ID */
     id: string;
     /** Tag name */
@@ -4214,6 +4216,8 @@ export type ReverseGeocodingStateResponseDto = {
 export type TagCreateDto = {
     /** Tag color (hex) */
     color?: string | null;
+    /** Optional tag description */
+    description?: string | null;
     /** Tag name */
     name: string;
     /** Parent tag ID */
@@ -4236,6 +4240,8 @@ export type TagBulkAssetsResponseDto = {
 export type TagUpdateDto = {
     /** Tag color (hex) */
     color?: string | null;
+    /** Optional tag description */
+    description?: string | null;
     /** Tag name */
     name?: string;
 };

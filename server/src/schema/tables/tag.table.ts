@@ -39,6 +39,9 @@ export class TagTable {
   @Column({ type: 'character varying', nullable: true, default: null })
   color!: string | null;
 
+  @Column({ type: 'character varying', nullable: true, default: null })
+  description!: string | null;
+
   @ForeignKeyColumn(() => TagTable, { nullable: true, onDelete: 'CASCADE' })
   parentId!: string | null;
 

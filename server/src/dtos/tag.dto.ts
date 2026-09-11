@@ -5,6 +5,8 @@ import { asDateTimeString } from 'src/utils/date';
 import { hexColor } from 'src/validation';
 import z from 'zod';
 
+const tagDescription = z.string().max(2000).nullable().optional().describe('Optional tag description');
+
 const TagCreateSchema = z
   .object({
     name: z
@@ -13,6 +15,7 @@ const TagCreateSchema = z
       .describe('Tag name'),
     parentId: z.uuidv4().nullish().describe('Parent tag ID'),
     color: hexColor.nullable().optional().describe('Tag color (hex)'),
+    description: tagDescription,
   })
   .meta({ id: 'TagCreateDto' });
 
@@ -24,6 +27,7 @@ export const TagUpdateSchema = z
       .optional()
       .describe('Tag name'),
     color: hexColor.nullable().optional().describe('Tag color (hex)'),
+    description: tagDescription,
   })
   .meta({ id: 'TagUpdateDto' });
 
@@ -57,6 +61,7 @@ export const TagResponseSchema = z
     // TODO: use `isoDatetimeToDate` when using `ZodSerializerDto` on the controllers.
     updatedAt: z.string().meta({ format: 'date-time' }).describe('Last update date'),
     color: z.string().optional().describe('Tag color (hex)'),
+    description: z.string().nullable().optional().describe('Optional tag description'),
   })
   .meta({ id: 'TagResponseDto' });
 
@@ -76,5 +81,6 @@ export function mapTag(entity: MaybeDehydrated<Tag>): TagResponseDto {
     createdAt: asDateTimeString(entity.createdAt),
     updatedAt: asDateTimeString(entity.updatedAt),
     color: entity.color ?? undefined,
+    description: entity.description ?? undefined,
   };
 }

@@ -50,8 +50,8 @@ export class TagService extends BaseService {
       throw new BadRequestException(`A tag with that name already exists`);
     }
 
-    const { color } = dto;
-    const tag = await this.tagRepository.create({ userId, value, color, parentId: parent?.id });
+    const { color, description } = dto;
+    const tag = await this.tagRepository.create({ userId, value, color, description, parentId: parent?.id });
 
     return mapTag(tag);
   }
@@ -59,7 +59,7 @@ export class TagService extends BaseService {
   async update(auth: AuthDto, id: string, dto: TagUpdateDto): Promise<TagResponseDto> {
     await this.requireAccess({ auth, permission: Permission.TagUpdate, ids: [id] });
 
-    const { name, color } = dto;
+    const { name, color, description } = dto;
     const existing = await this.findOrFail(id);
 
     let value;
@@ -71,7 +71,7 @@ export class TagService extends BaseService {
       value = existing.value;
     }
 
-    const tag = await this.tagRepository.update(id, { value, color });
+    const tag = await this.tagRepository.update(id, { value, color, description });
     return mapTag(tag);
   }
 
