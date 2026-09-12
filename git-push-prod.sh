@@ -26,6 +26,7 @@ MAINTENANCE_CMD="${IMMICH_MAINTENANCE_CMD:-$REPO/scripts/prod/maintenance.sh}"
 MIGRATE_CMD="${IMMICH_MIGRATE_CMD:-$REPO/scripts/prod/migrate.sh}"
 CHECK_CMD="${IMMICH_POST_DEPLOY_CHECK_CMD:-$REPO/scripts/prod/check.sh}"
 HEALTH_URL="${IMMICH_HEALTH_URL:-}"
+HEALTH_INSECURE_TLS="${IMMICH_HEALTH_INSECURE_TLS:-false}"
 LOCK_FILE="${IMMICH_DEPLOY_LOCK_FILE:-/tmp/immich-production-deploy.lock}"
 EXPECTED_BRANCH="${IMMICH_PROD_BRANCH:-}"
 EXPECTED_REMOTE="${IMMICH_PROD_REMOTE:-origin}"
@@ -99,8 +100,12 @@ echo "[7/8] Deploying..."
 "$DEPLOY_CMD" "$IMAGE" "$SHA" "$image_id"
 
 echo "[8/8] Checking production..."
+health_curl_args=(--fail --silent --show-error --max-time 10)
+if [[ "$HEALTH_INSECURE_TLS" == "true" ]]; then
+  health_curl_args+=(--insecure)
+fi
 for _ in $(seq 1 30); do
-  if curl --fail --silent --show-error --max-time 10 "$HEALTH_URL" >/dev/null; then
+  if curl "${health_curl_args[@]}" "$HEALTH_URL" >/dev/null; then
     # Must verify container image/digest, migration state, schema, and smoke endpoints.
     "$CHECK_CMD" "$IMAGE" "$SHA" "$image_id" "$backup_artifact"
     "$MAINTENANCE_CMD" exit "$SHA" "$IMAGE" "$image_id"
