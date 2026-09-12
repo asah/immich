@@ -66,7 +66,7 @@
     <div class:opacity-50={disabled} class:pointer-events-none={disabled}>
       <ReactionPicker count={0} selectedEmoji="＋" onSelect={({ key }) => onReaction?.(key)} />
     </div>
-  {:else}
+  {:else if !filterMode}
     <Button
       {disabled}
       onclick={onFavorite}
