@@ -573,7 +573,10 @@
             : undefined;
       const { assets } = await searchAssets({
         metadataSearchDto: {
-          albumIds: [albumId],
+          filter: {
+            albumIds: { any: [albumId] },
+            visibility: { eq: AssetVisibility.Timeline },
+          },
           orderBy: remoteOrderBy
             ? {
                 field: remoteOrderBy,
@@ -582,7 +585,6 @@
             : undefined,
           page: page ?? 1,
           size: 250,
-          visibility: AssetVisibility.Timeline,
           withExif: true,
         },
       });
