@@ -4,6 +4,7 @@
 set -Eeuo pipefail
 
 SERVER_HOME="$(readlink -f "$(dirname "$0")/..")"
+cd "$SERVER_HOME"
 
 if [[ -z "${DB_URL:-}" ]]; then
   : "${DB_USERNAME:=postgres}"
