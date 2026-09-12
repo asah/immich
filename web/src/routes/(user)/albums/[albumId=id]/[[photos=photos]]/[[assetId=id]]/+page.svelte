@@ -121,7 +121,7 @@
   let filenameScrollTop = $state(0);
   let filenameGalleryElement: HTMLElement | undefined = $state();
   let filenameAssets: AssetResponseDto[] = $state([]);
-  let filenameNextPage = $state<number | null>(null);
+  let filenameNextCursor = $state<string | null>(null);
   let filenameLoading = $state(false);
   let showAlbumOptions = $state(false);
   let albumOptionsReadOnly = $state(false);
@@ -557,13 +557,13 @@
   const isOwned = $derived(album.albumUsers[0].user.id === authManager.user.id);
 
   const loadFilenameAssets = async (reset = false) => {
-    if ((!reset && filenameLoading) || (!reset && !filenameNextPage)) {
+    if ((!reset && filenameLoading) || (!reset && !filenameNextCursor)) {
       return;
     }
     const request = reset ? ++filenameRequest : filenameRequest;
     filenameLoading = true;
     try {
-      const page = reset ? 1 : filenameNextPage;
+      const cursor = reset ? undefined : (filenameNextCursor ?? undefined);
       const [primarySort] = sortCriteria;
       const remoteOrderBy =
         primarySort.sortBy === AlbumAssetSortBy.FileSize
@@ -583,7 +583,7 @@
                 direction: primarySort.sortOrder === SortOrder.Asc ? AssetOrder.Asc : AssetOrder.Desc,
               }
             : undefined,
-          page: page ?? 1,
+          cursor,
           size: 250,
           withExif: true,
         },
@@ -594,7 +594,7 @@
         // client-side even when the server can provide an initial ordering.
         if (isAlternateSort) incoming.sort(compareAssets);
         filenameAssets = incoming;
-        filenameNextPage = Number(assets.nextPage) || null;
+        filenameNextCursor = assets.nextCursor;
       }
     } catch (error) {
       handleError(error, $t('loading_search_results_failed'));
@@ -610,7 +610,7 @@
   });
 
   $effect(() => {
-    if ((engagementFilter || hasClientSort) && isAlternateSort && !filenameLoading && filenameNextPage) {
+    if ((engagementFilter || hasClientSort) && isAlternateSort && !filenameLoading && filenameNextCursor) {
       untrack(() => void loadFilenameAssets());
     }
   });
@@ -744,7 +744,7 @@
     }
     await goto(url, { keepFocus: true, noScroll: true });
     filenameAssets = [];
-    filenameNextPage = 1;
+    filenameNextCursor = null;
     void loadFilenameAssets(true);
   };
 </script>
