@@ -8,8 +8,8 @@ import ActivityStatus from './ActivityStatus.svelte';
 vi.mock('$lib/managers/activity-manager.svelte', () => ({
   activityManager: {
     activities: [
-      { type: ReactionType.Like, parentActivityId: null, reactionKey: 'love' },
-      { type: ReactionType.Like, parentActivityId: null, reactionKey: 'love' },
+      { type: ReactionType.Like, parentActivityId: null, reactionKey: 'love', assetId: 'asset-1' },
+      { type: ReactionType.Like, parentActivityId: null, reactionKey: 'love', assetId: 'asset-2' },
     ],
   },
 }));

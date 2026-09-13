@@ -39,6 +39,10 @@ export class AlbumTable {
   @Column({ type: 'text', nullable: true })
   description!: string | null;
 
+  /** Optional human-readable path segment for signed-in album URLs. */
+  @Column({ type: 'character varying', nullable: true, unique: true })
+  slug!: string | null;
+
   @DeleteDateColumn()
   deletedAt!: Timestamp | null;
 

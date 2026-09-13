@@ -812,7 +812,7 @@
 
             <AlbumDescription
               id={album.id}
-              {isOwned}
+              isOwned={isEditor}
               bind:description={() => album.description, (description) => (album = { ...album, description })}
             />
           </div>
@@ -933,7 +933,7 @@
                 {/if}
                 <AlbumDescription
                   id={album.id}
-                  {isOwned}
+                  isOwned={isEditor}
                   bind:description={() => album.description, (description) => (album = { ...album, description })}
                 />
               </section>

@@ -337,10 +337,9 @@
     }
   };
 
-  const onDelete = () => {
-    const hasTrashedAsset = assetInteraction.assets.some((asset) => asset.isTrashed);
-    handlePromiseError(trashOrDelete(hasTrashedAsset));
-  };
+  // Keep Delete/Fn+Delete safe and consistent with Timeline. Shift+Delete is
+  // the explicit permanent-delete shortcut.
+  const onDelete = () => handlePromiseError(trashOrDelete());
 
   const trashOrDelete = async (force: boolean = false) => {
     const forceOrNoTrash = force || !featureFlagsManager.value.trash;

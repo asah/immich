@@ -54,10 +54,9 @@
     assetInteraction.clear();
   };
 
-  const onDelete = () => {
-    const hasTrashedAsset = assetInteraction.assets.some((asset) => asset.isTrashed);
-    handlePromiseError(trashOrDelete(hasTrashedAsset));
-  };
+  // Delete (including Fn+Delete on compact keyboards) always trashes. The
+  // explicit Shift+Delete shortcut is the only keyboard permanent-delete path.
+  const onDelete = () => handlePromiseError(trashOrDelete());
 
   const onStackAssets = async () => {
     const result = await stackAssets(assetInteraction.assets);

@@ -923,6 +923,8 @@ export type AlbumVotingDto = {
 export type AlbumResponseDto = {
     /** Album name */
     albumName: string;
+    /** Custom album URL slug */
+    slug: string | null;
     /** Thumbnail asset ID */
     albumThumbnailAssetId: string | null;
     /** First entry is always the album owner. Second entry is the auth user, if it differs from the owner. The rest are ordered alphabetically. */
@@ -970,6 +972,8 @@ export type CreateAlbumDto = {
     assetIds?: string[];
     /** Album description */
     description?: string | null;
+    /** Custom album URL slug */
+    slug?: string | null;
 };
 export type AlbumsAddAssetsDto = {
     /** Album IDs */
@@ -993,6 +997,8 @@ export type AlbumStatisticsResponseDto = {
 export type UpdateAlbumDto = {
     /** Album name */
     albumName?: string;
+    /** Custom album URL slug */
+    slug?: string | null;
     /** Album thumbnail asset ID */
     albumThumbnailAssetId?: string;
     /** Album description */
@@ -5428,12 +5434,13 @@ export function getUserStatisticsAdmin({ id, isFavorite, isTrashed, visibility }
 /**
  * List all albums
  */
-export function getAllAlbums({ assetId, id, isOwned, isShared, name }: {
+export function getAllAlbums({ assetId, id, isOwned, isShared, name, slug }: {
     assetId?: string;
     id?: string;
     isOwned?: boolean;
     isShared?: boolean;
     name?: string;
+    slug?: string;
 }, opts?: Oazapfts.RequestOpts) {
     return oazapfts.ok(oazapfts.fetchJson<{
         status: 200;
@@ -5443,7 +5450,8 @@ export function getAllAlbums({ assetId, id, isOwned, isShared, name }: {
         id,
         isOwned,
         isShared,
-        name
+        name,
+        slug
     }))}`, {
         ...opts
     }));

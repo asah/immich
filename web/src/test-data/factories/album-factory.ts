@@ -4,6 +4,7 @@ import { Sync } from 'factory.ts';
 
 export const albumFactory = Sync.makeFactory<AlbumResponseDto>({
   albumName: Sync.each(() => faker.commerce.product()),
+  slug: null,
   description: '',
   albumThumbnailAssetId: null,
   assetCount: Sync.each((index) => index % 5),

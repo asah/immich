@@ -211,7 +211,7 @@ export class AlbumRepository {
   @GenerateSql({ params: [DummyValue.UUID, { isOwned: true, isShared: true }] })
   getAll(
     ownerId: string,
-    options: { id?: string; isOwned?: boolean; isShared?: boolean; name?: string } = {},
+    options: { id?: string; isOwned?: boolean; isShared?: boolean; name?: string; slug?: string } = {},
   ): Promise<MapAlbumDto[]> {
     return this.buildAlbumBaseQuery(ownerId, options)
       .selectAll('album')
@@ -219,6 +219,7 @@ export class AlbumRepository {
       .select(withSharedLink)
       .$if(!!options.id, (qb) => qb.where('album.id', '=', options.id!))
       .$if(!!options.name, (qb) => qb.where('album.albumName', '=', options.name!))
+      .$if(!!options.slug, (qb) => qb.where('album.slug', '=', options.slug!))
       .orderBy('album.createdAt', 'desc')
       .execute();
   }

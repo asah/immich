@@ -568,7 +568,9 @@ export class SearchRepository {
   @GenerateSql(...searchMetadataV3Examples)
   async searchMetadataV3(pagination: PaginationOptions, options: AssetSearchBuilderV3Options, scope: AssetSearchScope) {
     const items = await withSearchOrder(searchAssetBuilder(this.db, options, scope), options.order)
-      .select(columns.searchAsset)
+      // Match the legacy search response: album presentation can group by tag,
+      // and the client must not lose those relations merely by using v3 search.
+      .select((eb) => [...columns.searchAsset, withTags(eb)])
       .limit(pagination.take + 1)
       .offset(pagination.skip ?? 0)
       .execute();

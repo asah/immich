@@ -1,5 +1,6 @@
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { DateTime } from 'luxon';
+import { PostgresError } from 'postgres';
 import {
   AddUsersDto,
   AlbumInviteResponseDto,
@@ -27,6 +28,13 @@ import { getPreferences } from 'src/utils/preferences';
 
 @Injectable()
 export class AlbumService extends BaseService {
+  private handleSlugConflict(error: unknown): never {
+    if ((error as PostgresError).constraint_name === 'album_slug_uq') {
+      throw new BadRequestException('That album URL is already in use');
+    }
+    throw error;
+  }
+
   async inviteUsers(auth: AuthDto, id: string, emails: string[]): Promise<void> {
     await this.requireAccess({ auth, permission: Permission.AlbumShare, ids: [id] });
     const config = await this.getConfig({ withCache: false });
@@ -179,17 +187,23 @@ export class AlbumService extends BaseService {
 
     const userMetadata = await this.userRepository.getMetadata(auth.user.id);
 
-    const album = await this.albumRepository.create(
-      {
-        albumName: dto.albumName,
-        description: dto.description,
-        albumThumbnailAssetId: assetIds[0] || null,
-        order: getPreferences(userMetadata).albums.defaultAssetOrder,
-      },
-      assetIds,
-      [{ userId: auth.user.id, role: AlbumUserRole.Owner }, ...albumUsers],
-      auth.user.id,
-    );
+    let album;
+    try {
+      album = await this.albumRepository.create(
+        {
+          albumName: dto.albumName,
+          slug: dto.slug,
+          description: dto.description,
+          albumThumbnailAssetId: assetIds[0] || null,
+          order: getPreferences(userMetadata).albums.defaultAssetOrder,
+        },
+        assetIds,
+        [{ userId: auth.user.id, role: AlbumUserRole.Owner }, ...albumUsers],
+        auth.user.id,
+      );
+    } catch (error) {
+      this.handleSlugConflict(error);
+    }
 
     for (const { userId } of albumUsers) {
       await this.eventRepository.emit('AlbumInvite', { id: album.id, userId, senderName: auth.user.name });
@@ -218,20 +232,26 @@ export class AlbumService extends BaseService {
         throw new BadRequestException('Invalid album thumbnail');
       }
     }
-    const updatedAlbum = await this.albumRepository.update(
-      album.id,
-      {
-        id: album.id,
-        albumName: dto.albumName,
-        description: dto.description,
-        albumThumbnailAssetId: dto.albumThumbnailAssetId,
-        isActivityEnabled: dto.isActivityEnabled,
-        order: dto.order,
-        presentation: dto.presentation,
-        voting: dto.voting,
-      },
-      auth.user.id,
-    );
+    let updatedAlbum;
+    try {
+      updatedAlbum = await this.albumRepository.update(
+        album.id,
+        {
+          id: album.id,
+          albumName: dto.albumName,
+          slug: dto.slug,
+          description: dto.description,
+          albumThumbnailAssetId: dto.albumThumbnailAssetId,
+          isActivityEnabled: dto.isActivityEnabled,
+          order: dto.order,
+          presentation: dto.presentation,
+          voting: dto.voting,
+        },
+        auth.user.id,
+      );
+    } catch (error) {
+      this.handleSlugConflict(error);
+    }
 
     return mapAlbum({ ...updatedAlbum, assets: album.assets });
   }

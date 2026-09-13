@@ -38,7 +38,9 @@
   }: Props = $props();
   const reactionCounts = $derived(
     activityManager.activities
-      .filter(({ type, parentActivityId }) => type === 'like' && !parentActivityId)
+      // Album-level reactions do not belong to a photo. Showing them in the
+      // album filter bar creates filters which can never produce a result.
+      .filter(({ type, parentActivityId, assetId }) => type === 'like' && !parentActivityId && (!filterMode || !!assetId))
       .reduce<Record<string, number>>((counts, { reactionKey }) => {
         const key = reactionKey ?? 'like';
         counts[key] = (counts[key] ?? 0) + 1;

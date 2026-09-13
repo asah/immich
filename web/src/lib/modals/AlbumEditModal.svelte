@@ -15,9 +15,23 @@
 
   let albumName = $state(album.albumName);
   let description = $state(album.description);
+  const slugify = (value: string) =>
+    value
+      .normalize('NFKD')
+      .replace(/[^\w\s-]/g, '')
+      .trim()
+      .toLowerCase()
+      .replace(/[\s_-]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  let slug = $state(album.slug ?? slugify(album.albumName));
+  let slugEdited = $state(false);
+
+  $effect(() => {
+    if (!slugEdited) slug = slugify(albumName);
+  });
 
   const onSubmit = async () => {
-    const success = await handleUpdateAlbum(album, { albumName, description: description || null });
+    const success = await handleUpdateAlbum(album, { albumName, description: description || null, slug: slug || null });
     if (success) {
       onClose();
     }
@@ -31,6 +45,10 @@
     <div class="flex grow flex-col gap-4">
       <Field label={$t('name')}>
         <Input bind:value={albumName} />
+      </Field>
+
+      <Field label="Album URL" description="Suggested from the name; leave blank to keep the ID URL.">
+        <Input bind:value={slug} oninput={() => (slugEdited = true)} />
       </Field>
 
       <Field label={$t('description')}>

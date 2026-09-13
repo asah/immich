@@ -11,6 +11,8 @@ import { asDateTimeString } from 'src/utils/date';
 import { stringToBool, toEmail } from 'src/validation';
 import z from 'zod';
 
+const AlbumSlugSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(80);
+
 const AlbumUserAddSchema = z
   .object({
     userId: z.uuidv4().describe('User ID'),
@@ -68,6 +70,7 @@ const CreateAlbumSchema = z
       }),
     albumUsers: z.array(AlbumUserCreateSchema).optional().describe('Album users'),
     assetIds: z.array(z.uuidv4()).optional().describe('Initial asset IDs'),
+    slug: AlbumSlugSchema.nullable().optional().describe('Custom album URL slug'),
   })
   .meta({ id: 'CreateAlbumDto' });
 
@@ -145,6 +148,7 @@ export type AlbumVoting = z.infer<typeof AlbumVotingSchema>;
 const UpdateAlbumSchema = z
   .object({
     albumName: z.string().optional().describe('Album name'),
+    slug: AlbumSlugSchema.nullable().optional().describe('Custom album URL slug'),
     // TODO: drop the empty-string-to-null transform in v4 (clients should send null)
     description: z
       .string()
@@ -180,6 +184,7 @@ const GetAlbumsSchema = z
       .optional()
       .describe('Filter by shared status: true = only shared, false = not shared, undefined = no filter'),
     assetId: z.uuidv4().optional().describe('Filter albums containing this asset ID (ignores other parameters)'),
+    slug: AlbumSlugSchema.optional().describe('Album URL slug (exact match)'),
   })
   .meta({ id: 'GetAlbumsDto' });
 
@@ -215,6 +220,7 @@ export const AlbumResponseSchema = z
   .object({
     id: z.uuidv4().describe('Album ID'),
     albumName: z.string().describe('Album name'),
+    slug: z.string().nullable().describe('Custom album URL slug'),
     description: z
       .string()
       .describe('Album description')
@@ -300,6 +306,7 @@ export type MapAlbumDto = {
   assets?: ShallowDehydrateObject<MapAsset>[];
   sharedLinks?: ShallowDehydrateObject<AuthSharedLink>[];
   albumName: string;
+  slug?: string | null;
   description: string | null;
   albumThumbnailAssetId: string | null;
   createdAt: Date;
@@ -338,6 +345,7 @@ export const mapAlbum = (entity: MaybeDehydrated<MapAlbumDto>): AlbumResponseDto
 
   return {
     albumName: entity.albumName,
+    slug: entity.slug ?? null,
     // TODO: return null instead of '' in v4
     description: entity.description ?? '',
     albumThumbnailAssetId: entity.albumThumbnailAssetId,

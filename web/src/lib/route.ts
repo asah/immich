@@ -49,7 +49,7 @@ export const Route = {
 
   // albums
   albums: () => '/albums',
-  viewAlbum: ({ id }: { id: string }) => `/albums/${id}`,
+  viewAlbum: ({ id, slug }: { id: string; slug?: string | null }) => `/albums/${slug || id}`,
   viewAlbumAsset: ({ albumId, assetId }: { albumId: string; assetId: string }) =>
     `/albums/${albumId}/photos/${assetId}`,
 

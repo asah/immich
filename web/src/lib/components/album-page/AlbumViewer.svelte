@@ -10,8 +10,10 @@
   import AssetSelectControlBar from '$lib/components/timeline/AssetSelectControlBar.svelte';
   import { assetMultiSelectManager } from '$lib/managers/asset-multi-select-manager.svelte';
   import { assetViewerManager } from '$lib/managers/asset-viewer-manager.svelte';
+  import { authManager } from '$lib/managers/auth-manager.svelte';
   import { featureFlagsManager } from '$lib/managers/feature-flags-manager.svelte';
   import { handleDownloadAlbum } from '$lib/services/album.service';
+  import { Route } from '$lib/route';
   import { getGlobalActions } from '$lib/services/app.service';
   import { openSlideshowAtAsset } from '$lib/services/slideshow.service';
   import { dragAndDropFilesStore } from '$lib/stores/drag-and-drop-files.store';
@@ -21,7 +23,13 @@
   import { sanitizeRichText } from '$lib/utils/sanitize-rich-text';
   import { handlePromiseError } from '$lib/utils';
   import { fileUploadHandler, openFileUploadDialog } from '$lib/utils/file-uploader';
-  import { AssetOrder, type AlbumResponseDto, type AssetResponseDto, type SharedLinkResponseDto } from '@immich/sdk';
+  import {
+    AlbumUserRole,
+    AssetOrder,
+    type AlbumResponseDto,
+    type AssetResponseDto,
+    type SharedLinkResponseDto,
+  } from '@immich/sdk';
   import { ActionButton, IconButton, Logo } from '@immich/ui';
   import { mdiDownload, mdiFileImagePlusOutline, mdiPresentationPlay, mdiSort } from '@mdi/js';
   import { t } from 'svelte-i18n';
@@ -40,6 +48,10 @@
   let { sharedLink }: Props = $props();
 
   const album = sharedLink.album as AlbumResponseDto;
+  const canEditAlbum = $derived(
+    authManager.authenticated &&
+      album.albumUsers.some(({ user, role }) => user.id === authManager.user.id && role !== AlbumUserRole.Viewer),
+  );
   const presentationSettings = $derived(getAlbumPresentationSettings(album.presentation));
 
   let { slideshowNavigation } = slideshowStore;
@@ -266,6 +278,13 @@
 
       {#snippet trailing()}
         <ActionButton action={Cast} />
+
+        {#if canEditAlbum}
+          <a
+            class="rounded-full px-3 py-2 text-sm font-semibold text-primary hover:bg-primary/10"
+            href={Route.viewAlbum({ id: album.id })}>{$t('edit_album')}</a
+          >
+        {/if}
 
         {#if album.assetCount > 0}
           <ButtonContextMenu icon={mdiSort} title="Sort" color="secondary" offset={{ x: 175, y: 25 }}>
