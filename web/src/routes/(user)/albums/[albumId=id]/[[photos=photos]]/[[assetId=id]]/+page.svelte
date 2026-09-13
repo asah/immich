@@ -57,6 +57,7 @@
     type AlbumAssetSortCriterion,
   } from '$lib/stores/preferences.store';
   import { getAlbumPresentationSettings } from '$lib/utils/album-presentation';
+  import { compareAlbumTagSections, getAlbumTagSection } from '$lib/utils/album-tag-sections';
   import { handlePromiseError } from '$lib/utils';
   import { handleError } from '$lib/utils/handle-error';
   import { isAlbumsRoute, navigate, type AssetGridRouteSearchParams } from '$lib/utils/navigation';
@@ -407,11 +408,9 @@
       const direction = sortOrder === SortOrder.Desc ? -1 : 1;
       let comparison = 0;
       if (sortBy === AlbumAssetSortBy.Tag) {
-        // This is a synthetic group (not a tag named "Untagged"); always
-        // place it after real tag groups, independent of sort direction.
-        const leftUntagged = !left.tags?.length;
-        const rightUntagged = !right.tags?.length;
-        if (leftUntagged !== rightUntagged) return leftUntagged ? 1 : -1;
+        comparison = compareAlbumTagSections(left, right, sortOrder);
+        if (comparison !== 0) return comparison;
+        continue;
       }
       if (sortBy === AlbumAssetSortBy.Engagement) {
         const score = (asset: AssetResponseDto) => {
@@ -432,8 +431,6 @@
               return asset.originalFileName;
             case AlbumAssetSortBy.FileSize:
               return exif?.fileSizeInByte ?? -1;
-            case AlbumAssetSortBy.Tag:
-              return asset.tags?.[0]?.name ?? 'Untagged';
             case AlbumAssetSortBy.Camera:
               return cameraLabel(asset);
             case AlbumAssetSortBy.Lens:
@@ -514,7 +511,7 @@
         });
       }
       case AlbumAssetSortBy.Tag: {
-        return filenameAssets.map(({ tags }) => tags?.[0]?.name ?? 'Untagged');
+        return filenameAssets.map(getAlbumTagSection);
       }
     }
   });

@@ -20,6 +20,7 @@
   import { mediaQueryManager } from '$lib/stores/media-query-manager.svelte';
   import { SlideshowNavigation, slideshowStore } from '$lib/stores/slideshow.store';
   import { getAlbumPresentationSettings } from '$lib/utils/album-presentation';
+  import { compareAlbumTagSections, getAlbumTagSection } from '$lib/utils/album-tag-sections';
   import { sanitizeRichText } from '$lib/utils/sanitize-rich-text';
   import { handlePromiseError } from '$lib/utils';
   import { fileUploadHandler, openFileUploadDialog } from '$lib/utils/file-uploader';
@@ -93,7 +94,7 @@
       case AlbumAssetSortBy.FileSize:
         return exif?.fileSizeInByte ?? -1;
       case AlbumAssetSortBy.Tag:
-        return asset.tags?.[0]?.name ?? 'Untagged';
+        return getAlbumTagSection(asset);
       case AlbumAssetSortBy.Camera:
         return [exif?.make, exif?.model].filter(Boolean).join(' ') || 'Unknown camera';
       case AlbumAssetSortBy.Lens:
@@ -127,12 +128,10 @@
     const assets = [...(sharedLink.assets as AssetResponseDto[])];
     assets.sort((left, right) => {
       for (const { sortBy, sortOrder } of sortCriteria) {
-        // Keep the synthetic no-tag section terminal in both ascending and
-        // descending tag sorts. A real tag named "Untagged" remains normal.
         if (sortBy === AlbumAssetSortBy.Tag) {
-          const leftUntagged = !left.tags?.length;
-          const rightUntagged = !right.tags?.length;
-          if (leftUntagged !== rightUntagged) return leftUntagged ? 1 : -1;
+          const comparison = compareAlbumTagSections(left, right, sortOrder);
+          if (comparison) return comparison;
+          continue;
         }
         const a = assetLabel(left, sortBy);
         const b = assetLabel(right, sortBy);
