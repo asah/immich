@@ -148,7 +148,9 @@
               sortOrder:
                 update.sortBy === AlbumAssetSortBy.Engagement || update.sortBy === AlbumAssetSortBy.FileSize
                   ? SortOrder.Desc
-                  : (update.sortOrder ?? criterion.sortOrder),
+                  : update.sortBy === AlbumAssetSortBy.Tag
+                    ? SortOrder.Asc
+                    : (update.sortOrder ?? criterion.sortOrder),
             }
           : criterion,
       ),

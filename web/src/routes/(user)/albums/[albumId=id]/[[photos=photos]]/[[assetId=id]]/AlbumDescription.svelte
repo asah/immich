@@ -63,7 +63,11 @@
     </div>
   {/if}
   {#if isOwned}
-    <Button size="small" color="secondary" class="mt-2" onclick={edit}>{$t('edit')}</Button>
+    <button
+      type="button"
+      class="mt-2 text-sm text-primary underline underline-offset-2 hover:text-primary/80"
+      onclick={edit}>edit description</button
+    >
   {/if}
 {/if}
 

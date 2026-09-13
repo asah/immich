@@ -127,6 +127,13 @@
     const assets = [...(sharedLink.assets as AssetResponseDto[])];
     assets.sort((left, right) => {
       for (const { sortBy, sortOrder } of sortCriteria) {
+        // Keep the synthetic no-tag section terminal in both ascending and
+        // descending tag sorts. A real tag named "Untagged" remains normal.
+        if (sortBy === AlbumAssetSortBy.Tag) {
+          const leftUntagged = !left.tags?.length;
+          const rightUntagged = !right.tags?.length;
+          if (leftUntagged !== rightUntagged) return leftUntagged ? 1 : -1;
+        }
         const a = assetLabel(left, sortBy);
         const b = assetLabel(right, sortBy);
         const comparison =

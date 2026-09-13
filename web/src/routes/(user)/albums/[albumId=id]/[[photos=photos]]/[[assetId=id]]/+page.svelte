@@ -406,6 +406,13 @@
     for (const { sortBy, sortOrder } of sortCriteria) {
       const direction = sortOrder === SortOrder.Desc ? -1 : 1;
       let comparison = 0;
+      if (sortBy === AlbumAssetSortBy.Tag) {
+        // This is a synthetic group (not a tag named "Untagged"); always
+        // place it after real tag groups, independent of sort direction.
+        const leftUntagged = !left.tags?.length;
+        const rightUntagged = !right.tags?.length;
+        if (leftUntagged !== rightUntagged) return leftUntagged ? 1 : -1;
+      }
       if (sortBy === AlbumAssetSortBy.Engagement) {
         const score = (asset: AssetResponseDto) => {
           const engagement = engagementByAsset[asset.id];

@@ -9,7 +9,7 @@ describe('AlbumDescription component', () => {
     const user = userEvent.setup();
     render(AlbumDescription, { isOwned: true, id: '', description: '' });
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'edit' }));
+    await user.click(screen.getByRole('button', { name: 'edit description' }));
     expect(screen.getByRole('textbox')).toBeInTheDocument();
   });
 
