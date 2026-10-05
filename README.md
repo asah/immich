@@ -50,6 +50,17 @@
 > [!NOTE]
 > You can find the main documentation, including installation guides, at https://immich.app/.
 
+## Core dev process
+
+```
+   # to write code
+   ./immich-codex
+   (write code then say "git commit" to commit to local repo)
+
+   # to push to github and update the live docker prod instance
+   ./git-push-prod.sh
+```
+
 ## Links
 
 - [Documentation](https://docs.immich.app/)
