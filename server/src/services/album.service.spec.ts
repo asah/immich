@@ -595,6 +595,7 @@ describe(AlbumService.name, () => {
       expect(mocks.albumUser.create).toHaveBeenCalledWith({
         userId: user.id,
         albumId: album.id,
+        role: AlbumUserRole.Viewer,
       });
       expect(mocks.event.emit).toHaveBeenCalledWith('AlbumInvite', {
         id: album.id,
@@ -623,6 +624,7 @@ describe(AlbumService.name, () => {
       expect(mocks.albumUser.create).toHaveBeenCalledWith({
         userId: user.id,
         albumId: album.id,
+        role: AlbumUserRole.Viewer,
       });
       expect(mocks.event.emit).toHaveBeenCalledTimes(1);
       expect(mocks.event.emit).toHaveBeenCalledWith('AlbumInvite', {

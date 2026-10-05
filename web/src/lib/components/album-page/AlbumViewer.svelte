@@ -3,13 +3,16 @@
   import { page } from '$app/state';
   import { shortcut } from '$lib/actions/shortcut';
   import AlbumMap from '$lib/components/album-page/AlbumMap.svelte';
+  import AssetEngagementBadge from '$lib/components/album-page/AssetEngagementBadge.svelte';
   import ButtonContextMenu from '$lib/components/shared-components/context-menu/ButtonContextMenu.svelte';
   import MenuOption from '$lib/components/shared-components/context-menu/MenuOption.svelte';
   import GalleryViewer from '$lib/components/shared-components/gallery-viewer/GalleryViewer.svelte';
   import DownloadAction from '$lib/components/timeline/actions/DownloadAction.svelte';
+  import ReactionAction from '$lib/components/timeline/actions/ReactionAction.svelte';
   import AssetSelectControlBar from '$lib/components/timeline/AssetSelectControlBar.svelte';
   import { assetMultiSelectManager } from '$lib/managers/asset-multi-select-manager.svelte';
   import { assetViewerManager } from '$lib/managers/asset-viewer-manager.svelte';
+  import { activityManager } from '$lib/managers/activity-manager.svelte';
   import { authManager } from '$lib/managers/auth-manager.svelte';
   import { featureFlagsManager } from '$lib/managers/feature-flags-manager.svelte';
   import { handleDownloadAlbum } from '$lib/services/album.service';
@@ -40,6 +43,7 @@
   import { AlbumAssetSortBy, SortOrder, defaultAlbumAssetDisplayInfo } from '$lib/stores/preferences.store';
   import type { Viewport } from '$lib/managers/timeline-manager/types';
   import { DateTime } from 'luxon';
+  import { onDestroy } from 'svelte';
   import { toTimelineAsset } from '$lib/utils/timeline-util';
 
   interface Props {
@@ -53,7 +57,22 @@
     authManager.authenticated &&
       album.albumUsers.some(({ user, role }) => user.id === authManager.user.id && role !== AlbumUserRole.Viewer),
   );
+  const canReact = $derived(authManager.authenticated && album.isActivityEnabled);
   const presentationSettings = $derived(getAlbumPresentationSettings(album.presentation));
+  const engagementByAsset = $derived.by(() => {
+    const engagement: Record<string, { reactions: Record<string, number>; comments: number }> = {};
+    for (const activity of activityManager.activities) {
+      if (!activity.assetId || activity.parentActivityId) continue;
+      const entry = (engagement[activity.assetId] ??= { reactions: {}, comments: 0 });
+      if (activity.type === 'like') {
+        const key = activity.reactionKey ?? 'like';
+        entry.reactions[key] = (entry.reactions[key] ?? 0) + 1;
+      } else if (activity.type === 'comment') {
+        entry.comments++;
+      }
+    }
+    return engagement;
+  });
 
   let { slideshowNavigation } = slideshowStore;
 
@@ -164,6 +183,13 @@
     dragAndDropFilesStore.set({ isDragging: false, files: [] });
   });
 
+  $effect(() => {
+    if (!authManager.authenticated || assetViewerManager.isViewing) return;
+    handlePromiseError(activityManager.init(album.id));
+  });
+
+  onDestroy(() => activityManager.reset());
+
   const handleStartSlideshow = async () => {
     const asset =
       $slideshowNavigation === SlideshowNavigation.Shuffle
@@ -245,7 +271,7 @@
         <GalleryViewer
           assets={galleryAssets}
           assetInteraction={assetMultiSelectManager}
-          disableAssetSelect={!sharedLink.allowDownload}
+          disableAssetSelect={!sharedLink.allowDownload && !canReact}
           {album}
           viewport={galleryViewport}
           viewportScrollTop={galleryScrollTop}
@@ -256,7 +282,14 @@
           primarySortGroupDescriptions={galleryGroupKeys ? {} : undefined}
           captionsBelow={true}
           instantCameraStyle={presentationSettings.instantCameraStyle}
-        />
+        >
+          {#snippet assetOverlay(asset)}
+            {@const engagement = engagementByAsset[asset.id] ?? { reactions: {}, comments: 0 }}
+            {#if presentationSettings.displayInfo?.reactions ?? true}
+              <AssetEngagementBadge reactions={engagement.reactions} comments={engagement.comments} />
+            {/if}
+          {/snippet}
+        </GalleryViewer>
       </div>
     </section>
   </div>
@@ -272,6 +305,9 @@
       >
       {#if sharedLink.allowDownload}
         <DownloadAction filename={album.albumName} />
+      {/if}
+      {#if canReact}
+        <ReactionAction albumId={album.id} />
       {/if}
     </AssetSelectControlBar>
   {:else}

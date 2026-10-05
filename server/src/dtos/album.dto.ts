@@ -11,12 +11,15 @@ import { asDateTimeString } from 'src/utils/date';
 import { stringToBool, toEmail } from 'src/validation';
 import z from 'zod';
 
-const AlbumSlugSchema = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/).max(80);
+const AlbumSlugSchema = z
+  .string()
+  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
+  .max(80);
 
 const AlbumUserAddSchema = z
   .object({
     userId: z.uuidv4().describe('User ID'),
-    role: AlbumUserRoleSchema.default(AlbumUserRole.Editor).optional().describe('Album user role'),
+    role: AlbumUserRoleSchema.default(AlbumUserRole.Viewer).optional().describe('Album user role'),
   })
   .meta({ id: 'AlbumUserAddDto' });
 

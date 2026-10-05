@@ -38,12 +38,14 @@
     selectedEmoji = '😀',
     count = 0,
     buttonLabel = 'Add reaction',
+    placement = 'above',
   }: {
     onSelect: (reaction: Reaction) => void;
     compact?: boolean;
     selectedEmoji?: string;
     count?: number;
     buttonLabel?: string;
+    placement?: 'above' | 'below';
   } = $props();
   let open = $state(false);
   let popupStyle = $state('');
@@ -57,7 +59,10 @@
       const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
       const maxLeft = Math.max(popupEdgeOffset, window.innerWidth - popupWidth - popupEdgeOffset);
       const left = Math.min(Math.max(popupEdgeOffset, rect.left), maxLeft);
-      popupStyle = `left: ${left}px; bottom: ${window.innerHeight - rect.top + 8}px;`;
+      popupStyle =
+        placement === 'below'
+          ? `left: ${left}px; top: ${rect.bottom + 8}px;`
+          : `left: ${left}px; bottom: ${window.innerHeight - rect.top + 8}px;`;
     }
   };
 </script>

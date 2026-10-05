@@ -18,8 +18,8 @@ import { BulkIdErrorReason, BulkIdResponseDto, BulkIdsDto } from 'src/dtos/asset
 import { AuthDto } from 'src/dtos/auth.dto';
 import { MapMarkerResponseDto } from 'src/dtos/map.dto';
 import { AlbumUserRole, JobName, Permission } from 'src/enum';
-import { EmailTemplate } from 'src/repositories/email.repository';
 import { AlbumAssetCount, AlbumInfoOptions } from 'src/repositories/album.repository';
+import { EmailTemplate } from 'src/repositories/email.repository';
 import { BaseService } from 'src/services/base.service';
 import { addAssets, removeAssets } from 'src/utils/asset.util';
 import { asDateTimeString } from 'src/utils/date';
@@ -67,7 +67,12 @@ export class AlbumService extends BaseService {
       const inviteUrl = `${getExternalDomain(config.server)}/auth/album-invite#token=${encodeURIComponent(token)}`;
       const { html, text } = await this.emailRepository.renderEmail({
         template: EmailTemplate.ALBUM_ACCOUNT_INVITE,
-        data: { albumName: album.albumName, senderName: auth.user.name, inviteUrl, baseUrl: getExternalDomain(config.server) },
+        data: {
+          albumName: album.albumName,
+          senderName: auth.user.name,
+          inviteUrl,
+          baseUrl: getExternalDomain(config.server),
+        },
         customTemplate: '',
       });
       await this.jobRepository.queue({
@@ -397,7 +402,7 @@ export class AlbumService extends BaseService {
         throw new BadRequestException('Invalid user');
       }
 
-      await this.albumUserRepository.create({ userId, albumId: id, role });
+      await this.albumUserRepository.create({ userId, albumId: id, role: role ?? AlbumUserRole.Viewer });
       await this.eventRepository.emit('AlbumInvite', { id, userId, senderName: auth.user.name });
     }
 
