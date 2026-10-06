@@ -57,6 +57,7 @@ export class AuthController {
   }
 
   @Post('album-invite/preview')
+  @Authenticated({ public: true })
   @HttpCode(HttpStatus.OK)
   @Endpoint({ summary: 'Preview an email album invitation', history: new HistoryBuilder().added('v3') })
   getAlbumInvitePreview(@Body() dto: AlbumInviteTokenDto): Promise<AlbumInvitePreviewDto> {
@@ -85,6 +86,7 @@ export class AuthController {
   }
 
   @Post('album-invite/accept')
+  @Authenticated({ public: true })
   @Endpoint({ summary: 'Accept an email album invitation', history: new HistoryBuilder().added('v3') })
   async acceptAlbumInvite(
     @Res({ passthrough: true }) res: Response,

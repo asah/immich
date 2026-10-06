@@ -49,7 +49,9 @@
   const playback = $derived(element.videoPlayback ?? { mode: 'click' as const, delayMs: 0 });
 
   $effect(() => {
-    if (element.type !== 'video' || !video) return;
+    if (element.type !== 'video' || !video) {
+      return;
+    }
     const triggered = isStoryVideoTriggered(
       playback.mode === 'delayed' ? 'delay' : playback.mode,
       playback.delayMs,
@@ -67,7 +69,9 @@
   });
 
   const playVideo = async () => {
-    if (!video) return;
+    if (!video) {
+      return;
+    }
     video.muted = playback.mode !== 'click';
     try {
       await video.play();
@@ -128,7 +132,7 @@
         </div>{/if}
     {:else if element.type === 'text'}
       <div
-        class="size-full overflow-hidden whitespace-pre-wrap break-words"
+        class="size-full overflow-hidden wrap-break-word whitespace-pre-wrap"
         style:font-family={fontFamily}
         style:font-size={`${storyStyleNumber(element, 'size', 36)}px`}
         style:line-height={`${storyStyleNumber(element, 'lineHeight', 44)}px`}

@@ -16,7 +16,9 @@
 
   const handleReaction = async ({ key }: { key: string }) => {
     const assets = assetMultiSelectManager.assets;
-    if (assets.length === 0 || loading) return;
+    if (assets.length === 0 || loading) {
+      return;
+    }
 
     loading = true;
     try {

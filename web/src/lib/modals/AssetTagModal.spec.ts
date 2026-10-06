@@ -25,11 +25,13 @@ describe('AssetTagModal', () => {
     vi.stubGlobal('visualViewport', getVisualViewportMock());
     Element.prototype.animate = getAnimateMock();
     sdkMock.getAllTags.mockResolvedValue(tags);
-    sdkMock.getAssetInfo.mockImplementation(async ({ id }) =>
-      assetFactory.build({
-        id,
-        tags: id === 'asset-1' ? [tags[0], tags[1]] : [tags[0], tags[2]],
-      }),
+    sdkMock.getAssetInfo.mockImplementation(({ id }) =>
+      Promise.resolve(
+        assetFactory.build({
+          id,
+          tags: id === 'asset-1' ? [tags[0], tags[1]] : [tags[0], tags[2]],
+        }),
+      ),
     );
   });
 

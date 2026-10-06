@@ -25,6 +25,36 @@ export const setupTimelineMockApiRoutes = async (
   changes: Changes,
   testContext: TimelineTestContext,
 ) => {
+  await context.route('**/api/tags', (route) => route.fulfill({ json: [] }));
+  await context.route('**/api/activities?**', (route) => route.fulfill({ json: [] }));
+  await context.route('**/api/activities/statistics?**', (route) => route.fulfill({ json: { comments: 0, likes: 0 } }));
+  await context.route('**/api/search/metadata', async (route, request) => {
+    const { filter, orderBy } = request.postDataJSON();
+    const albumId = filter?.albumIds?.any?.[0];
+    if (!albumId) {
+      return route.fallback();
+    }
+    const items = timelineRestData.buckets
+      .keys()
+      .flatMap((timeBucket) =>
+        getTimeBucket(timelineRestData, timeBucket, false, false, undefined, albumId, changes).id.map((id) => ({
+          ...getAsset(timelineRestData, id)!,
+          isFavorite: changes.assetFavorites.includes(id) || getAsset(timelineRestData, id)!.isFavorite,
+        })),
+      )
+      .toArray();
+    items.sort((left, right) => left.localDateTime.localeCompare(right.localDateTime));
+    if (orderBy?.direction !== 'asc') {
+      items.reverse();
+    }
+    return route.fulfill({
+      json: {
+        albums: { total: 0, count: 0, items: [], facets: [] },
+        assets: { total: items.length, count: items.length, items, facets: [], nextPage: null, nextCursor: null },
+      },
+    });
+  });
+
   await context.route('**/api/timeline**', async (route, request) => {
     const url = new URL(request.url());
     const pathname = url.pathname;

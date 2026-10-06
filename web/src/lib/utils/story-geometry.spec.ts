@@ -13,7 +13,7 @@ describe('story geometry', () => {
   it('quantizes half away from zero', () => {
     expect(quantizeStoryUnit(1.2345)).toBe(1.235);
     expect(quantizeStoryUnit(-1.2345)).toBe(-1.235);
-    expect(() => quantizeStoryUnit(Number.NaN)).toThrow();
+    expect(() => quantizeStoryUnit(NaN)).toThrow();
   });
 
   it('normalizes rotation', () => {

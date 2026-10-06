@@ -18,7 +18,9 @@ export const createStoryPageMoveCommand = (
   index: number,
   direction: -1 | 1,
 ): StoryCommand => {
-  if (index + direction < 0 || index + direction >= pages.length) throw new RangeError('Page move is out of bounds');
+  if (index + direction < 0 || index + direction >= pages.length) {
+    throw new RangeError('Page move is out of bounds');
+  }
   return {
     op: 'page.move',
     pageId: pages[index].id,

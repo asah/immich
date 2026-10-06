@@ -32,7 +32,7 @@
   onMount(() => load(true));
   const search = () => {
     clearTimeout(searchTimer);
-    searchTimer = setTimeout(() => load(true), 300);
+    searchTimer = setTimeout(() => void load(true), 300);
   };
   const toggle = (asset: AssetResponseDto) =>
     (selected = selected.some(({ id }) => id === asset.id)
@@ -44,7 +44,7 @@
   title={$t('story_choose_photos')}
   size="large"
   {onClose}
-  disabled={!selected.length}
+  disabled={selected.length === 0}
   submitText={$t('add')}
   onSubmit={() => onClose(selected)}
   ><Input
@@ -77,7 +77,7 @@
           /></label
         >{/each}
     </div>{/if}
-  {#if assets.length && hasMore}<div class="mt-3 flex justify-center">
+  {#if assets.length > 0 && hasMore}<div class="mt-3 flex justify-center">
       <button class="rounded-lg border px-4 py-2" type="button" disabled={loading} onclick={() => load()}>
         {loading ? $t('loading') : $t('load_more')}
       </button>

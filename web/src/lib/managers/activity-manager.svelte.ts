@@ -98,7 +98,7 @@ class ActivityManager {
     return activity;
   }
 
-  async deleteActivity(activity: ActivityResponseDto, index?: number) {
+  async deleteActivity(activity: ActivityResponseDto, _?: number) {
     if (!this.#albumId) {
       return;
     }
@@ -126,13 +126,6 @@ class ActivityManager {
     if (this.#isLiked && this.#isLiked.reactionKey === reactionKey) {
       await this.deleteActivity(this.#isLiked);
       this.#isLiked = null;
-    } else if (this.#isLiked) {
-      this.#isLiked = (await this.addActivity({
-        albumId: this.#albumId,
-        assetId: this.#assetId,
-        type: ReactionType.Like,
-        reactionKey,
-      }))!;
     } else {
       this.#isLiked = (await this.addActivity({
         albumId: this.#albumId,

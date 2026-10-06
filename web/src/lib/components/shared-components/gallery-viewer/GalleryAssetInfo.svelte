@@ -73,7 +73,7 @@
 </script>
 
 {#if fileSize && placement === 'overlay'}
-  <div class="absolute top-2 right-2 rounded-full bg-black/75 px-2 py-0.5 text-xs font-semibold text-white shadow">
+  <div class="absolute top-2 right-2 rounded-full bg-black/75 px-2 py-0.5 text-xs font-semibold text-white shadow-sm">
     {fileSize}
   </div>
 {/if}

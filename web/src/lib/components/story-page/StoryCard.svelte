@@ -6,17 +6,17 @@
 
   let { story }: { story: StoryResponseDto } = $props();
   const status = $derived(
-    !story.publishedRevisionId
-      ? $t('story_status_draft')
-      : story.hasUnpublishedChanges
+    story.publishedRevisionId
+      ? story.hasUnpublishedChanges
         ? $t('story_status_unpublished_changes')
-        : $t('story_status_published'),
+        : $t('story_status_published')
+      : $t('story_status_draft'),
   );
 </script>
 
 <a href={Route.viewStory(story)} class="group block min-w-0">
   <Card class="h-full overflow-hidden shadow-none transition-colors group-hover:border-primary">
-    <div class="flex aspect-[4/3] items-center justify-center bg-surface-container text-5xl" aria-hidden="true">📖</div>
+    <div class="bg-surface-container flex aspect-4/3 items-center justify-center text-5xl" aria-hidden="true">📖</div>
     <CardHeader>
       <div class="flex items-start justify-between gap-2">
         <CardTitle class="truncate group-hover:text-primary">{story.title}</CardTitle>

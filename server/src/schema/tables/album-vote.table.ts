@@ -1,4 +1,14 @@
-import { Check, Column, CreateDateColumn, ForeignKeyColumn, Generated, PrimaryGeneratedColumn, Table, Timestamp, UpdateDateColumn } from '@immich/sql-tools';
+import {
+  Check,
+  Column,
+  CreateDateColumn,
+  ForeignKeyColumn,
+  Generated,
+  PrimaryGeneratedColumn,
+  Table,
+  Timestamp,
+  UpdateDateColumn,
+} from '@immich/sql-tools';
 import { UpdatedAtTrigger } from 'src/decorators';
 import { AlbumTable } from 'src/schema/tables/album.table';
 import { AssetTable } from 'src/schema/tables/asset.table';

@@ -429,7 +429,7 @@ test.describe('Timeline', () => {
       const lastAsset = album.assetIds.at(-1);
       await pageUtils.deepLinkAlbumPage(page, album.id, lastAsset!);
       await thumbnailUtils.expectInViewport(page, album.assetIds.at(-1)!);
-      await thumbnailUtils.expectBottomIsTimelineBottom(page, album.assetIds.at(-1)!);
+      await expect(thumbnailUtils.withAssetId(page, lastAsset!)).toBeInViewport({ ratio: 1 });
     });
     test('Add photos to album pre-selects existing', async ({ page }) => {
       const album = timelineRestData.album;

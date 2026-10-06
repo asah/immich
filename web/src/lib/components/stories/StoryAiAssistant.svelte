@@ -100,7 +100,7 @@
           <h3 id="story-ai-preview-heading" class="font-semibold">Proposed changes</h3>
           <p>{aiState.draft.diff.summary}</p>
           <ul class="mt-2 list-disc pl-5">
-            {#each aiState.draft.diff.changes as change}
+            {#each aiState.draft.diff.changes as change, index (index)}
               <li><span class="capitalize">{change.kind}</span>: {change.label}</li>
             {/each}
           </ul>

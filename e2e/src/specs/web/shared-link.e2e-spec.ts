@@ -51,8 +51,9 @@ test.describe('Shared Links', () => {
   test('download from a shared link', async ({ page }) => {
     await page.goto(`/share/${sharedLink.key}`);
     await page.getByRole('heading', { name: 'Test Album' }).waitFor();
-    await page.locator(`[data-asset-id="${asset.id}"]`).hover();
-    await page.waitForSelector(`[data-asset-id="${asset.id}"] [role="checkbox"]`);
+    const thumbnail = page.locator(`[data-thumbnail-focus-container][data-asset="${asset.id}"]`);
+    await thumbnail.hover();
+    await expect(thumbnail.getByRole('checkbox')).toBeVisible();
     await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Download' }).click()]);
   });
 

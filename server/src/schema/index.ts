@@ -31,16 +31,16 @@ import {
   user_delete_audit,
   user_metadata_audit,
 } from 'src/schema/functions';
-import { ActivityTable } from 'src/schema/tables/activity.table';
 import { ActivityAssetTable } from 'src/schema/tables/activity-asset.table';
+import { ActivityTable } from 'src/schema/tables/activity.table';
 import { AiCredentialTable } from 'src/schema/tables/ai-credential.table';
 import { AiProviderTable } from 'src/schema/tables/ai-provider.table';
 import { AlbumAssetAuditTable } from 'src/schema/tables/album-asset-audit.table';
 import { AlbumAssetTable } from 'src/schema/tables/album-asset.table';
 import { AlbumAuditTable } from 'src/schema/tables/album-audit.table';
+import { AlbumInviteTable } from 'src/schema/tables/album-invite.table';
 import { AlbumUserAuditTable } from 'src/schema/tables/album-user-audit.table';
 import { AlbumUserTable } from 'src/schema/tables/album-user.table';
-import { AlbumInviteTable } from 'src/schema/tables/album-invite.table';
 import { AlbumVoteTable } from 'src/schema/tables/album-vote.table';
 import { AlbumTable } from 'src/schema/tables/album.table';
 import { ApiKeyTable } from 'src/schema/tables/api-key.table';

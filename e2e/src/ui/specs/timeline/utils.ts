@@ -129,7 +129,7 @@ export const thumbnailUtils = {
 };
 export const timelineUtils = {
   locator(page: Page) {
-    return page.locator('#asset-grid');
+    return page.locator('#asset-grid, [data-album-gallery]');
   },
   async waitForTimelineLoad(page: Page) {
     await expect(timelineUtils.locator(page)).toBeInViewport();

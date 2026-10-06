@@ -1,5 +1,5 @@
 <script lang="ts">
-import { error } from '@sveltejs/kit';
+  import { error } from '@sveltejs/kit';
   import { goto } from '$app/navigation';
   import OnEvents from '$lib/components/OnEvents.svelte';
   import UserPageLayout from '$lib/components/layouts/UserPageLayout.svelte';

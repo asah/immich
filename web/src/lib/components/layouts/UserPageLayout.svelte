@@ -8,6 +8,7 @@
   import UserSidebar from '$lib/components/shared-components/side-bar/UserSidebar.svelte';
   import type { HeaderButtonActionItem } from '$lib/types';
   import { openFileUploadDialog } from '$lib/utils/file-uploader';
+  import { sanitizeRichText } from '$lib/utils/sanitize-rich-text';
   import { Button, ContextMenuButton, HStack, isMenuItemType, type MenuItemType } from '@immich/ui';
   import type { Snippet } from 'svelte';
   import { t } from 'svelte-i18n';
@@ -81,7 +82,10 @@
             <p class="text-sm text-gray-400 dark:text-gray-600">{description}</p>
           {/if}
           {#if descriptionHtml}
-            <p class="max-w-[40rem] text-sm text-gray-400 dark:text-gray-600">{@html descriptionHtml}</p>
+            <p class="max-w-160 text-sm text-gray-400 dark:text-gray-600">
+              <!-- eslint-disable-next-line svelte/no-at-html-tags -- Only allowlisted rich text is rendered. -->
+              {@html sanitizeRichText(descriptionHtml)}
+            </p>
           {/if}
         </div>
 

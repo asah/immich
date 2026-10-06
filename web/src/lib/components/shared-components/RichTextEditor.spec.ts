@@ -16,7 +16,7 @@ describe('RichTextEditor', () => {
     const user = userEvent.setup();
     Object.defineProperty(document, 'execCommand', { configurable: true, value: vi.fn().mockReturnValue(true) });
     const execCommand = vi.mocked(document.execCommand);
-    Object.defineProperty(window, 'prompt', {
+    Object.defineProperty(globalThis, 'prompt', {
       configurable: true,
       value: vi.fn().mockReturnValue('https://example.com'),
     });
@@ -25,7 +25,7 @@ describe('RichTextEditor', () => {
     editor.focus();
     const range = document.createRange();
     range.selectNodeContents(editor);
-    const selection = window.getSelection()!;
+    const selection = getSelection()!;
     selection.removeAllRanges();
     selection.addRange(range);
     await fireEvent.mouseDown(screen.getByRole('button', { name: 'Link' }));

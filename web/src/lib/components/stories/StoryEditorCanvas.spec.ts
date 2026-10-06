@@ -17,7 +17,7 @@ const setup = () => {
     document: storyDocumentFixture,
     recovery: new MemoryStoryRecoveryStore(),
   });
-  const onBatch = vi.fn(async (_batch: StoryCommandBatch) => {});
+  const onBatch = vi.fn(async (_: StoryCommandBatch) => {});
   render(StoryEditorCanvas, { scene, aspectRatio: 'portrait-4:5', transactionManager, onBatch });
   return { onBatch };
 };

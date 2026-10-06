@@ -87,25 +87,33 @@ export const getStoryElementLabel = (element: StoryElement) => element.altText |
 export const isDecorativeStoryElement = (element: StoryElement) => element.ariaHidden;
 
 const assertScene = (scene: StoryScene) => {
-  if (!scene.id || !scene.template || scene.durationMs < 1000 || scene.durationMs > 60_000)
+  if (!scene.id || !scene.template || scene.durationMs < 1000 || scene.durationMs > 60_000) {
     throw new TypeError('Invalid story scene');
+  }
   const ids = new Set<string>();
   for (const element of scene.elements) {
-    if (ids.has(element.id)) throw new TypeError(`Duplicate story element: ${element.id}`);
+    if (ids.has(element.id)) {
+      throw new TypeError(`Duplicate story element: ${element.id}`);
+    }
     ids.add(element.id);
     const { x, y, width, height } = element.frame;
-    if (![x, y, width, height, element.rotation].every(Number.isFinite) || width <= 0 || height <= 0)
+    if ([x, y, width, height, element.rotation].some((value) => !Number.isFinite(value)) || width <= 0 || height <= 0) {
       throw new TypeError(`Invalid geometry: ${element.id}`);
+    }
   }
   const reading = new Set(scene.readingOrder);
-  if (reading.size !== scene.readingOrder.length || scene.readingOrder.some((id) => !ids.has(id)))
+  if (reading.size !== scene.readingOrder.length || scene.readingOrder.some((id) => !ids.has(id))) {
     throw new TypeError('Invalid reading order');
-  if (scene.elements.some((element) => !element.ariaHidden && !reading.has(element.id)))
+  }
+  if (scene.elements.some((element) => !element.ariaHidden && !reading.has(element.id))) {
     throw new TypeError('Meaningful element is absent from reading order');
+  }
 };
 
 export const assertStoryDocument = (value: unknown): asserts value is StoryDocument => {
-  if (!value || typeof value !== 'object') throw new TypeError('Story document must be an object');
+  if (!value || typeof value !== 'object') {
+    throw new TypeError('Story document must be an object');
+  }
   const document = value as Partial<StoryDocument>;
   if (
     document.schemaVersion !== 1 ||
@@ -114,11 +122,14 @@ export const assertStoryDocument = (value: unknown): asserts value is StoryDocum
     !Array.isArray(document.pages) ||
     !Array.isArray(document.unplacedAssetIds) ||
     !document.curation
-  )
+  ) {
     throw new TypeError('Invalid story document root');
+  }
   const ids = new Set<string>();
   for (const scene of [document.cover, ...document.pages]) {
-    if (ids.has(scene.id)) throw new TypeError(`Duplicate story scene: ${scene.id}`);
+    if (ids.has(scene.id)) {
+      throw new TypeError(`Duplicate story scene: ${scene.id}`);
+    }
     ids.add(scene.id);
     assertScene(scene);
   }

@@ -9,8 +9,8 @@ describe('sanitizeRichText', () => {
   });
 
   it('removes executable markup and unsafe links', () => {
-    expect(sanitizeRichText('<img src=x onerror=alert(1)><a href="javascript:alert(1)">no</a><script>bad()</script>')).toBe(
-      '<a>no</a>bad()',
-    );
+    expect(
+      sanitizeRichText('<img src=x onerror=alert(1)><a href="javascript:alert(1)">no</a><script>bad()</script>'),
+    ).toBe('<a>no</a>bad()');
   });
 });

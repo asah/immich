@@ -122,8 +122,11 @@ export class StoryEditorTransactionManager<TDocument, TPreview = unknown> {
     entry.acknowledged = true;
     this.#revision = revision;
     this.#document = structuredClone(canonicalDocument);
-    if (this.pendingBatches.length === 0) await this.#recovery.clear(this.#storyId);
-    else await this.#persist();
+    if (this.pendingBatches.length === 0) {
+      await this.#recovery.clear(this.#storyId);
+    } else {
+      await this.#persist();
+    }
   }
 
   async synchronize(revision: number, canonicalDocument: TDocument) {
@@ -206,6 +209,7 @@ export class StoryEditorTransactionManager<TDocument, TPreview = unknown> {
   }
 }
 
+/* eslint-disable @typescript-eslint/require-await -- The recovery interface is asynchronous; async also converts storage/clone errors to rejections without requiring Promise.try in older browsers. */
 export class MemoryStoryRecoveryStore<TDocument> implements StoryRecoveryStore<TDocument> {
   readonly #records = new Map<string, StoryRecoveryRecord<TDocument>>();
 
@@ -236,10 +240,14 @@ export class LocalStorageStoryRecoveryStore<TDocument> implements StoryRecoveryS
 
   async load(storyId: string) {
     const serialized = this.storage?.getItem(this.#key(storyId));
-    if (!serialized) return undefined;
+    if (!serialized) {
+      return undefined;
+    }
     try {
       const record = JSON.parse(serialized) as StoryRecoveryRecord<TDocument>;
-      if (record.storyId !== storyId || !Array.isArray(record.unsentBatches)) throw new TypeError('Invalid recovery');
+      if (record.storyId !== storyId || !Array.isArray(record.unsentBatches)) {
+        throw new TypeError('Invalid recovery');
+      }
       return record;
     } catch {
       this.storage?.removeItem(this.#key(storyId));
@@ -260,6 +268,8 @@ export class LocalStorageStoryRecoveryStore<TDocument> implements StoryRecoveryS
   }
 }
 
+/* eslint-enable @typescript-eslint/require-await */
+
 /** Serializes command construction and sending so each batch observes the prior acknowledgement revision. */
 export class StorySerializedCommandQueue<TDocument, TPreview> {
   #tail: Promise<void> = Promise.resolve();
@@ -277,7 +287,9 @@ export class StorySerializedCommandQueue<TDocument, TPreview> {
     return this.#append(async () => {
       this.manager.begin(options.kind, options.preview);
       const batch = await this.manager.commit(options.commands, options.inverseCommands);
-      if (batch) await this.#send(batch, options.send);
+      if (batch) {
+        await this.#send(batch, options.send);
+      }
     });
   }
 
@@ -289,7 +301,9 @@ export class StorySerializedCommandQueue<TDocument, TPreview> {
   }) {
     return this.#append(async () => {
       const batch = await this.manager.commit(options.commands, options.inverseCommands);
-      if (batch) await this.#send(batch, options.send);
+      if (batch) {
+        await this.#send(batch, options.send);
+      }
     });
   }
 
@@ -299,9 +313,13 @@ export class StorySerializedCommandQueue<TDocument, TPreview> {
 
   /** Retries the exact persisted mutation so server idempotency remains effective. */
   async retryFailed() {
-    if (this.#retrying) return this.#retrying;
+    if (this.#retrying) {
+      return this.#retrying;
+    }
     const failed = this.#failed;
-    if (!failed) return;
+    if (!failed) {
+      return;
+    }
     const retry = this.#send(failed.batch, failed.send).finally(() => {
       this.#retrying = undefined;
     });
@@ -315,7 +333,9 @@ export class StorySerializedCommandQueue<TDocument, TPreview> {
   }
 
   sendCommitted(batch: StoryCommandBatch | undefined, send: (batch: StoryCommandBatch) => Promise<void>) {
-    if (!batch) return Promise.resolve();
+    if (!batch) {
+      return Promise.resolve();
+    }
     return this.#append(() => this.#send(batch, send));
   }
 

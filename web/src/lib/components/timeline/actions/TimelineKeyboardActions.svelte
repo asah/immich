@@ -127,8 +127,8 @@
       assetInteraction.clear();
     };
 
-    window.addEventListener('keydown', clearSelectionOnEscape, { capture: true });
-    return () => window.removeEventListener('keydown', clearSelectionOnEscape, { capture: true });
+    addEventListener('keydown', clearSelectionOnEscape, { capture: true });
+    return () => removeEventListener('keydown', clearSelectionOnEscape, { capture: true });
   });
 
   const shortcutList = $derived.by(() => {

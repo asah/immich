@@ -15,6 +15,7 @@ const ADMIN_ROUTES = new Set([
   'DELETE libraries/:id',
   'DELETE queues/:name/jobs',
   'DELETE server/license',
+  'DELETE stories/ai/server-provider',
   'GET jobs',
   'GET libraries',
   'GET libraries/:id',
@@ -40,6 +41,7 @@ const ADMIN_ROUTES = new Set([
   'PUT libraries/:id',
   'PUT queues/:name',
   'PUT server/license',
+  'PUT stories/ai/server-provider',
   'PUT system-config',
 ]);
 
@@ -48,6 +50,8 @@ const SHARED_LINK_ROUTES = new Set([
   'DELETE assets/:id/video/stream/:sessionId',
   'GET albums/:id',
   'GET albums/:id/map-markers',
+  'GET albums/:id/voting/leaderboard',
+  'GET albums/:id/voting/session',
   'GET assets/:id',
   'GET assets/:id/original',
   'GET assets/:id/thumbnail',
@@ -56,6 +60,10 @@ const SHARED_LINK_ROUTES = new Set([
   'GET assets/:id/video/stream/:sessionId/:variantIndex/playlist.m3u8',
   'GET assets/:id/video/stream/main.m3u8',
   'GET shared-links/me',
+  'GET stories/shared',
+  'GET stories/shared/assets/:id/original',
+  'GET stories/shared/assets/:id/rendition',
+  'GET stories/shared/assets/:id/video',
   'GET timeline/bucket',
   'GET timeline/buckets',
   'POST assets',
@@ -63,6 +71,7 @@ const SHARED_LINK_ROUTES = new Set([
   'POST download/info',
   'POST search/metadata',
   'POST shared-links/login',
+  'PUT albums/:id/voting/votes/:assetId',
 ]);
 
 const isAdminPermission = (permission: AuthenticatedOptions['permission']) =>

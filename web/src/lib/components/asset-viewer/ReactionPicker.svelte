@@ -73,13 +73,14 @@
   </Button>
   {#if open}
     <div
-      class="fixed z-[100] w-64 max-w-[calc(100vw-1rem)] rounded-xl border border-gray-300 bg-white p-2 shadow-xl dark:border-gray-700 dark:bg-gray-900"
+      class="fixed z-100 w-64 max-w-[calc(100vw-1rem)] rounded-xl border border-gray-300 bg-white p-2 shadow-xl dark:border-gray-700 dark:bg-gray-900"
       style={popupStyle}
     >
       <div class="grid grid-cols-6 gap-1" aria-label="Popular reactions">
-        {#each popular as reaction}
+        {#each popular as reaction (reaction.key)}
           <button
-            class="rounded p-1 text-xl hover:bg-gray-100 dark:hover:bg-gray-800"
+            type="button"
+            class="rounded-sm p-1 text-xl hover:bg-gray-100 dark:hover:bg-gray-800"
             title={reaction.label}
             aria-label={reaction.label}
             onclick={() => {
@@ -94,9 +95,10 @@
           class="mt-2 grid max-h-32 grid-cols-8 gap-1 overflow-y-auto border-t border-gray-200 pt-2 dark:border-gray-700"
           aria-label="All reactions"
         >
-          {#each all.slice(popular.length) as reaction}
+          {#each all.slice(popular.length) as reaction (reaction.key)}
             <button
-              class="rounded p-1 text-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+              type="button"
+              class="rounded-sm p-1 text-lg hover:bg-gray-100 dark:hover:bg-gray-800"
               title={reaction.label}
               aria-label={reaction.label}
               onclick={() => {

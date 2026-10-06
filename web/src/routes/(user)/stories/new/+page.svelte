@@ -19,11 +19,15 @@
   let aiPrompt = $state('');
   const chooseAlbums = async () => {
     const albums = await modalManager.show(AlbumPickerModal, {});
-    if (albums) albumIds = albums.map(({ id }) => id);
+    if (albums) {
+      albumIds = albums.map(({ id }) => id);
+    }
   };
   const choosePhotos = async () => {
     const assets = await modalManager.show(StoryAssetPickerModal);
-    if (assets) assetIds = assets.map(({ id }) => id);
+    if (assets) {
+      assetIds = assets.map(({ id }) => id);
+    }
   };
   $effect(() => {
     const saved = localStorage.getItem('immich-story-brief');
@@ -47,15 +51,17 @@
     try {
       const story = await storyService.create(value);
       try {
-        if (startMode !== 'blank' && (albumIds.length || assetIds.length))
+        if (startMode !== 'blank' && (albumIds.length > 0 || assetIds.length > 0)) {
           await storyService.importSelection(story.id, albumIds, assetIds, startMode === 'automatic');
+        }
       } catch {
         toastManager.danger($t('story_import_error'));
         await goto(Route.viewStory(story));
         return;
       }
-      if (startMode === 'ai' && aiPrompt.trim())
+      if (startMode === 'ai' && aiPrompt.trim()) {
         sessionStorage.setItem(`immich-story-ai-prompt-${story.id}`, aiPrompt.trim());
+      }
       localStorage.removeItem('immich-story-brief');
       await goto(Route.viewStory(story));
     } catch {
@@ -66,15 +72,19 @@
   };
   const selectMode = (mode: typeof startMode) => {
     startMode = mode;
-    if (mode !== 'albums' && mode !== 'automatic') albumIds = [];
-    if (mode !== 'photos') assetIds = [];
+    if (mode !== 'albums' && mode !== 'automatic') {
+      albumIds = [];
+    }
+    if (mode !== 'photos') {
+      assetIds = [];
+    }
   };
 </script>
 
 <UserPageLayout title={data.meta.title}
   ><div class="p-4 sm:p-8">
     <div class="mx-auto mb-5 flex max-w-2xl flex-wrap gap-2">
-      {#each ['blank', 'albums', 'photos', 'automatic', 'ai'] as mode}<Button
+      {#each ['blank', 'albums', 'photos', 'automatic', 'ai'] as mode (mode)}<Button
           size="small"
           variant={startMode === mode ? 'filled' : 'ghost'}
           onclick={() => selectMode(mode as typeof startMode)}>{$t(`story_start_${mode}` as never)}</Button

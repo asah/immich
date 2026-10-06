@@ -4,6 +4,7 @@
 
 import {
   AlbumUserRole,
+  AssetOrder,
   AssetTypeEnum,
   AssetVisibility,
   UserAvatarColor,
@@ -415,6 +416,10 @@ export function getAlbum(
     albumName: album.albumName,
     description: album.description,
     albumThumbnailAssetId: album.thumbnailAssetId,
+    order: AssetOrder.Desc,
+    presentation: null,
+    slug: null,
+    voting: null,
     createdAt: album.createdAt,
     updatedAt: album.updatedAt,
     albumUsers: [{ user: albumOwner, role: AlbumUserRole.Owner }],

@@ -40,8 +40,14 @@ const SharedLinkCreateSchema = z
     allowDownload: z.boolean().default(true).optional().describe('Allow downloads'),
     showMetadata: z.boolean().default(true).optional().describe('Show metadata'),
   })
-  .superRefine(({ type, albumId, assetIds }, ctx) => {
+  .superRefine(({ type, albumId, assetIds, storyId }, ctx) => {
     switch (type) {
+      case SharedLinkType.Story: {
+        if (!storyId) {
+          ctx.addIssue(`storyId is required for type ${SharedLinkType.Story}`);
+        }
+        return;
+      }
       case SharedLinkType.Album: {
         if (!albumId) {
           ctx.addIssue(`albumId is required for type ${SharedLinkType.Album}`);

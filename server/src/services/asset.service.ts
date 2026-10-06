@@ -49,6 +49,15 @@ import { extractTimeZone } from 'src/utils/date';
 import { batched, findOrFail } from 'src/utils/misc';
 import { transformOcrBoundingBox } from 'src/utils/transform';
 
+const distance = (a: { latitude: number; longitude: number }, b: { latitude: number; longitude: number }) => {
+  const radians = Math.PI / 180;
+  const lat = (b.latitude - a.latitude) * radians;
+  const lon = (b.longitude - a.longitude) * radians;
+  const h =
+    Math.sin(lat / 2) ** 2 + Math.cos(a.latitude * radians) * Math.cos(b.latitude * radians) * Math.sin(lon / 2) ** 2;
+  return 6_371_000 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+};
+
 @Injectable()
 export class AssetService extends BaseService {
   async getLocationSuggestions(auth: AuthDto): Promise<LocationSuggestionResponseDto[]> {
@@ -56,28 +65,43 @@ export class AssetService extends BaseService {
     const sources = assets.filter((asset) => asset.latitude !== null && asset.longitude !== null);
     const groups = new Map<string, LocationSuggestionResponseDto>();
     const thirtyMinutes = 30 * 60 * 1000;
-    const distance = (a: { latitude: number; longitude: number }, b: { latitude: number; longitude: number }) => {
-      const radians = Math.PI / 180;
-      const lat = (b.latitude - a.latitude) * radians;
-      const lon = (b.longitude - a.longitude) * radians;
-      const h = Math.sin(lat / 2) ** 2 + Math.cos(a.latitude * radians) * Math.cos(b.latitude * radians) * Math.sin(lon / 2) ** 2;
-      return 6_371_000 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
-    };
     for (const target of assets) {
-      if (target.latitude !== null || target.longitude !== null) continue;
-      const candidates = sources.filter((source) => Math.abs(source.localDateTime.getTime() - target.localDateTime.getTime()) <= thirtyMinutes);
-      if (candidates.length < 2) continue;
+      if (target.latitude !== null || target.longitude !== null) {
+        continue;
+      }
+      const candidates = sources.filter(
+        (source) => Math.abs(source.localDateTime.getTime() - target.localDateTime.getTime()) <= thirtyMinutes,
+      );
+      if (candidates.length < 2) {
+        continue;
+      }
       const latitude = candidates.reduce((sum, source) => sum + Number(source.latitude), 0) / candidates.length;
       const longitude = candidates.reduce((sum, source) => sum + Number(source.longitude), 0) / candidates.length;
-      const spread = Math.max(...candidates.map((source) => distance({ latitude, longitude }, { latitude: Number(source.latitude), longitude: Number(source.longitude) })));
-      if (spread > 500) continue;
-      const locality = [candidates[0].city, candidates[0].state, candidates[0].country].filter(Boolean).join(', ') || 'Suggested location';
+      const spread = Math.max(
+        ...candidates.map((source) =>
+          distance({ latitude, longitude }, { latitude: Number(source.latitude), longitude: Number(source.longitude) }),
+        ),
+      );
+      if (spread > 500) {
+        continue;
+      }
+      const locality =
+        [candidates[0].city, candidates[0].state, candidates[0].country].filter(Boolean).join(', ') ||
+        'Suggested location';
       const key = `${latitude.toFixed(3)}:${longitude.toFixed(3)}:${Math.floor(target.localDateTime.getTime() / thirtyMinutes)}`;
-      const group = groups.get(key) ?? { assetIds: [], latitude, longitude, locality, accuracyMeters: Math.max(100, Math.ceil(spread)), confidence: 0.95, timeWindowMinutes: 30 };
+      const group = groups.get(key) ?? {
+        assetIds: [],
+        latitude,
+        longitude,
+        locality,
+        accuracyMeters: Math.max(100, Math.ceil(spread)),
+        confidence: 0.95,
+        timeWindowMinutes: 30,
+      };
       group.assetIds.push(target.id);
       groups.set(key, group);
     }
-    return [...groups.values()];
+    return groups.values().toArray();
   }
 
   async getStatistics(auth: AuthDto, dto: AssetStatsDto) {

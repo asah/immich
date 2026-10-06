@@ -17,11 +17,11 @@ test.describe('Album', () => {
 
     await page.goto('/albums');
     await page.getByRole('button', { name: 'Create album' }).click();
-    await page.getByRole('button', { name: 'Select photos' }).click();
+    await page.getByRole('button', { name: 'Add photos', exact: true }).click();
     await page.getByRole('button', { name: 'Close' }).click();
 
     await page.reload();
-    await page.getByRole('button', { name: 'Select photos' }).waitFor();
+    await expect(page.getByRole('button', { name: 'Add photos', exact: true })).toBeVisible();
   });
 
   test('should keep map view open after viewing an asset from the map and going back', async ({ context, page }) => {

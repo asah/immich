@@ -49,7 +49,9 @@
     try {
       sharedLink = await sharedLinkLogin({ key, slug, sharedLinkLoginDto: { password } });
       setSharedLink(sharedLink);
-      if ((sharedLink.type as string) === 'STORY') publishedStory = await storyService.sharedPublished({ key, slug });
+      if ((sharedLink.type as string) === 'STORY') {
+        publishedStory = await storyService.sharedPublished({ key, slug });
+      }
       passwordRequired = false;
       title = (sharedLink.album ? sharedLink.album.albumName : $t('public_share')) + ' - Immich';
       description =

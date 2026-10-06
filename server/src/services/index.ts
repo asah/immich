@@ -1,6 +1,6 @@
 import { ActivityService } from 'src/services/activity.service';
-import { AlbumService } from 'src/services/album.service';
 import { AlbumVoteService } from 'src/services/album-vote.service';
+import { AlbumService } from 'src/services/album.service';
 import { ApiKeyService } from 'src/services/api-key.service';
 import { ApiService } from 'src/services/api.service';
 import { AssetFileService } from 'src/services/asset-file.service';

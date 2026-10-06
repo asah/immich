@@ -1,4 +1,13 @@
-import { Column, CreateDateColumn, ForeignKeyColumn, Generated, Index, PrimaryGeneratedColumn, Table, Timestamp } from '@immich/sql-tools';
+import {
+  Column,
+  CreateDateColumn,
+  ForeignKeyColumn,
+  Generated,
+  Index,
+  PrimaryGeneratedColumn,
+  Table,
+  Timestamp,
+} from '@immich/sql-tools';
 import { AlbumUserRole } from 'src/enum';
 import { album_user_role_enum } from 'src/schema/enums';
 import { AlbumTable } from 'src/schema/tables/album.table';

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/svelte';
+import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { getIntersectionObserverMock } from '$lib/__mocks__/intersection-observer.mock';
 import { AssetMultiSelectManager } from '$lib/managers/asset-multi-select-manager.svelte';
@@ -9,6 +9,21 @@ describe('GalleryViewer section links', () => {
   beforeEach(() => {
     vi.stubGlobal('IntersectionObserver', getIntersectionObserverMock());
     localStorage.clear();
+  });
+
+  test('scrolls to a deep-linked asset even before its virtualized thumbnail is rendered', async () => {
+    const assets = Array.from({ length: 20 }, (_, index) => assetFactory.build({ id: `asset-${index}` }));
+    const onScrollTo = vi.fn();
+    render(GalleryViewer, {
+      assets,
+      assetInteraction: new AssetMultiSelectManager(),
+      viewport: { width: 400, height: 100 },
+      scrollTargetId: assets.at(-1)!.id,
+      onScrollTo,
+    });
+
+    await waitFor(() => expect(onScrollTo).toHaveBeenCalledWith(expect.any(Number)));
+    expect(onScrollTo.mock.calls[0][0]).toBeGreaterThan(100);
   });
 
   test('uses the section title to fold and the link icon for its in-album deep link', () => {
@@ -59,7 +74,7 @@ describe('GalleryViewer section links', () => {
     });
 
     const toggle = screen.getByRole('button', { name: 'Collapse section Beach' });
-    await toggle.click();
+    await fireEvent.click(toggle);
 
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
     expect(container.querySelector('[data-section-bar="section-asset"]')).toHaveAttribute('data-collapsed', 'true');
@@ -67,7 +82,7 @@ describe('GalleryViewer section links', () => {
     expect(localStorage.getItem('album-collapsed-sections')).toContain('Beach');
   });
 
-  test('temporarily opens saved-collapsed sections without changing the saved preference', async () => {
+  test('temporarily opens saved-collapsed sections without changing the saved preference', () => {
     const asset = assetFactory.build({ id: 'section-asset' });
     localStorage.setItem('album-collapsed-sections', JSON.stringify({ 'anonymous:album-id': ['Beach'] }));
     const { container } = render(GalleryViewer, {

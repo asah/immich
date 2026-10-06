@@ -10,7 +10,7 @@ export const load = (async ({ params, url, depends }) => {
 
   const album = await getAlbumInfo({ id: params.albumId });
   if (album.slug) {
-    throw redirect(308, url.pathname.replace(`/albums/${params.albumId}`, `/albums/${album.slug}`) + url.search);
+    throw redirect(308, url.pathname.replace(`/albums/${params.albumId}`, () => `/albums/${album.slug}`) + url.search);
   }
 
   return {

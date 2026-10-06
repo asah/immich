@@ -26,7 +26,7 @@
   let {
     isLiked,
     numberOfComments,
-    numberOfLikes,
+    numberOfLikes: _,
     disabled,
     onFavorite,
     onReaction,
@@ -36,17 +36,18 @@
     activeComments = false,
     filterMode = false,
   }: Props = $props();
-  const reactionCounts = $derived(
-    activityManager.activities
-      // Album-level reactions do not belong to a photo. Showing them in the
-      // album filter bar creates filters which can never produce a result.
-      .filter(({ type, parentActivityId, assetId }) => type === 'like' && !parentActivityId && (!filterMode || !!assetId))
-      .reduce<Record<string, number>>((counts, { reactionKey }) => {
-        const key = reactionKey ?? 'like';
-        counts[key] = (counts[key] ?? 0) + 1;
-        return counts;
-      }, {}),
-  );
+  const reactionCounts = $derived.by(() => {
+    const counts: Record<string, number> = {};
+    for (const { reactionKey, type, parentActivityId, assetId } of activityManager.activities) {
+      // Album-level reactions must not create photo filters with no results.
+      if (type !== 'like' || parentActivityId || (filterMode && !assetId)) {
+        continue;
+      }
+      const key = reactionKey ?? 'like';
+      counts[key] = (counts[key] ?? 0) + 1;
+    }
+    return counts;
+  });
 </script>
 
 <div class="flex items-center justify-center gap-1 rounded-full border bg-subtle/70 p-1">

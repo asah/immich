@@ -397,7 +397,10 @@ describe(SharedLinkService.name, () => {
         type: SharedLinkType.Album,
       });
 
-      await sharedLinkRepo.addAssets(sharedLink.id, [asset1.id, asset2.id]);
+      await Promise.all([
+        ctx.newAlbumAsset({ albumId: album.id, assetId: asset1.id }),
+        ctx.newAlbumAsset({ albumId: album.id, assetId: asset2.id }),
+      ]);
       const result = await sut.get(auth, sharedLink.id);
       const assetIds = result.assets.map((asset) => asset.id);
 

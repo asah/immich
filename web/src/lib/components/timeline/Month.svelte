@@ -60,7 +60,7 @@
   };
 
   const getSectionHref = (timelineDay: TimelineDay) => sectionLink?.(timelineDay);
-  const copySectionLink = (href: string) => void copyToClipboard(new URL(href, window.location.href).toString());
+  const copySectionLink = (href: string) => void copyToClipboard(new URL(href, location.href).href);
 </script>
 
 {#each filterIsInOrNearViewport(timelineMonth.timelineDays) as timelineDay, groupIndex (timelineDay.day)}

@@ -32,7 +32,7 @@
         startOffsetMs: startHere ? offsetMs : null,
         allowDownload,
       });
-      const url = new URL(Route.viewSharedLink(link), location.origin).toString();
+      const url = new URL(Route.viewSharedLink(link), location.origin).href;
       await navigator.clipboard.writeText(url);
       toastManager.primary($t('story_share_copied'));
       onClose();

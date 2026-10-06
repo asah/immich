@@ -62,23 +62,43 @@
           <Switch bind:checked={albumUpdateNotificationEnabled} />
         </Field>
 
-        <Field label="Shared photo and album activity" description="Owners are notified by default; participants receive relevant replies and updates." {disabled}>
+        <Field
+          label="Shared photo and album activity"
+          description="Owners are notified by default; participants receive relevant replies and updates."
+          {disabled}
+        >
           <Switch bind:checked={activityNotificationEnabled} />
         </Field>
 
-        <Field label="Comments" description="Comments and replies on shared photos and albums." disabled={disabled || !activityNotificationEnabled}>
+        <Field
+          label="Comments"
+          description="Comments and replies on shared photos and albums."
+          disabled={disabled || !activityNotificationEnabled}
+        >
           <Switch bind:checked={commentNotificationEnabled} />
         </Field>
 
-        <Field label="Reactions" description="Reactions on shared photos and albums." disabled={disabled || !activityNotificationEnabled}>
+        <Field
+          label="Reactions"
+          description="Reactions on shared photos and albums."
+          disabled={disabled || !activityNotificationEnabled}
+        >
           <Switch bind:checked={reactionNotificationEnabled} />
         </Field>
 
-        <Field label="Photo description changes" description="A non-owner changed the description of one of your photos." {disabled}>
+        <Field
+          label="Photo description changes"
+          description="A non-owner changed the description of one of your photos."
+          {disabled}
+        >
           <Switch bind:checked={descriptionNotificationEnabled} />
         </Field>
 
-        <Field label="Email delivery" description="Immediate sends each notice; hourly and daily coalesce updates for the same item." {disabled}>
+        <Field
+          label="Email delivery"
+          description="Immediate sends each notice; hourly and daily coalesce updates for the same item."
+          {disabled}
+        >
           <select class="immich-form-select" bind:value={notificationFrequency}>
             <option value="immediate">Immediately</option>
             <option value="hourly">Hourly</option>

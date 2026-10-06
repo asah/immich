@@ -112,8 +112,10 @@
           {#each pendingInvites as invite (invite.id)}
             <div class="mt-2 flex items-center gap-2">
               <Text class="grow" size="small">{invite.email}</Text>
-              <button class="text-sm text-immich-primary underline" type="button" onclick={() => revokePendingInvite(invite)}
-                >Revoke</button
+              <button
+                class="text-sm text-immich-primary underline"
+                type="button"
+                onclick={() => revokePendingInvite(invite)}>Revoke</button
               >
             </div>
           {/each}

@@ -98,7 +98,9 @@ export class AlbumInviteRepository {
         .where('email', '=', invite.email)
         .where('deletedAt', 'is', null)
         .executeTakeFirst();
-      if (existing) return { status: 'existing' };
+      if (existing) {
+        return { status: 'existing' };
+      }
 
       const clusterGroup = await trx.insertInto('cluster_group').values({}).returning('id').executeTakeFirstOrThrow();
       const user = await trx

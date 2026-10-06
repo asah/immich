@@ -23,6 +23,7 @@
   import { archiveAssets, getNextAsset, getPreviousAsset, navigateToAsset } from '$lib/utils/asset-utils';
   import { moveFocus } from '$lib/utils/focus-util';
   import { handleError } from '$lib/utils/handle-error';
+  import { sanitizeRichText } from '$lib/utils/sanitize-rich-text';
   import { PersistedLocalStorage } from '$lib/utils/persisted';
   import { getGroupedJustifiedLayoutFromAssets, getJustifiedLayoutFromAssets } from '$lib/utils/layout-utils';
   import { navigate } from '$lib/utils/navigation';
@@ -33,7 +34,8 @@
   import { mdiChevronDown, mdiChevronRight, mdiLink } from '@mdi/js';
   import { debounce } from 'lodash-es';
   import { t } from 'svelte-i18n';
-  import type { Snippet } from 'svelte';
+  import { untrack, type Snippet } from 'svelte';
+  import { SvelteMap, SvelteSet } from 'svelte/reactivity';
   import type { ClassValue } from 'svelte/elements';
 
   const {
@@ -62,6 +64,8 @@
     primarySortGroupDescriptions?: Record<string, string | null | undefined>;
     primarySortGroupColors?: Record<string, string | null | undefined>;
     viewportScrollTop?: number;
+    scrollTargetId?: string;
+    onScrollTo?: (top: number) => void;
     imageClass?: ClassValue;
     rowHeight?: number;
     /** Temporarily reveal sections without changing the user's saved collapsed-section preference. */
@@ -92,6 +96,8 @@
     primarySortGroupDescriptions,
     primarySortGroupColors,
     viewportScrollTop,
+    scrollTargetId,
+    onScrollTo,
     imageClass = '',
     rowHeight,
     forceSectionsOpen = false,
@@ -119,14 +125,15 @@
       return [] as Array<{ key: string; headerHeight: number }>;
     }
 
-    return primarySortGroupKeys.reduce<Array<{ key: string; headerHeight: number }>>((groups, key) => {
+    const groups: Array<{ key: string; headerHeight: number }> = [];
+    for (const key of primarySortGroupKeys) {
       if (groups.at(-1)?.key === key) {
-        return groups;
+        continue;
       }
       // A title and its controls need 56px; descriptions get an additional line and breathing room.
-      groups.push({ key, headerHeight: primarySortGroupDescriptions[key] ? 80 : 56 });
-      return groups;
-    }, []);
+      groups.push({ key, headerHeight: (primarySortGroupDescriptions[key] ?? '').length > 0 ? 80 : 56 });
+    }
+    return groups;
   });
   // Reserve exactly the rendered section-bar height before positioning the first photo row.
   const sectionHeaderHeight = $derived(
@@ -146,19 +153,23 @@
       : getJustifiedLayoutFromAssets(assets, layoutOptions),
   );
   const captionRows = $derived.by(() => {
-    if (!captionsBelow || !displayAssetInfo) return [] as Array<{ top: number; indexes: number[] }>;
-    const rows = new Map<number, number[]>();
+    if (!captionsBelow || !displayAssetInfo) {
+      return [] as Array<{ top: number; indexes: number[] }>;
+    }
+    const rows = new SvelteMap<number, number[]>();
     for (let index = 0; index < assets.length; index++) {
       const top = geometry.getTop(index);
       rows.set(top, [...(rows.get(top) ?? []), index]);
     }
-    return [...rows.entries()].sort(([left], [right]) => left - right).map(([top, indexes]) => ({ top, indexes }));
+    return [...rows].sort(([left], [right]) => left - right).map(([top, indexes]) => ({ top, indexes }));
   });
   let expandedCaptionAssetId = $state<string>();
   const captionFooterHeight = $derived(captionsBelow && displayAssetInfo ? 32 : 0);
   const captionGeometry = $derived.by(() => {
-    if (!captionFooterHeight) return geometry;
-    const positions = new Map<number, { top: number; height: number }>();
+    if (!captionFooterHeight) {
+      return geometry;
+    }
+    const positions = new SvelteMap<number, { top: number; height: number }>();
     let offset = 0;
     for (const row of captionRows) {
       const expanded = row.indexes.some((index) => assets[index]?.id === expandedCaptionAssetId);
@@ -178,19 +189,18 @@
       getHeight: (index: number) => positions.get(index)?.height ?? geometry.getHeight(index),
     };
   });
-  const getCaptionOffset = (top: number) =>
-    captionRows
-      .filter((row) => row.top < top)
-      .reduce((offset, row) => {
-        const expanded = row.indexes.some((index) => assets[index]?.id === expandedCaptionAssetId);
-        return offset + captionFooterHeight + (expanded ? 48 : 0);
-      }, 0);
+  const getCaptionOffset = (top: number) => {
+    let offset = 0;
+    for (const row of captionRows) {
+      if (row.top >= top) {
+        continue;
+      }
+      const expanded = row.indexes.some((index) => assets[index]?.id === expandedCaptionAssetId);
+      offset += captionFooterHeight + (expanded ? 48 : 0);
+    }
+    return offset;
+  };
   const dividerTops = $derived('dividerTops' in geometry ? (geometry.dividerTops as number[]) : []);
-  const sanitizeDescription = (value: string) =>
-    value
-      .replaceAll(/<\/?(?:script|iframe|object|embed|style)[^>]*>/gi, '')
-      .replaceAll(/\son\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
-      .replaceAll(/javascript\s*:/gi, '');
   const dividerLabels = $derived.by(() => {
     if (!primarySortGroupKeys || !primarySortGroupDescriptions) {
       return [] as Array<{ top: number; key: string; assetId: string; count: number; description?: string | null }>;
@@ -198,7 +208,9 @@
     const labels: Array<{ top: number; key: string; assetId: string; count: number; description?: string | null }> = [];
     let groupIndex = 0;
     for (let index = 0; index < primarySortGroupKeys.length; index++) {
-      if (index > 0 && primarySortGroupKeys[index] === primarySortGroupKeys[index - 1]) continue;
+      if (index > 0 && primarySortGroupKeys[index] === primarySortGroupKeys[index - 1]) {
+        continue;
+      }
       const top =
         dividerTops[groupIndex] -
         (sectionGroups[groupIndex]?.headerHeight ?? 56) / 2 +
@@ -227,14 +239,26 @@
       return;
     }
 
-    const collapsed = new Set(collapsedAlbumSections.current[sectionPersistenceKey] ?? []);
-    collapsed.has(key) ? collapsed.delete(key) : collapsed.add(key);
+    const collapsed = new SvelteSet(collapsedAlbumSections.current[sectionPersistenceKey]);
+    if (collapsed.has(key)) {
+      collapsed.delete(key);
+    } else {
+      collapsed.add(key);
+    }
     collapsedAlbumSections.current = { ...collapsedAlbumSections.current, [sectionPersistenceKey]: [...collapsed] };
   };
 
   const getStyle = (index: number) => {
     return `top: ${captionGeometry.getTop(index)}px; left: ${geometry.getLeft(index)}px; width: ${geometry.getWidth(index)}px; height: ${captionGeometry.getHeight(index)}px;`;
   };
+
+  $effect(() => {
+    const index = assets.findIndex((asset) => asset.id === scrollTargetId);
+    if (index !== -1 && viewport.width > 0) {
+      const top = captionGeometry.getTop(index) + slidingWindowOffset;
+      untrack(() => onScrollTo?.(top));
+    }
+  });
 
   const isInOrNearViewport = (index: number) => {
     const window = slidingWindow;
@@ -510,7 +534,7 @@
       <div
         data-section-bar={label.assetId}
         data-collapsed={isSectionCollapsed(label.key)}
-        class={`absolute inset-x-0 z-10 border-t px-2 py-2 font-sans text-sm leading-5 ${
+        class={`absolute inset-x-0 z-10 border-t p-2 font-sans text-sm/5 ${
           instantCameraStyle
             ? 'border-gray-700 bg-black text-gray-300'
             : 'border-gray-300 bg-white/90 text-gray-500 dark:border-gray-600 dark:bg-immich-dark-gray/90'
@@ -519,7 +543,7 @@
       >
         <div class="flex max-w-[90%] items-center gap-1 truncate">
           <button
-            class="shrink-0 rounded p-1 hover:bg-gray-200 dark:hover:bg-gray-700"
+            class="shrink-0 rounded-sm p-1 hover:bg-gray-200 dark:hover:bg-gray-700"
             class:hover:bg-gray-800={instantCameraStyle}
             type="button"
             aria-label={`${isSectionCollapsed(label.key) ? 'Expand' : 'Collapse'} section ${label.key}`}
@@ -557,9 +581,10 @@
           >
         </div>
         {#if label.description}<div
-            class="mt-1 ms-7 max-w-[calc(90%-1.75rem)] truncate text-xs leading-5 text-gray-600 dark:text-gray-300"
+            class="ms-7 mt-1 max-w-[calc(90%-1.75rem)] truncate text-xs/5 text-gray-600 dark:text-gray-300"
           >
-            {@html sanitizeDescription(label.description)}
+            <!-- eslint-disable-next-line svelte/no-at-html-tags -- Only allowlisted rich text is rendered. -->
+            {@html sanitizeRichText(label.description)}
           </div>{/if}
       </div>
     {/each}

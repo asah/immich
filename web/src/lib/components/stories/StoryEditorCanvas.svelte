@@ -4,7 +4,6 @@
   import {
     getStoryElementName,
     storyStyleNumber,
-    storyStylePoint,
     storyStyleString,
     type StoryAspectRatio,
     type StoryElement,
@@ -79,7 +78,7 @@
   const retrySave = () => trackSave(commandQueue.retryFailed());
 
   const patchCommand = (element: StoryElement, patch: Record<string, unknown>): StoryCommand => {
-    if ('frame' in patch || 'rotation' in patch)
+    if ('frame' in patch || 'rotation' in patch) {
       return {
         op: 'element.patchGeometry',
         sceneId: scene.id,
@@ -87,9 +86,11 @@
         frame: patch.frame ?? element.frame,
         rotation: patch.rotation ?? element.rotation,
       };
-    if ('text' in patch)
+    }
+    if ('text' in patch) {
       return { op: 'element.setText', sceneId: scene.id, elementId: element.id, text: patch.text ?? '' };
-    if ('ariaHidden' in patch || 'altText' in patch)
+    }
+    if ('ariaHidden' in patch || 'altText' in patch) {
       return {
         op: 'element.setAccessibility',
         sceneId: scene.id,
@@ -97,17 +98,21 @@
         ariaHidden: patch.ariaHidden ?? element.ariaHidden,
         altText: patch.altText ?? element.altText ?? '',
       };
-    if ('style' in patch)
+    }
+    if ('style' in patch) {
       return { op: 'element.setTextStyle', sceneId: scene.id, elementId: element.id, style: patch.style ?? {} };
-    if ('border' in patch)
+    }
+    if ('border' in patch) {
       return { op: 'element.setBorder', sceneId: scene.id, elementId: element.id, border: patch.border ?? null };
-    if ('animation' in patch)
+    }
+    if ('animation' in patch) {
       return {
         op: 'element.setAnimation',
         sceneId: scene.id,
         elementId: element.id,
         animation: patch.animation ?? null,
       };
+    }
     if ('videoPlayback' in patch) {
       const playback = patch.videoPlayback as StoryElement['videoPlayback'];
       return {
@@ -123,13 +128,17 @@
 
   const patchElement = async (element: StoryElement, patch: Record<string, unknown>) => {
     const inverse: Record<string, unknown> = {};
-    for (const key of Object.keys(patch)) inverse[key] = element[key as keyof StoryElement];
+    for (const key of Object.keys(patch)) {
+      inverse[key] = element[key as keyof StoryElement];
+    }
     await emit([patchCommand(element, patch)], [patchCommand(element, inverse)]);
     liveMessage = `${getStoryElementName(element)} updated`;
   };
 
   const handleGesture = async (result: StoryGestureResult | undefined) => {
-    if (!result) return;
+    if (!result) {
+      return;
+    }
     if (result.type === 'preview') {
       preview = { frame: result.frame, rotation: result.rotation };
       transactionManager.update(preview);
@@ -162,7 +171,9 @@
           send,
         }),
       );
-      if (saved) liveMessage = `${getStoryElementName(selected)} moved`;
+      if (saved) {
+        liveMessage = `${getStoryElementName(selected)} moved`;
+      }
     } else if (result.type === 'viewport') {
       panX += result.panX;
       panY += result.panY;
@@ -171,8 +182,12 @@
   };
 
   const onPointerDown = (event: PointerEvent, operation: 'move' | 'resize' | 'rotate') => {
-    if (!selected || sending || saveError || event.button !== 0) return;
-    event.currentTarget instanceof Element && event.currentTarget.setPointerCapture(event.pointerId);
+    if (!selected || sending || saveError || event.button !== 0) {
+      return;
+    }
+    if (event.currentTarget instanceof Element) {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
     const point = { x: event.clientX, y: event.clientY, pointerType: event.pointerType };
     if (gesture.mode === 'idle') {
       transactionManager.begin(operation, { frame: selected.frame, rotation: selected.rotation });
@@ -190,28 +205,54 @@
   const cancelGesture = () => void handleGesture(gesture.cancel());
 
   const nudge = async (dx: number, dy: number) => {
-    if (!selected) return;
+    if (!selected) {
+      return;
+    }
     await patchElement(selected, { frame: { ...selected.frame, x: selected.frame.x + dx, y: selected.frame.y + dy } });
   };
 
   const removeElement = (element: StoryElement) => {
     const inverse: StoryCommand[] = [{ op: 'element.add', sceneId: scene.id, element }];
-    if (!element.ariaHidden)
+    if (!element.ariaHidden) {
       inverse.push({ op: 'scene.setReadingOrder', sceneId: scene.id, elementIds: scene.readingOrder });
+    }
     return emit([{ op: 'element.remove', sceneId: scene.id, elementId: element.id }], inverse);
   };
 
   const onKeydown = (event: KeyboardEvent) => {
-    if ((event.target as HTMLElement).matches('input, textarea, select, button')) return;
+    if ((event.target as HTMLElement).matches('input, textarea, select, button')) {
+      return;
+    }
     const amount = event.shiftKey ? 10 : 1;
-    if (event.key === 'Escape') cancelGesture();
-    else if (event.key === 'ArrowLeft') void nudge(-amount, 0);
-    else if (event.key === 'ArrowRight') void nudge(amount, 0);
-    else if (event.key === 'ArrowUp') void nudge(0, -amount);
-    else if (event.key === 'ArrowDown') void nudge(0, amount);
-    else if ((event.key === 'Delete' || event.key === 'Backspace') && selected) {
-      void removeElement(selected);
-    } else return;
+    switch (event.key) {
+      case 'Escape': {
+        cancelGesture();
+        break;
+      }
+      case 'ArrowLeft': {
+        void nudge(-amount, 0);
+        break;
+      }
+      case 'ArrowRight': {
+        void nudge(amount, 0);
+        break;
+      }
+      case 'ArrowUp': {
+        void nudge(0, -amount);
+        break;
+      }
+      case 'ArrowDown': {
+        void nudge(0, amount);
+        break;
+      }
+      default: {
+        if ((event.key === 'Delete' || event.key === 'Backspace') && selected) {
+          void removeElement(selected);
+        } else {
+          return;
+        }
+      }
+    }
     event.preventDefault();
   };
 
@@ -248,8 +289,9 @@
             }
           : { ...base, type, style: { shape: 'rectangle', fill: '#DDE4FF' } };
     const commands: StoryCommand[] = [{ op: 'element.add', sceneId: scene.id, element }];
-    if (type === 'text')
+    if (type === 'text') {
       commands.push({ op: 'scene.setReadingOrder', sceneId: scene.id, elementIds: [...scene.readingOrder, id] });
+    }
     void emit(commands, [{ op: 'element.remove', sceneId: scene.id, elementId: id }]);
   };
 
@@ -258,9 +300,24 @@
     const index = items.findIndex((item) => item.id === id);
     const others = items.filter((item) => item.id !== id);
     let afterElementId: string | null = null;
-    if (direction === 'front') afterElementId = others.at(-1)?.id ?? null;
-    else if (direction === 'forward') afterElementId = items[index + 1]?.id ?? others.at(-1)?.id ?? null;
-    else if (direction === 'backward') afterElementId = index > 1 ? items[index - 2].id : null;
+    switch (direction) {
+      case 'front': {
+        afterElementId = others.at(-1)?.id ?? null;
+        break;
+      }
+      case 'forward': {
+        afterElementId = items[index + 1]?.id ?? others.at(-1)?.id ?? null;
+        break;
+      }
+      case 'backward': {
+        afterElementId = index > 1 ? items[index - 2].id : null;
+        break;
+      }
+      case 'back': {
+        afterElementId = null;
+        break;
+      }
+    }
     const previousAfterId = index > 0 ? items[index - 1].id : null;
     void emit(
       [{ op: 'element.moveLayer', sceneId: scene.id, elementId: id, afterElementId }],
@@ -275,19 +332,20 @@
   const undo = async () => {
     const batch = await transactionManager.undo();
     await trackSave(commandQueue.sendCommitted(batch, send));
-    if (batch) liveMessage = 'Last change undone';
+    if (batch) {
+      liveMessage = 'Last change undone';
+    }
   };
   const redo = async () => {
     const batch = await transactionManager.redo();
     await trackSave(commandQueue.sendCommitted(batch, send));
-    if (batch) liveMessage = 'Change redone';
+    if (batch) {
+      liveMessage = 'Change redone';
+    }
   };
 </script>
 
-<section
-  class="grid h-full min-h-0 min-w-0 gap-3 md:grid-cols-[minmax(0,1fr)_14rem]"
-  aria-label="Story editor"
->
+<section class="grid h-full min-h-0 min-w-0 gap-3 md:grid-cols-[minmax(0,1fr)_14rem]" aria-label="Story editor">
   <div class="flex min-h-0 min-w-0 flex-col gap-2">
     <div class="flex flex-wrap gap-2" aria-label="Story editor controls">
       <button class="min-h-11" type="button" onclick={() => addElement('text')}>Add text</button>
@@ -297,7 +355,9 @@
         <select
           aria-label="Built-in sticker"
           onchange={(event) => {
-            if (event.currentTarget.value) addElement('sticker', event.currentTarget.value);
+            if (event.currentTarget.value) {
+              addElement('sticker', event.currentTarget.value);
+            }
             event.currentTarget.value = '';
           }}
           ><option value="">Choose…</option><option value="builtin:heart">Heart</option><option value="builtin:star"
@@ -343,7 +403,7 @@
     <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
     <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
     <div
-      class="relative min-h-80 flex-1 overflow-hidden bg-gray-100 outline-none touch-none"
+      class="relative min-h-80 flex-1 touch-none overflow-hidden bg-gray-100 outline-none"
       role="application"
       aria-label="Story canvas. Use the Objects panel for a fully accessible editing view."
       tabindex="0"
@@ -404,11 +464,15 @@
       onSelect={(id) => (selectedId = id)}
       onPatch={(id, patch) => {
         const element = scene.elements.find((item) => item.id === id);
-        if (element) void patchElement(element, patch);
+        if (element) {
+          void patchElement(element, patch);
+        }
       }}
       onDelete={(id) => {
         const element = scene.elements.find((item) => item.id === id);
-        if (element) void removeElement(element);
+        if (element) {
+          void removeElement(element);
+        }
       }}
       onMove={moveLayer}
     />
@@ -559,7 +623,7 @@
               /></label
             >{/if}
         {/if}
-        {#if selected.type === 'image' || selected.type === 'video' || selected.type === 'sticker'}
+        {#if ['image', 'video', 'sticker'].includes(selected.type)}
           <fieldset class="grid grid-cols-2 gap-2 rounded-lg border p-2">
             <legend>Border</legend>
             <label

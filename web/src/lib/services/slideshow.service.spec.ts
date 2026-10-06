@@ -5,8 +5,9 @@ describe('openSlideshowAtAsset', () => {
   it('routes to the asset before starting playback', async () => {
     const events: string[] = [];
     const launcher = {
-      navigateToAsset: vi.fn(async (id: string) => {
+      navigateToAsset: vi.fn((id: string) => {
         events.push(`navigate:${id}`);
+        return Promise.resolve();
       }),
       start: vi.fn(() => {
         events.push('start');

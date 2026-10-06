@@ -120,7 +120,9 @@
   );
 
   const saveSortCriteria = async (criteria: AlbumAssetSortCriterion[]) => {
-    if (readOnly) return;
+    if (readOnly) {
+      return;
+    }
     const [primary] = criteria;
     const settings = {
       ...presentationSettings,
@@ -172,7 +174,9 @@
   ]);
 
   const setDisplayInfo = (key: keyof AlbumAssetDisplayInfo, checked: boolean) => {
-    if (readOnly) return;
+    if (readOnly) {
+      return;
+    }
     const settings = {
       ...presentationSettings,
       displayInfo: { ...defaultAlbumAssetDisplayInfo, ...presentationSettings.displayInfo, [key]: checked },
@@ -182,14 +186,18 @@
   };
 
   const updatePresentation = (update: Partial<AlbumAssetViewSettings>) => {
-    if (readOnly) return;
+    if (readOnly) {
+      return;
+    }
     const settings = { ...presentationSettings, ...update };
     album = { ...album, presentation: toAlbumPresentation(settings) };
     void handleUpdateAlbum(album, { presentation: album.presentation });
   };
 
   const updateVoting = (update: Partial<typeof votingSettings>) => {
-    if (readOnly) return;
+    if (readOnly) {
+      return;
+    }
     album = { ...album, voting: { ...votingSettings, ...update } };
     void handleUpdateAlbum(album, { voting: album.voting });
   };
@@ -222,7 +230,7 @@
                   <Select
                     value={criterion.sortBy}
                     options={sortByOptions.filter(
-                      ({ value }) => value === criterion.sortBy || !sortCriteria.some(({ sortBy }) => sortBy === value),
+                      ({ value }) => value === criterion.sortBy || sortCriteria.every(({ sortBy }) => sortBy !== value),
                     )}
                     onChange={(sortBy) => updateSortCriterion(index, { sortBy: sortBy as AlbumAssetSortBy })}
                   />
@@ -254,8 +262,8 @@
                 class="self-start text-sm font-medium text-primary hover:underline"
                 disabled={readOnly}
                 onclick={() => {
-                  const next = sortByOptions.find(({ value }) => !sortCriteria.some(({ sortBy }) => sortBy === value));
-                  if (next)
+                  const next = sortByOptions.find(({ value }) => sortCriteria.every(({ sortBy }) => sortBy !== value));
+                  if (next) {
                     void saveSortCriteria([
                       ...sortCriteria,
                       {
@@ -266,6 +274,7 @@
                             : SortOrder.Asc,
                       },
                     ]);
+                  }
                 }}>+ {$t('add_sort_criterion')}</button
               >
             {/if}
@@ -420,7 +429,7 @@
 {#if inline}
   <aside
     transition:fly={{ x: 360, duration: 180 }}
-    class="fixed top-(--navbar-height) inset-e-0 bottom-0 z-30 w-full overflow-y-auto border-s border-gray-200 bg-white p-5 shadow-2xl sm:w-105 dark:border-gray-700 dark:bg-immich-dark-gray"
+    class="fixed inset-e-0 top-(--navbar-height) bottom-0 z-30 w-full overflow-y-auto border-s border-gray-200 bg-white p-5 shadow-2xl sm:w-105 dark:border-gray-700 dark:bg-immich-dark-gray"
     data-testid="album-options-panel"
     aria-label={readOnly ? $t('album') : $t('options')}
   >

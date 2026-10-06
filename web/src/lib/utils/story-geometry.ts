@@ -80,7 +80,7 @@ export const moveStoryItem = <T extends { id: string }>(
   const without = items.filter((candidate) => candidate.id !== id);
   const targetId = 'beforeId' in target ? target.beforeId : target.afterId;
   const targetIndex = without.findIndex((candidate) => candidate.id === targetId);
-  if (targetIndex < 0) {
+  if (targetIndex === -1) {
     throw new RangeError(`Unknown target: ${targetId}`);
   }
   const insertionIndex = 'beforeId' in target ? targetIndex : targetIndex + 1;

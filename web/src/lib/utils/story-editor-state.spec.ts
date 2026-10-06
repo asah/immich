@@ -132,9 +132,9 @@ describe('StoryEditorTransactionManager', () => {
     const manager = createManager();
     const queue = new StorySerializedCommandQueue(manager);
     let sent = 0;
-    const send = async () => {
+    const send = () => {
       sent++;
-      throw new Error('STALE_REVISION');
+      return Promise.reject(new Error('STALE_REVISION'));
     };
     const first = queue.enqueue({
       kind: 'text',
@@ -164,7 +164,9 @@ describe('StoryEditorTransactionManager', () => {
     let fail = true;
     const send = async (batch: { baseRevision: number; clientMutationId: string }) => {
       mutationIds.push(batch.clientMutationId);
-      if (fail) throw new Error('offline');
+      if (fail) {
+        throw new Error('offline');
+      }
       await manager.acknowledge(batch.clientMutationId, batch.baseRevision + 1, { value: 2 });
     };
     const first = queue.enqueue({
@@ -192,7 +194,9 @@ describe('StoryEditorTransactionManager', () => {
     const retryGate = new Promise<void>((resolve) => (releaseRetry = resolve));
     const send = async (batch: { baseRevision: number; clientMutationId: string }) => {
       attempts++;
-      if (attempts === 1) throw new Error('offline');
+      if (attempts === 1) {
+        throw new Error('offline');
+      }
       await retryGate;
       await manager.acknowledge(batch.clientMutationId, batch.baseRevision + 1, { value: 2 });
     };

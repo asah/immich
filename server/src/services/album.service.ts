@@ -46,7 +46,7 @@ export class AlbumService extends BaseService {
     for (const email of new Set(emails.map((email) => email.trim().toLowerCase()))) {
       const user = await this.userRepository.getByEmail(email);
       if (user) {
-        if (!album.albumUsers.some(({ user: member }) => member.id === user.id)) {
+        if (album.albumUsers.every(({ user: member }) => member.id !== user.id)) {
           await this.albumUserRepository.create({ albumId: id, userId: user.id, role: AlbumUserRole.Viewer });
           await this.eventRepository.emit('AlbumInvite', { id, userId: user.id, senderName: auth.user.name });
         }
@@ -226,7 +226,7 @@ export class AlbumService extends BaseService {
     // manage its contents, but only the owner may change these settings.
     if (
       (dto.presentation !== undefined || dto.voting !== undefined) &&
-      !album.albumUsers.some(({ user, role }) => user.id === auth.user.id && role === AlbumUserRole.Owner)
+      album.albumUsers.every(({ user, role }) => !(user.id === auth.user.id && role === AlbumUserRole.Owner))
     ) {
       throw new ForbiddenException('Only the album owner can update presentation or voting settings');
     }

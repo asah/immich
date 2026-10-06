@@ -6,7 +6,9 @@ const AlbumVoteParamSchema = z.object({
   assetId: z.uuidv4().describe('Asset ID'),
 });
 
-const AlbumVoteSchema = z.object({ value: z.union([z.literal(-1), z.literal(1)]).nullable() }).meta({ id: 'AlbumVoteDto' });
+const AlbumVoteSchema = z
+  .object({ value: z.union([z.literal(-1), z.literal(1)]).nullable() })
+  .meta({ id: 'AlbumVoteDto' });
 
 const AlbumVoteCandidateSchema = z
   .object({

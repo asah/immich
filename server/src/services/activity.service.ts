@@ -21,9 +21,9 @@ const sanitizeCommentDocument = (document?: string | null) => {
   }
 
   return document
-    .replace(/<\/?(script|style|iframe|object|embed)[^>]*>/gi, '')
-    .replace(/\son[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
-    .replace(/(href|src)\s*=\s*(?:"|')?\s*javascript:[^\s"'>]+(?:"|')?/gi, '$1="#"');
+    .replaceAll(/<\/?(script|style|iframe|object|embed)[^>]*>/gi, '')
+    .replaceAll(/\son[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+    .replaceAll(/(href|src)\s*=\s*(?:"|')?\s*javascript:[^\s"'>]+(?:"|')?/gi, '$1="#"');
 };
 
 @Injectable()

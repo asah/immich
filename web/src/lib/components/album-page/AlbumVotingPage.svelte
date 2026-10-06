@@ -51,7 +51,7 @@
 </script>
 
 <main
-  class="min-h-dvh bg-immich-bg px-4 pt-8 pb-28 text-immich-fg dark:bg-immich-dark-bg dark:text-immich-dark-fg sm:px-8"
+  class="min-h-dvh bg-immich-bg px-4 pt-8 pb-28 text-immich-fg sm:px-8 dark:bg-immich-dark-bg dark:text-immich-dark-fg"
 >
   <div class="mx-auto max-w-5xl">
     <a class="text-sm font-medium text-primary hover:underline" href={backHref}>← Back to album</a>
@@ -115,7 +115,7 @@
       {#if session.leaderboardVisible}
         {@const remainingRatings = Math.max(0, session.requiredCount - session.submittedCount)}
         <div
-          class="fixed inset-x-0 bottom-0 z-30 border-t border-gray-200 bg-white/95 shadow-lg backdrop-blur dark:border-gray-700 dark:bg-immich-dark-bg/95"
+          class="fixed inset-x-0 bottom-0 z-30 border-t border-gray-200 bg-white/95 shadow-lg backdrop-blur-sm dark:border-gray-700 dark:bg-immich-dark-bg/95"
         >
           <div class="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3 sm:px-8">
             <Button color="secondary" disabled={remainingRatings > 0} onclick={openLeaderboard}>
@@ -142,7 +142,7 @@
           <li>
             <div class="grid h-36 place-items-center rounded-lg bg-black">
               <img
-                class="h-full w-full object-contain"
+                class="size-full object-contain"
                 src={getAssetMediaUrl({ id: item.assetId })}
                 alt={`Favorite ${index + 1}`}
               />

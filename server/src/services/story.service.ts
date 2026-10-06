@@ -957,7 +957,7 @@ export class StoryService {
     if (items.some(({ id }) => id === item.id)) {
       throw new BadRequestException('Duplicate ID');
     }
-    const index = afterId == null ? -1 : items.findIndex(({ id }) => id === afterId);
+    const index = afterId === null || afterId === undefined ? -1 : items.findIndex(({ id }) => id === afterId);
     if (afterId && index < 0) {
       throw new BadRequestException('Anchor not found');
     }
@@ -973,7 +973,7 @@ export class StoryService {
       throw new BadRequestException('Item not found');
     }
     const [item] = items.splice(index, 1);
-    const target = afterId == null ? -1 : items.findIndex((item) => item.id === afterId);
+    const target = afterId === null || afterId === undefined ? -1 : items.findIndex((item) => item.id === afterId);
     if (afterId && target < 0) {
       throw new BadRequestException('Anchor not found');
     }

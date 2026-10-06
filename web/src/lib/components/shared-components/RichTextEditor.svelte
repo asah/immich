@@ -1,4 +1,5 @@
 <script lang="ts">
+  /* eslint-disable unicorn/prefer-dom-node-html-methods -- innerHTML supports older browsers and this editor has no shadow roots. */
   import ReactionPicker from '$lib/components/asset-viewer/ReactionPicker.svelte';
   import { Button, Field } from '@immich/ui';
   import { mdiFormatBold, mdiFormatItalic, mdiFormatUnderline, mdiLink, mdiPalette } from '@mdi/js';
@@ -12,15 +13,17 @@
   let savedRange = $state<Range>();
 
   const saveSelection = () => {
-    const selection = window.getSelection();
+    const selection = getSelection();
     if (selection?.rangeCount && editor?.contains(selection.anchorNode)) {
       savedRange = selection.getRangeAt(0).cloneRange();
     }
   };
 
   const restoreSelection = () => {
-    if (!savedRange) return;
-    const selection = window.getSelection();
+    if (!savedRange) {
+      return;
+    }
+    const selection = getSelection();
     selection?.removeAllRanges();
     selection?.addRange(savedRange);
   };
@@ -47,7 +50,9 @@
 
   const addLink = () => {
     const url = prompt('URL');
-    if (url) command('createLink', url);
+    if (url) {
+      command('createLink', url);
+    }
   };
 
   const insertEmoji = (emoji: string) => {
@@ -60,12 +65,16 @@
 
   onMount(() => {
     if (editor) {
+      // Svelte does not manage children of this contenteditable element.
+      // eslint-disable-next-line svelte/no-dom-manipulating
       editor.innerHTML = value;
     }
   });
 
   $effect(() => {
     if (editor && editor.innerHTML !== value && document.activeElement !== editor) {
+      // Svelte does not manage children of this contenteditable element.
+      // eslint-disable-next-line svelte/no-dom-manipulating
       editor.innerHTML = value;
     }
   });

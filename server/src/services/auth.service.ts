@@ -43,8 +43,10 @@ export interface LoginDetails {
 }
 
 const maskEmail = (email: string) => {
-  const [localPart, domain] = email.split('@');
-  if (!domain) return '••••';
+  const [localPart, domain] = email.split('@', 2);
+  if (!domain) {
+    return '••••';
+  }
   return `${localPart.slice(0, 1)}•••@${domain}`;
 };
 
@@ -225,7 +227,9 @@ export class AuthService extends BaseService {
     loginDetails: LoginDetails,
   ): Promise<AlbumInviteAcceptResponseDto> {
     const config = await this.getConfig({ withCache: false });
-    if (!config.passwordLogin.enabled) throw new BadRequestException('Password login has been disabled');
+    if (!config.passwordLogin.enabled) {
+      throw new BadRequestException('Password login has been disabled');
+    }
     const quota = config.oauth.defaultStorageQuota;
     let result;
     try {
@@ -247,14 +251,18 @@ export class AuthService extends BaseService {
       throw new BadRequestException('This invitation is invalid or has expired');
     }
     const user = await this.userRepository.get(result.userId, {});
-    if (!user) throw new BadRequestException('Unable to create account from invitation');
+    if (!user) {
+      throw new BadRequestException('Unable to create account from invitation');
+    }
     await this.eventRepository.emit('UserCreate', user);
     return { ...(await this.createLoginResponse(user, loginDetails)), albumId: result.albumId };
   }
 
   async getAlbumInvitePreview(dto: AlbumInviteTokenDto): Promise<AlbumInvitePreviewDto> {
     const invite = await this.albumInviteRepository.getPreview(this.cryptoRepository.hashSha256(dto.token));
-    if (!invite) throw new BadRequestException('This invitation is invalid or has expired');
+    if (!invite) {
+      throw new BadRequestException('This invitation is invalid or has expired');
+    }
     return {
       albumId: invite.albumId,
       albumName: invite.albumName,
@@ -265,8 +273,9 @@ export class AuthService extends BaseService {
 
   async claimAlbumInvite(auth: AuthDto, dto: AlbumInviteTokenDto): Promise<AlbumInviteClaimDto> {
     const result = await this.albumInviteRepository.claim(this.cryptoRepository.hashSha256(dto.token), auth.user);
-    if (result.status !== 'success')
+    if (result.status !== 'success') {
       throw new BadRequestException('This invitation is invalid, expired, or belongs to another email address');
+    }
     return { albumId: result.albumId };
   }
 

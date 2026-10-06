@@ -8,7 +8,7 @@ vi.mock('$lib/utils/file-uploader', () => ({ openFileUploadDialog: vi.fn() }));
 describe('getAlbumAssetsActions', () => {
   test('uploads from the album view directly into the current album', () => {
     const album = albumFactory.build({ id: 'album-id' });
-    const { Upload } = getAlbumAssetsActions(vi.fn((id) => String(id)) as never, album, []);
+    const { Upload } = getAlbumAssetsActions(vi.fn(String) as never, album, []);
 
     Upload.onAction(Upload);
 

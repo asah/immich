@@ -1,5 +1,4 @@
 import { fireEvent, screen } from '@testing-library/svelte';
-import { get } from 'svelte/store';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { handleUpdateAlbum } from '$lib/services/album.service';
 import {

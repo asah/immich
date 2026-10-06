@@ -26,7 +26,7 @@
     <Input bind:value={value.title} maxlength={200} required autofocus />
   </Field>
   <Field label={$t('description')} description={$t('story_description_hint')}>
-    <Textarea bind:value={value.description} maxlength={10000} />
+    <Textarea bind:value={value.description} maxlength={10_000} />
   </Field>
   <Field label={$t('story_format')}>
     <Select

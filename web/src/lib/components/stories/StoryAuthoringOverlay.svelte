@@ -40,7 +40,7 @@
         stroke-width="2"
         vector-effect="non-scaling-stroke"
       />
-      {#each corners as corner}
+      {#each corners as corner, index (index)}
         <circle
           cx={corner[0]}
           cy={corner[1]}

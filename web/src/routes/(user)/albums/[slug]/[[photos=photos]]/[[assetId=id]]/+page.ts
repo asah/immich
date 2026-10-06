@@ -1,5 +1,5 @@
-import { error } from '@sveltejs/kit';
 import { getAllAlbums } from '@immich/sdk';
+import { error } from '@sveltejs/kit';
 import { authenticate } from '$lib/utils/auth';
 import type { PageLoad } from './$types';
 

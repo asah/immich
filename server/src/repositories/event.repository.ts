@@ -40,7 +40,16 @@ type EventMap = {
   // album events
   AlbumUpdate: [{ id: string; userIds: string[]; recipientIds: string[] }];
   AlbumInvite: [{ id: string; userId: string; senderName: string }];
-  ActivityCreate: [{ activityId: string; actorId: string; albumId: string; assetId?: string; isLiked: boolean; parentActivityId?: string }];
+  ActivityCreate: [
+    {
+      activityId: string;
+      actorId: string;
+      albumId: string;
+      assetId?: string;
+      isLiked: boolean;
+      parentActivityId?: string;
+    },
+  ];
 
   // cluster group events
   ClusterGroupRequest: [{ clusterGroupId: string; userId: string; senderName: string }];

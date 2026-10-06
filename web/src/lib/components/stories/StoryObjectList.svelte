@@ -39,7 +39,7 @@
         {#if selectedId === element.id}
           <fieldset class="mt-2 grid grid-cols-2 gap-2">
             <legend class="sr-only">Edit {getStoryElementLabel(element)}</legend>
-            {#each ['x', 'y', 'width', 'height'] as key}
+            {#each ['x', 'y', 'width', 'height'] as key (key)}
               <label class="text-sm">
                 {key}
                 <input

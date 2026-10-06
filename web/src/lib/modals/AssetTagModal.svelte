@@ -153,7 +153,7 @@
                   size="tiny"
                   checked={getTagState(tag.id) === true}
                   indeterminate={getTagState(tag.id) === 'indeterminate'}
-                  onCheckedChange={(checked) => updateTagState(tag.id, checked === true)}
+                  onCheckedChange={(checked) => updateTagState(tag.id, checked)}
                 />
                 <Label for={id} label={tag.value} class="text-sm font-normal" />
               </div>

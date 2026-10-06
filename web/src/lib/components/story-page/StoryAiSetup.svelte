@@ -44,8 +44,8 @@
       await storyService.setupAiProvider(key, model);
       key = '';
       onSaved();
-    } catch (cause) {
-      error = describeError(cause);
+    } catch (error_) {
+      error = describeError(error_);
     } finally {
       busy = false;
     }

@@ -42,15 +42,6 @@ import {
   type StoryUpdateDto,
 } from '@immich/sdk';
 
-export type {
-  SharedStoryResponseDto,
-  StoryCommandBatchDto,
-  StoryCreateDto,
-  StoryDocumentResponseDto,
-  StoryResponseDto,
-  StoryRevisionResponseDto,
-  StoryUpdateDto,
-};
 export type StoryAspectRatio = StoryResponseDto['aspectRatio'];
 export type StoryDocumentDto = StoryDocumentResponseDto['document'];
 export type SharedPublishedStoryDto = SharedStoryResponseDto;
@@ -163,7 +154,21 @@ export const storyService = {
       },
     }),
   async detail(id: string): Promise<StoryDetail> {
-    const [story, document, revisions] = await Promise.all([this.get(id), this.document(id), this.revisions(id)]);
+    const [story, document, revisions] = await Promise.all([
+      storyService.get(id),
+      storyService.document(id),
+      storyService.revisions(id),
+    ]);
     return { story, document, revisions };
   },
 };
+
+export {
+  type SharedStoryResponseDto,
+  type StoryCommandBatchDto,
+  type StoryCreateDto,
+  type StoryDocumentResponseDto,
+  type StoryResponseDto,
+  type StoryRevisionResponseDto,
+  type StoryUpdateDto,
+} from '@immich/sdk';

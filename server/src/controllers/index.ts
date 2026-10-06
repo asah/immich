@@ -1,6 +1,6 @@
 import { ActivityController } from 'src/controllers/activity.controller';
-import { AlbumController } from 'src/controllers/album.controller';
 import { AlbumVoteController } from 'src/controllers/album-vote.controller';
+import { AlbumController } from 'src/controllers/album.controller';
 import { ApiKeyController } from 'src/controllers/api-key.controller';
 import { AppController } from 'src/controllers/app.controller';
 import { AssetFilesController } from 'src/controllers/asset-file.controller';

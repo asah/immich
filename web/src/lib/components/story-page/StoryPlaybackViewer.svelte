@@ -54,8 +54,11 @@
     if (playing && !documentHidden) {
       pageTime += Math.max(0, now - last);
       if (pageTime >= (scenes[index].durationMs ?? 6000)) {
-        if (index < scenes.length - 1) move(1);
-        else playing = false;
+        if (index < scenes.length - 1) {
+          move(1);
+        } else {
+          playing = false;
+        }
       }
     }
     last = now;
@@ -65,7 +68,9 @@
   onMount(() => {
     const query = matchMedia('(prefers-reduced-motion: reduce)');
     reducedMotion = query.matches;
-    if (reducedMotion) playing = false;
+    if (reducedMotion) {
+      playing = false;
+    }
     const visibility = () => {
       documentHidden = document.hidden;
       last = performance.now();
@@ -75,10 +80,11 @@
       await domTick();
       const mediaReady = Promise.all(
         [...viewport.querySelectorAll<HTMLImageElement | HTMLVideoElement>('img, video')].map((media) => {
-          if (media instanceof HTMLImageElement)
+          if (media instanceof HTMLImageElement) {
             return media.complete
               ? media.decode().catch(() => undefined)
               : new Promise<void>((resolve) => media.addEventListener('load', () => resolve(), { once: true }));
+          }
           return media.readyState >= 2
             ? Promise.resolve()
             : new Promise<void>((resolve) => media.addEventListener('loadeddata', () => resolve(), { once: true }));
@@ -93,7 +99,9 @@
     void prepare();
     return () => {
       document.removeEventListener('visibilitychange', visibility);
-      if (frame) cancelAnimationFrame(frame);
+      if (frame) {
+        cancelAnimationFrame(frame);
+      }
     };
   });
 </script>

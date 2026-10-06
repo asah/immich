@@ -38,6 +38,7 @@
   import { featureFlagsManager } from '$lib/managers/feature-flags-manager.svelte';
   import { TimelineManager } from '$lib/managers/timeline-manager/timeline-manager.svelte';
   import type { TimelineAsset } from '$lib/managers/timeline-manager/types';
+  import { toTimelineAsset } from '$lib/utils/timeline-util';
   import AlbumOptionsModal from '$lib/modals/AlbumOptionsModal.svelte';
   import { Route } from '$lib/route';
   import {
@@ -77,10 +78,10 @@
   } from '@immich/sdk';
   import {
     ActionButton,
+    Button,
     CommandPaletteDefaultProvider,
     Icon,
     IconButton,
-    modalManager,
     toastManager,
     Tooltip,
   } from '@immich/ui';
@@ -121,6 +122,7 @@
   const filenameViewport: Viewport = $state({ width: 0, height: 0 });
   let filenameScrollTop = $state(0);
   let filenameGalleryElement: HTMLElement | undefined = $state();
+  let filenameScrollElement: HTMLElement | undefined = $state();
   let filenameAssets: AssetResponseDto[] = $state([]);
   let filenameNextCursor = $state<string | null>(null);
   let filenameLoading = $state(false);
@@ -174,8 +176,8 @@
       }
     };
 
-    window.addEventListener('keydown', clearAlbumSelectionOnEscape, { capture: true });
-    return () => window.removeEventListener('keydown', clearAlbumSelectionOnEscape, { capture: true });
+    addEventListener('keydown', clearAlbumSelectionOnEscape, { capture: true });
+    return () => removeEventListener('keydown', clearAlbumSelectionOnEscape, { capture: true });
   });
 
   const handleFavorite = async () => {
@@ -187,6 +189,20 @@
   };
 
   const handleStartSlideshow = async () => {
+    if (isAlternateSort) {
+      if (filteredFilenameAssets.length === 0) {
+        await loadFilenameAssets(true);
+      }
+      const index =
+        $slideshowNavigation === SlideshowNavigation.Shuffle
+          ? Math.floor(Math.random() * filteredFilenameAssets.length)
+          : 0;
+      const asset = filteredFilenameAssets[index];
+      if (asset) {
+        await openSlideshowAtAsset(asset.id);
+      }
+      return;
+    }
     const asset =
       $slideshowNavigation === SlideshowNavigation.Shuffle
         ? await timelineManager.getRandomAsset()
@@ -200,7 +216,9 @@
   };
 
   const handleEscape = async () => {
-    timelineManager.suspendTransitions = true;
+    if (timelineManager) {
+      timelineManager.suspendTransitions = true;
+    }
     if (viewMode === AlbumPageViewMode.SELECT_THUMBNAIL) {
       viewMode = AlbumPageViewMode.VIEW;
       return;
@@ -224,7 +242,9 @@
   };
 
   const setModeToView = async () => {
-    timelineManager.suspendTransitions = true;
+    if (timelineManager) {
+      timelineManager.suspendTransitions = true;
+    }
     viewMode = AlbumPageViewMode.VIEW;
     await navigate(
       { targetRoute: 'current', assetId: null, assetGridRouteSearchParams: { at: oldAt?.at } },
@@ -239,7 +259,8 @@
   };
 
   const handleSetVisibility = (assetIds: string[]) => {
-    timelineManager.removeAssets(assetIds);
+    timelineManager?.removeAssets(assetIds);
+    filenameAssets = filenameAssets.filter((asset) => !assetIds.includes(asset.id));
     assetMultiSelectManager.clear();
   };
 
@@ -252,7 +273,7 @@
   };
 
   const handleRemoveAssets = async (assetIds: string[]) => {
-    timelineManager.removeAssets(assetIds);
+    timelineManager?.removeAssets(assetIds);
     // Albums with published sorting render the separate gallery data source. Keep
     // it in sync immediately so it cannot try to display thumbnails that were
     // just deleted, then reload its server-backed page for a complete refresh.
@@ -266,8 +287,11 @@
   };
 
   const handleUndoRemoveAssets = async (assets: TimelineAsset[]) => {
-    timelineManager.upsertAssets(assets);
+    timelineManager?.upsertAssets(assets);
     await refreshAlbum();
+    if (isAlternateSort) {
+      await loadFilenameAssets(true);
+    }
   };
 
   const handleUpdateThumbnail = async (assetId: string) => {
@@ -344,11 +368,21 @@
   };
   const fileSizeGroup = (asset: AssetResponseDto) => {
     const size = asset.exifInfo?.fileSizeInByte ?? 0;
-    if (size < 1_000_000) return 'Under 1 MB';
-    if (size < 5_000_000) return '1–5 MB';
-    if (size < 20_000_000) return '5–20 MB';
-    if (size < 100_000_000) return '20–100 MB';
-    if (size < 500_000_000) return '100–500 MB';
+    if (size < 1_000_000) {
+      return 'Under 1 MB';
+    }
+    if (size < 5_000_000) {
+      return '1–5 MB';
+    }
+    if (size < 20_000_000) {
+      return '5–20 MB';
+    }
+    if (size < 100_000_000) {
+      return '20–100 MB';
+    }
+    if (size < 500_000_000) {
+      return '100–500 MB';
+    }
     return '500 MB and over';
   };
   const albumSortCriteria = $derived.by(() => {
@@ -363,7 +397,9 @@
   const engagementByAsset = $derived.by(() => {
     const engagement: Record<string, { reactions: Record<string, number>; comments: number }> = {};
     for (const activity of activityManager.activities) {
-      if (!activity.assetId || activity.parentActivityId) continue;
+      if (!activity.assetId || activity.parentActivityId) {
+        continue;
+      }
       const entry = (engagement[activity.assetId] ??= { reactions: {}, comments: 0 });
       if (activity.type === 'like') {
         const key = activity.reactionKey ?? 'like';
@@ -375,14 +411,14 @@
     return engagement;
   });
   const filteredFilenameAssets = $derived(
-    !engagementFilter
-      ? filenameAssets
-      : filenameAssets.filter((asset) => {
+    engagementFilter
+      ? filenameAssets.filter((asset) => {
           const engagement = engagementByAsset[asset.id];
           return engagementFilter === 'comments'
             ? (engagement?.comments ?? 0) > 0
             : (engagement?.reactions[engagementFilter as string] ?? 0) > 0;
-        }),
+        })
+      : filenameAssets,
   );
   const hasClientSort = $derived(
     sortCriteria.some(({ sortBy }) =>
@@ -406,10 +442,12 @@
   const compareAssets = (left: AssetResponseDto, right: AssetResponseDto) => {
     for (const { sortBy, sortOrder } of sortCriteria) {
       const direction = sortOrder === SortOrder.Desc ? -1 : 1;
-      let comparison = 0;
+      let comparison: number;
       if (sortBy === AlbumAssetSortBy.Tag) {
         comparison = compareAlbumTagSections(left, right, sortOrder);
-        if (comparison !== 0) return comparison;
+        if (comparison !== 0) {
+          return comparison;
+        }
         continue;
       }
       if (sortBy === AlbumAssetSortBy.Engagement) {
@@ -425,26 +463,36 @@
         const value = (asset: AssetResponseDto): string | number => {
           const exif = asset.exifInfo;
           switch (sortBy) {
-            case AlbumAssetSortBy.DateTaken:
+            case AlbumAssetSortBy.DateTaken: {
               return asset.localDateTime;
-            case AlbumAssetSortBy.FileName:
+            }
+            case AlbumAssetSortBy.FileName: {
               return asset.originalFileName;
-            case AlbumAssetSortBy.FileSize:
+            }
+            case AlbumAssetSortBy.FileSize: {
               return exif?.fileSizeInByte ?? -1;
-            case AlbumAssetSortBy.Camera:
+            }
+            case AlbumAssetSortBy.Camera: {
               return cameraLabel(asset);
-            case AlbumAssetSortBy.Lens:
+            }
+            case AlbumAssetSortBy.Lens: {
               return exif?.lensModel ?? 'Unknown lens';
-            case AlbumAssetSortBy.Location:
+            }
+            case AlbumAssetSortBy.Location: {
               return locationLabel(asset);
-            case AlbumAssetSortBy.Time:
+            }
+            case AlbumAssetSortBy.Time: {
               return localDateTime(asset).hour;
-            case AlbumAssetSortBy.Description:
+            }
+            case AlbumAssetSortBy.Description: {
               return exif?.description ?? '';
-            case AlbumAssetSortBy.CameraSettings:
+            }
+            case AlbumAssetSortBy.CameraSettings: {
               return cameraSettingsLabel(asset);
-            case AlbumAssetSortBy.LensSettings:
+            }
+            case AlbumAssetSortBy.LensSettings: {
               return lensSettingsLabel(asset);
+            }
           }
         };
         const a = value(left);
@@ -452,7 +500,9 @@
         comparison =
           typeof a === 'number' && typeof b === 'number' ? a - b : compareCaseSensitive(String(a), String(b));
       }
-      if (comparison !== 0) return direction * comparison;
+      if (comparison !== 0) {
+        return direction * comparison;
+      }
     }
     return compareCaseSensitive(left.id, right.id);
   };
@@ -479,16 +529,16 @@
         return filenameAssets.map(({ originalFileName }) => originalFileName);
       }
       case AlbumAssetSortBy.FileSize: {
-        return filenameAssets.map(fileSizeGroup);
+        return filenameAssets.map((asset) => fileSizeGroup(asset));
       }
       case AlbumAssetSortBy.Camera: {
-        return filenameAssets.map(cameraLabel);
+        return filenameAssets.map((asset) => cameraLabel(asset));
       }
       case AlbumAssetSortBy.Lens: {
         return filenameAssets.map(({ exifInfo }) => exifInfo?.lensModel ?? 'Unknown lens');
       }
       case AlbumAssetSortBy.Location: {
-        return filenameAssets.map(locationLabel);
+        return filenameAssets.map((asset) => locationLabel(asset));
       }
       case AlbumAssetSortBy.Time: {
         return filenameAssets.map((asset) => localDateTime(asset).toFormat('h a'));
@@ -497,10 +547,10 @@
         return filenameAssets.map(({ exifInfo }) => exifInfo?.description || 'No description');
       }
       case AlbumAssetSortBy.CameraSettings: {
-        return filenameAssets.map(cameraSettingsLabel);
+        return filenameAssets.map((asset) => cameraSettingsLabel(asset));
       }
       case AlbumAssetSortBy.LensSettings: {
-        return filenameAssets.map(lensSettingsLabel);
+        return filenameAssets.map((asset) => lensSettingsLabel(asset));
       }
       case AlbumAssetSortBy.Engagement: {
         return filenameAssets.map((asset) => {
@@ -511,7 +561,7 @@
         });
       }
       case AlbumAssetSortBy.Tag: {
-        return filenameAssets.map(getAlbumTagSection);
+        return filenameAssets.map((asset) => getAlbumTagSection(asset));
       }
     }
   });
@@ -561,7 +611,7 @@
   const isOwned = $derived(album.albumUsers[0].user.id === authManager.user.id);
 
   const loadFilenameAssets = async (reset = false) => {
-    if ((!reset && filenameLoading) || (!reset && !filenameNextCursor)) {
+    if (!reset && (filenameLoading || !filenameNextCursor)) {
       return;
     }
     const request = reset ? ++filenameRequest : filenameRequest;
@@ -596,7 +646,9 @@
         const incoming = [...(reset ? [] : filenameAssets), ...assets.items];
         // Section labels and file names use a case-sensitive comparison. Do it
         // client-side even when the server can provide an initial ordering.
-        if (isAlternateSort) incoming.sort(compareAssets);
+        if (isAlternateSort) {
+          incoming.sort(compareAssets);
+        }
         filenameAssets = incoming;
         filenameNextCursor = assets.nextCursor;
       }
@@ -714,17 +766,6 @@
     await timelineManager?.reload();
   };
 
-  $effect(() => {
-    const assetId = page.url.searchParams.get('at');
-    if (!isAlternateSort || !assetId || filenameAssets.length === 0 || !filenameGalleryElement) {
-      return;
-    }
-
-    filenameGalleryElement
-      .querySelector<HTMLElement>(`[data-section-anchor="${assetId}"]`)
-      ?.scrollIntoView({ block: 'start' });
-  });
-
   const { Cast } = $derived(getGlobalActions($t));
   const { Share } = $derived(getAlbumActions($t, album));
   const { AddAssets, Upload } = $derived(getAlbumAssetsActions($t, album, timelineMultiSelectManager.assets));
@@ -792,14 +833,16 @@
     >
       {#if isAlternateSort}
         <section
+          data-album-gallery
           class="h-full overflow-y-auto"
+          bind:this={filenameScrollElement}
           bind:clientHeight={filenameViewport.height}
           bind:clientWidth={filenameViewport.width}
           onscroll={(event) => (filenameScrollTop = event.currentTarget.scrollTop)}
         >
           <div
             class={presentationSettings.instantCameraStyle
-              ? '-mx-2 bg-white px-2 py-8 text-immich-fg dark:bg-immich-dark-bg dark:text-immich-dark-fg md:-mx-6 md:px-6'
+              ? '-mx-2 bg-white px-2 py-8 text-immich-fg md:-mx-6 md:px-6 dark:bg-immich-dark-bg dark:text-immich-dark-fg'
               : 'pt-8'}
           >
             <AlbumTitle
@@ -840,6 +883,8 @@
               instantCameraStyle={presentationSettings.instantCameraStyle}
               slidingWindowOffset={filenameGalleryElement?.offsetTop ?? 0}
               viewportScrollTop={filenameScrollTop}
+              scrollTargetId={page.url.searchParams.get('at') ?? undefined}
+              onScrollTo={(top) => filenameScrollElement?.scrollTo({ top })}
               viewport={filenameViewport}
               rowHeight={presentationSettings.rowHeight}
             >
@@ -992,7 +1037,24 @@
         {@const Actions = getAssetBulkActions($t)}
         <CommandPaletteDefaultProvider name={$t('assets')} actions={Object.values(Actions)} />
         <CreateSharedLink />
-        <SelectAllAssets {timelineManager} assetInteraction={assetMultiSelectManager} />
+        {#if isAlternateSort}
+          <Button
+            variant="ghost"
+            disabled={filenameLoading}
+            onclick={async () => {
+              while (filenameNextCursor) {
+                const previousCursor = filenameNextCursor;
+                await loadFilenameAssets();
+                if (filenameNextCursor === previousCursor) {
+                  return;
+                }
+              }
+              assetMultiSelectManager.selectAssets(filteredFilenameAssets.map((asset) => toTimelineAsset(asset)));
+            }}>{$t('select_all')}</Button
+          >
+        {:else}
+          <SelectAllAssets {timelineManager} assetInteraction={assetMultiSelectManager} />
+        {/if}
         <ActionButton action={Actions.AddToAlbum} />
         {#if isEditor && availableTags.length > 0}<TagAction />{/if}
         {#if assetMultiSelectManager.isAllUserOwned}
@@ -1009,7 +1071,12 @@
             <ArchiveAction
               menuItem
               unarchive={assetMultiSelectManager.isAllArchived}
-              onArchive={(ids, visibility) => timelineManager.update(ids, (asset) => (asset.visibility = visibility))}
+              onArchive={(ids, visibility) => {
+                timelineManager?.update(ids, (asset) => (asset.visibility = visibility));
+                filenameAssets = filenameAssets.map((asset) =>
+                  ids.includes(asset.id) ? { ...asset, visibility } : asset,
+                );
+              }}
             />
             <SetVisibilityAction menuItem onVisibilitySet={handleSetVisibility} />
           {/if}
@@ -1132,7 +1199,9 @@
                 color="secondary"
                 aria-label={$t('add_photos')}
                 onclick={async () => {
-                  timelineManager.suspendTransitions = true;
+                  if (timelineManager) {
+                    timelineManager.suspendTransitions = true;
+                  }
                   viewMode = AlbumPageViewMode.SELECT_ASSETS;
                   oldAt = { at: assetViewerManager.gridScrollTarget?.at };
                   await navigate(

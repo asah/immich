@@ -144,7 +144,9 @@
   };
   const addMedia = async () => {
     const albums = await modalManager.show(AlbumPickerModal, {});
-    if (!albums?.length) return;
+    if (!albums?.length) {
+      return;
+    }
     try {
       await storyService.importAlbums(
         data.story.id,
@@ -202,7 +204,9 @@
     textAllowed: boolean;
     thumbnailsAllowed: boolean;
   }) => {
-    if (!aiProvider) return;
+    if (!aiProvider) {
+      return;
+    }
     const saved = await storyService.aiConsent(aiProvider.id, textAllowed, thumbnailsAllowed);
     aiConsent = {
       providerFingerprint: aiProvider.credentialFingerprint ?? aiProvider.id,
@@ -245,7 +249,9 @@
     }
   };
   const applyAi = async (draftId: string) => {
-    if (aiState.state !== 'preview') return;
+    if (aiState.state !== 'preview') {
+      return;
+    }
     aiState = { state: 'applying', draft: aiState.draft };
     try {
       requireIdleEditor();
@@ -290,7 +296,9 @@
   };
   onMount(async () => {
     const recovery = await transactionManager.restore();
-    if (recovery !== 'ready') return;
+    if (recovery !== 'ready') {
+      return;
+    }
     try {
       for (const batch of transactionManager.pendingBatches) {
         const result = await storyService.apply(data.story.id, {
@@ -332,9 +340,7 @@
         >{/if}
     </div>
   {/snippet}
-  <div
-    class="grid h-full grid-rows-[auto_1fr] overflow-hidden md:grid-cols-[12rem_minmax(0,1fr)_18rem] md:grid-rows-1"
-  >
+  <div class="grid h-full grid-rows-[auto_1fr] overflow-hidden md:grid-cols-[12rem_minmax(0,1fr)_18rem] md:grid-rows-1">
     <nav
       class="col-span-full flex flex-wrap justify-center gap-2 border-b p-2 md:hidden"
       aria-label={$t('story_editor_surfaces')}
@@ -355,15 +361,17 @@
     </nav>
     <aside
       class:hidden={mobileSurface !== 'pages'}
-      class="order-2 min-w-0 overflow-auto border-t p-3 md:order-1 md:block md:border-t-0 md:border-e"
+      class="order-2 min-w-0 overflow-auto border-t p-3 md:order-1 md:block md:border-e md:border-t-0"
       aria-label={$t('story_pages')}
     >
       <button
+        type="button"
         class:font-bold={sceneIndex === -1}
         class="mb-2 w-full rounded-lg border p-3 text-start"
         onclick={() => (sceneIndex = -1)}>{$t('story_cover')}</button
       >
       {#each data.document.document.pages as page, index (page.id)}<button
+          type="button"
           class:font-bold={sceneIndex === index}
           class="mb-2 w-full rounded-lg border p-3 text-start"
           onclick={() => (sceneIndex = index)}>{$t('story_page_number', { values: { number: index + 1 } })}</button

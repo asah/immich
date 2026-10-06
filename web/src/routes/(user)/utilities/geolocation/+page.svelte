@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { SvelteSet } from 'svelte/reactivity';
   import { isDefined } from '$lib';
   import UserPageLayout from '$lib/components/layouts/UserPageLayout.svelte';
   import EmptyPlaceholder from '$lib/components/shared-components/EmptyPlaceholder.svelte';
@@ -45,9 +46,11 @@
   let suggestionsLoading = $state(false);
   let applyingSuggestions = $state(false);
   let suggestionProgress = $state<string>();
-  let selectedSuggestionKeys = $state(new Set<string>());
+  const selectedSuggestionKeys = new SvelteSet<string>();
   const suggestionKey = (suggestion: LocationSuggestion) => suggestion.assetIds.join(',');
-  const selectedSuggestions = $derived(suggestions.filter((suggestion) => selectedSuggestionKeys.has(suggestionKey(suggestion))));
+  const selectedSuggestions = $derived(
+    suggestions.filter((suggestion) => selectedSuggestionKeys.has(suggestionKey(suggestion))),
+  );
 
   let timelineManager = $state<TimelineManager>() as TimelineManager;
   const options = {
@@ -103,9 +106,11 @@
     suggestionsLoading = true;
     try {
       const response = await fetch('/api/assets/location-suggestions');
-      if (!response.ok) throw new Error(String(response.status));
+      if (!response.ok) {
+        throw new Error(String(response.status));
+      }
       suggestions = await response.json();
-      selectedSuggestionKeys = new Set();
+      selectedSuggestionKeys.clear();
     } finally {
       suggestionsLoading = false;
     }
@@ -118,7 +123,9 @@
   const previewSuggestion = async (suggestion: LocationSuggestion) => {
     showSuggestion(suggestion);
     const selected = await modalManager.show(GeolocationPointPickerModal, { point });
-    if (selected) point = selected;
+    if (selected) {
+      point = selected;
+    }
   };
 
   const applySuggestion = async (suggestion: LocationSuggestion) => {
@@ -131,7 +138,9 @@
 
   const applySelectedSuggestions = async () => {
     const selected = selectedSuggestions;
-    if (selected.length === 0) return;
+    if (selected.length === 0) {
+      return;
+    }
 
     applyingSuggestions = true;
     try {
@@ -223,7 +232,9 @@
         leadingIcon={mdiLightbulbOutline}
         onclick={() => {
           mode = mode === 'manual' ? 'suggestions' : 'manual';
-          if (mode === 'suggestions' && suggestions.length === 0) void loadSuggestions();
+          if (mode === 'suggestions' && suggestions.length === 0) {
+            void loadSuggestions();
+          }
         }}>Suggestions</Button
       >
       <Text class="mr-4 hidden md:block" size="tiny" color="muted">{$t('geolocation_instruction_location')}</Text>
@@ -285,19 +296,41 @@
         >Only nearby, same-owner GPS evidence that agrees within 500 m is shown.</Text
       >
       {#if suggestionsLoading}
-        <div class="flex h-48 flex-col items-center justify-center gap-3"><LoadingSpinner size="giant" /><Text color="muted">Finding nearby GPS evidence…</Text></div>
+        <div class="flex h-48 flex-col items-center justify-center gap-3">
+          <LoadingSpinner size="giant" /><Text color="muted">Finding nearby GPS evidence…</Text>
+        </div>
       {:else if suggestions.length === 0}
         <EmptyPlaceholder text="No high-confidence location suggestions" onClick={() => {}} class="mx-auto mt-10" />
       {:else}
         <div class="mt-4 flex flex-wrap items-center gap-2">
-          <Button size="small" color="secondary" variant="ghost" onclick={() => (selectedSuggestionKeys = new Set(suggestions.map(suggestionKey)))} disabled={applyingSuggestions}>Select all</Button>
-          <Button size="small" color="secondary" variant="ghost" onclick={() => (selectedSuggestionKeys = new Set())} disabled={selectedSuggestionKeys.size === 0 || applyingSuggestions}>Select none</Button>
-          <Button size="small" disabled={selectedSuggestions.length === 0 || applyingSuggestions} onclick={() => void applySelectedSuggestions()}>
+          <Button
+            size="small"
+            color="secondary"
+            variant="ghost"
+            onclick={() => {
+              for (const suggestion of suggestions) {
+                selectedSuggestionKeys.add(suggestionKey(suggestion));
+              }
+            }}
+            disabled={applyingSuggestions}>Select all</Button
+          >
+          <Button
+            size="small"
+            color="secondary"
+            variant="ghost"
+            onclick={() => selectedSuggestionKeys.clear()}
+            disabled={selectedSuggestionKeys.size === 0 || applyingSuggestions}>Select none</Button
+          >
+          <Button
+            size="small"
+            disabled={selectedSuggestions.length === 0 || applyingSuggestions}
+            onclick={() => void applySelectedSuggestions()}
+          >
             {applyingSuggestions ? suggestionProgress : `Apply selected (${selectedSuggestions.length})`}
           </Button>
         </div>
         <div class="mt-6 grid gap-4 md:grid-cols-2">
-          {#each suggestions as suggestion (suggestion.assetIds.join())}
+          {#each suggestions as suggestion (suggestion.assetIds.join(','))}
             <article class="rounded-xl border bg-subtle p-4">
               <div class="flex items-start justify-between gap-3">
                 <div class="flex gap-3">
@@ -306,17 +339,19 @@
                     checked={selectedSuggestionKeys.has(suggestionKey(suggestion))}
                     disabled={applyingSuggestions}
                     onCheckedChange={(checked) => {
-                      const next = new Set(selectedSuggestionKeys);
-                      checked === true ? next.add(suggestionKey(suggestion)) : next.delete(suggestionKey(suggestion));
-                      selectedSuggestionKeys = next;
+                      if (checked) {
+                        selectedSuggestionKeys.add(suggestionKey(suggestion));
+                      } else {
+                        selectedSuggestionKeys.delete(suggestionKey(suggestion));
+                      }
                     }}
                   />
                   <div>
-                  <Text fontWeight="semi-bold">{suggestion.locality}</Text>
-                  <Text class="mt-1 block" color="muted" size="small">
-                    {suggestion.assetIds.length} photo{suggestion.assetIds.length === 1 ? '' : 's'} · within {suggestion.timeWindowMinutes}
-                    min · approximately {suggestion.accuracyMeters} m
-                  </Text>
+                    <Text fontWeight="semi-bold">{suggestion.locality}</Text>
+                    <Text class="mt-1 block" color="muted" size="small">
+                      {suggestion.assetIds.length} photo{suggestion.assetIds.length === 1 ? '' : 's'} · within {suggestion.timeWindowMinutes}
+                      min · approximately {suggestion.accuracyMeters} m
+                    </Text>
                   </div>
                 </div>
                 <span class="rounded-full bg-success px-2 py-1 text-xs text-black">High confidence</span>
@@ -331,10 +366,15 @@
                 {/each}
               </div>
               <div class="mt-4 flex gap-2">
-                <Button size="small" color="secondary" variant="ghost" onclick={() => void previewSuggestion(suggestion)}
-                  >Preview on map</Button
+                <Button
+                  size="small"
+                  color="secondary"
+                  variant="ghost"
+                  onclick={() => void previewSuggestion(suggestion)}>Preview on map</Button
                 >
-                <Button size="small" disabled={applyingSuggestions} onclick={() => void applySuggestion(suggestion)}>Apply suggestion</Button>
+                <Button size="small" disabled={applyingSuggestions} onclick={() => void applySuggestion(suggestion)}
+                  >Apply suggestion</Button
+                >
               </div>
             </article>
           {/each}

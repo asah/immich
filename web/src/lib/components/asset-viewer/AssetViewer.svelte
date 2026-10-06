@@ -30,7 +30,6 @@
   import { toTimelineAsset } from '$lib/utils/timeline-util';
   import {
     AssetTypeEnum,
-    AlbumUserRole,
     getAssetInfo,
     getStack,
     type AlbumResponseDto,
@@ -82,7 +81,7 @@
     cursor,
     showNavigation = true,
     withStacked = false,
-    isShared = false,
+    isShared: _,
     album,
     person,
     onAssetChange,
@@ -377,11 +376,13 @@
   let isFullScreen = $derived(!!fullscreenElement);
 
   $effect(() => {
-    if (album && asset.id) {
-      handlePromiseError(activityManager.init(album.id, asset.id));
-      if (new URLSearchParams(window.location.search).has('comment')) {
-        assetViewerManager.isShowActivityPanel = true;
-      }
+    if (!(album && asset.id)) {
+      return;
+    }
+
+    handlePromiseError(activityManager.init(album.id, asset.id));
+    if (new URLSearchParams(location.search).has('comment')) {
+      assetViewerManager.isShowActivityPanel = true;
     }
   });
 

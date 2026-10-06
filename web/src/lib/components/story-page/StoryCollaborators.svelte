@@ -14,7 +14,9 @@
   let selectedId = $state('');
   onMount(async () => (candidates = await searchUsers()));
   const add = async () => {
-    if (!selectedId) return;
+    if (!selectedId) {
+      return;
+    }
     users = await storyService.addCollaborator(storyId, selectedId, AlbumUserRole.Editor);
     selectedId = '';
   };
@@ -39,7 +41,7 @@
         options={[
           { label: $t('story_choose_user'), value: '' },
           ...candidates
-            .filter((candidate) => !users.some(({ userId }) => userId === candidate.id))
+            .filter((candidate) => users.every(({ userId }) => userId !== candidate.id))
             .map((candidate) => ({ label: `${candidate.name} · ${candidate.email}`, value: candidate.id })),
         ]}
       /><Button size="small" disabled={!selectedId} onclick={add}>{$t('add')}</Button>

@@ -30,7 +30,7 @@
   ]);
 </script>
 
-<section class="min-w-0 rounded-2xl border bg-surface-container-low p-4" aria-labelledby="curation-title">
+<section class="bg-surface-container-low min-w-0 rounded-2xl border p-4" aria-labelledby="curation-title">
   <div class="flex flex-wrap items-center justify-between gap-3">
     <div>
       <h2 id="curation-title" class="font-semibold text-dark">{$t('story_curation')}</h2>
@@ -54,7 +54,7 @@
         class="grid min-h-11 min-w-0 grid-cols-[auto_minmax(0,1fr)] gap-2 rounded-lg border bg-white p-2 dark:bg-gray-800"
       >
         {#if item.thumbnailUrl}<img
-            class="size-10 rounded object-cover"
+            class="size-10 rounded-sm object-cover"
             src={item.thumbnailUrl}
             alt=""
             loading="lazy"
@@ -63,9 +63,10 @@
           <div class="flex min-w-0 items-start justify-between gap-2">
             {#if item.name}<details class="min-w-0 flex-1">
                 <summary class="cursor-pointer text-sm" title={item.name}>Photo</summary>
-                <p class="break-all text-xs text-gray-500">{item.name}</p>
+                <p class="text-xs break-all text-gray-500">{item.name}</p>
               </details>{:else}<span class="min-w-0 flex-1 text-sm">Photo</span>{/if}<span
-              class="shrink-0 text-xs text-gray-500">{item.used ? $t('story_curation_used') : $t('story_curation_unplaced')}</span
+              class="shrink-0 text-xs text-gray-500"
+              >{item.used ? $t('story_curation_used') : $t('story_curation_unplaced')}</span
             >
           </div>
           <div class="mt-2 flex min-w-0 flex-wrap items-end gap-2">

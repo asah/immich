@@ -18,16 +18,18 @@
   const slugify = (value: string) =>
     value
       .normalize('NFKD')
-      .replace(/[^\w\s-]/g, '')
+      .replaceAll(/[^\w\s-]/g, '')
       .trim()
       .toLowerCase()
-      .replace(/[\s_-]+/g, '-')
-      .replace(/^-+|-+$/g, '');
+      .replaceAll(/[\s_-]+/g, '-')
+      .replaceAll(/^-+|-+$/g, '');
   let slug = $state(album.slug ?? slugify(album.albumName));
   let slugEdited = $state(false);
 
   $effect(() => {
-    if (!slugEdited) slug = slugify(albumName);
+    if (!slugEdited) {
+      slug = slugify(albumName);
+    }
   });
 
   const onSubmit = async () => {

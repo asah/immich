@@ -62,7 +62,9 @@
   const engagementByAsset = $derived.by(() => {
     const engagement: Record<string, { reactions: Record<string, number>; comments: number }> = {};
     for (const activity of activityManager.activities) {
-      if (!activity.assetId || activity.parentActivityId) continue;
+      if (!activity.assetId || activity.parentActivityId) {
+        continue;
+      }
       const entry = (engagement[activity.assetId] ??= { reactions: {}, comments: 0 });
       if (activity.type === 'like') {
         const key = activity.reactionKey ?? 'like';
@@ -108,23 +110,31 @@
   const assetLabel = (asset: AssetResponseDto, sortBy: AlbumAssetSortBy): string | number => {
     const exif = asset.exifInfo;
     switch (sortBy) {
-      case AlbumAssetSortBy.FileName:
+      case AlbumAssetSortBy.FileName: {
         return asset.originalFileName;
-      case AlbumAssetSortBy.FileSize:
+      }
+      case AlbumAssetSortBy.FileSize: {
         return exif?.fileSizeInByte ?? -1;
-      case AlbumAssetSortBy.Tag:
+      }
+      case AlbumAssetSortBy.Tag: {
         return getAlbumTagSection(asset);
-      case AlbumAssetSortBy.Camera:
+      }
+      case AlbumAssetSortBy.Camera: {
         return [exif?.make, exif?.model].filter(Boolean).join(' ') || 'Unknown camera';
-      case AlbumAssetSortBy.Lens:
+      }
+      case AlbumAssetSortBy.Lens: {
         return exif?.lensModel ?? 'Unknown lens';
-      case AlbumAssetSortBy.Location:
+      }
+      case AlbumAssetSortBy.Location: {
         return [exif?.city, exif?.state, exif?.country].filter(Boolean).join(', ') || 'Unknown location';
-      case AlbumAssetSortBy.Time:
+      }
+      case AlbumAssetSortBy.Time: {
         return DateTime.fromISO(asset.localDateTime, { zone: 'utc' }).hour;
-      case AlbumAssetSortBy.Description:
+      }
+      case AlbumAssetSortBy.Description: {
         return exif?.description ?? '';
-      case AlbumAssetSortBy.CameraSettings:
+      }
+      case AlbumAssetSortBy.CameraSettings: {
         return [
           exif?.focalLength && `${exif.focalLength}mm`,
           exif?.fNumber && `f/${exif.fNumber}`,
@@ -132,15 +142,18 @@
         ]
           .filter(Boolean)
           .join(' ');
-      case AlbumAssetSortBy.LensSettings:
+      }
+      case AlbumAssetSortBy.LensSettings: {
         return [exif?.focalLength && `${exif.focalLength}mm`, exif?.fNumber && `f/${exif.fNumber}`]
           .filter(Boolean)
           .join(' ');
-      case AlbumAssetSortBy.Engagement:
+      }
+      case AlbumAssetSortBy.Engagement: {
         return 0;
-      case AlbumAssetSortBy.DateTaken:
-      default:
+      }
+      case AlbumAssetSortBy.DateTaken: {
         return asset.localDateTime;
+      }
     }
   };
   const galleryAssets = $derived.by(() => {
@@ -149,7 +162,9 @@
       for (const { sortBy, sortOrder } of sortCriteria) {
         if (sortBy === AlbumAssetSortBy.Tag) {
           const comparison = compareAlbumTagSections(left, right, sortOrder);
-          if (comparison) return comparison;
+          if (comparison) {
+            return comparison;
+          }
           continue;
         }
         const a = assetLabel(left, sortBy);
@@ -162,14 +177,18 @@
               : String(a) < String(b)
                 ? -1
                 : 1;
-        if (comparison) return (sortOrder === SortOrder.Desc ? -1 : 1) * comparison;
+        if (comparison) {
+          return (sortOrder === SortOrder.Desc ? -1 : 1) * comparison;
+        }
       }
       return left.id === right.id ? 0 : left.id < right.id ? -1 : 1;
     });
     return assets;
   });
   const galleryGroupKeys = $derived.by(() => {
-    if (!presentationSettings.showSortDividers) return undefined;
+    if (!presentationSettings.showSortDividers) {
+      return undefined;
+    }
     const sortBy = sortCriteria[0]?.sortBy ?? AlbumAssetSortBy.DateTaken;
     return galleryAssets.map((asset) => String(assetLabel(asset, sortBy)));
   });
@@ -184,7 +203,9 @@
   });
 
   $effect(() => {
-    if (!authManager.authenticated || assetViewerManager.isViewing) return;
+    if (!authManager.authenticated || assetViewerManager.isViewing) {
+      return;
+    }
     handlePromiseError(activityManager.init(album.id));
   });
 
@@ -242,7 +263,7 @@
     >
       <section
         class={presentationSettings.instantCameraStyle
-          ? '-mx-2 bg-white px-2 pt-8 pb-8 text-immich-fg dark:bg-immich-dark-bg dark:text-immich-dark-fg md:-mx-6 md:px-6'
+          ? '-mx-2 bg-white px-2 py-8 text-immich-fg md:-mx-6 md:px-6 dark:bg-immich-dark-bg dark:text-immich-dark-fg'
           : 'px-2 pt-8 md:px-0 md:pt-24'}
       >
         <!-- ALBUM TITLE -->
@@ -259,6 +280,7 @@
           <div
             class="album-description mt-6 mb-12 w-full pb-2 text-start text-base font-medium text-black dark:text-gray-300"
           >
+            <!-- eslint-disable-next-line svelte/no-at-html-tags -- Only allowlisted rich text is rendered. -->
             {@html sanitizeRichText(album.description)}
           </div>
         {/if}
@@ -300,8 +322,9 @@
     <AssetSelectControlBar>
       <button
         type="button"
-        class="rounded px-3 py-2 text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800"
-        onclick={() => assetMultiSelectManager.selectAssets(galleryAssets.map(toTimelineAsset))}>Select all</button
+        class="rounded-sm px-3 py-2 text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800"
+        onclick={() => assetMultiSelectManager.selectAssets(galleryAssets.map((asset) => toTimelineAsset(asset)))}
+        >Select all</button
       >
       {#if sharedLink.allowDownload}
         <DownloadAction filename={album.albumName} />

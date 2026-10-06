@@ -35,15 +35,17 @@
     [asset.exifInfo?.city, asset.exifInfo?.state, asset.exifInfo?.country].filter(Boolean).join(', '),
   );
 
-  const reactionCounts = $derived(
-    activityManager.activities
-      .filter(({ type, parentActivityId }) => type === ReactionType.Like && !parentActivityId)
-      .reduce<Record<string, number>>((counts, { reactionKey }) => {
-        const key = reactionKey ?? 'like';
-        counts[key] = (counts[key] ?? 0) + 1;
-        return counts;
-      }, {}),
-  );
+  const reactionCounts = $derived.by(() => {
+    const counts: Record<string, number> = {};
+    for (const { reactionKey, type, parentActivityId } of activityManager.activities) {
+      if (type !== ReactionType.Like || parentActivityId) {
+        continue;
+      }
+      const key = reactionKey ?? 'like';
+      counts[key] = (counts[key] ?? 0) + 1;
+    }
+    return counts;
+  });
   const hasReactions = $derived(Object.keys(reactionCounts).length > 0);
 
   const shouldShow = $derived.by(() => {

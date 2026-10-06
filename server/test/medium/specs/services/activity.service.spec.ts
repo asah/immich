@@ -5,6 +5,7 @@ import { ActivityRepository } from 'src/repositories/activity.repository';
 import { AlbumUserRepository } from 'src/repositories/album-user.repository';
 import { AlbumRepository } from 'src/repositories/album.repository';
 import { AssetRepository } from 'src/repositories/asset.repository';
+import { EventRepository } from 'src/repositories/event.repository';
 import { LoggingRepository } from 'src/repositories/logging.repository';
 import { UserRepository } from 'src/repositories/user.repository';
 import { DB } from 'src/schema';
@@ -16,11 +17,13 @@ import { getKyselyDB } from 'test/utils';
 let defaultDatabase: Kysely<DB>;
 
 const setup = (db?: Kysely<DB>) => {
-  return newMediumService(ActivityService, {
+  const result = newMediumService(ActivityService, {
     database: db || defaultDatabase,
     real: [AccessRepository, ActivityRepository, AlbumRepository, AlbumUserRepository, AssetRepository, UserRepository],
-    mock: [LoggingRepository],
+    mock: [LoggingRepository, EventRepository],
   });
+  result.ctx.getMock(EventRepository).emit.mockResolvedValue();
+  return result;
 };
 
 beforeAll(async () => {
@@ -112,6 +115,10 @@ describe(ActivityService.name, () => {
           createdAt: expect.any(Date),
           type: ReactionType.COMMENT,
           comment: 'This is my first comment',
+          commentDocument: null,
+          reactionKey: null,
+          parentActivityId: null,
+          assetIds: [],
           user: expect.objectContaining({ id: owner.id }),
         },
       });
@@ -130,6 +137,10 @@ describe(ActivityService.name, () => {
           createdAt: expect.any(Date),
           type: ReactionType.LIKE,
           comment: null,
+          commentDocument: null,
+          reactionKey: ReactionType.LIKE,
+          parentActivityId: null,
+          assetIds: [],
           user: expect.objectContaining({ id: owner.id }),
         },
       });

@@ -40,11 +40,7 @@
 </script>
 
 {#if isOwned && editing}
-  <RichTextEditor
-    label={$t('description')}
-    bind:value={draft}
-    onSubmit={() => void save()}
-  />
+  <RichTextEditor label={$t('description')} bind:value={draft} onSubmit={() => void save()} />
   <div class="mt-2 flex gap-2">
     <Button size="small" onclick={() => void save()}>{$t('save')}</Button>
     <Button
@@ -59,6 +55,7 @@
 {:else}
   {#if description}
     <div class="album-description wrap-break-words w-full text-base text-black dark:text-white">
+      <!-- eslint-disable-next-line svelte/no-at-html-tags -- Only allowlisted rich text is rendered. -->
       {@html sanitizeRichText(description)}
     </div>
   {/if}

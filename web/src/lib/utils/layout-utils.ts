@@ -179,7 +179,9 @@ export function getGroupedJustifiedLayoutFromAssets(
       topOffset += groupLayout.containerHeight;
     }
     // Keep each section visually distinct without adding trailing empty space after the last one.
-    if (index < assets.length) topOffset += groupGap;
+    if (index < assets.length) {
+      topOffset += groupGap;
+    }
     groupStart = index;
     groupNumber++;
   }
