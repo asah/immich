@@ -82,6 +82,26 @@ from
       left join lateral (
         select
           "asset".*,
+          (
+            select
+              coalesce(json_agg(agg), '[]')
+            from
+              (
+                select
+                  "tag"."id",
+                  "tag"."value",
+                  "tag"."createdAt",
+                  "tag"."updatedAt",
+                  "tag"."color",
+                  "tag"."description",
+                  "tag"."parentId"
+                from
+                  "tag"
+                  inner join "tag_asset" on "tag"."id" = "tag_asset"."tagId"
+                where
+                  "asset"."id" = "tag_asset"."assetId"
+              ) as agg
+          ) as "tags",
           to_json("exifInfo") as "exifInfo"
         from
           "asset"
@@ -157,12 +177,15 @@ from
       "album"."id",
       "owner".*
   ) as "album" on true
+  left join "story" on "story"."id" = "shared_link"."storyId"
+  and "story"."deletedAt" is null
 where
   "shared_link"."id" = $1
   and "shared_link"."userId" = $2
   and (
     "shared_link"."type" = $3
     or "album"."id" is not null
+    or "story"."id" is not null
   )
 order by
   "shared_link"."createdAt" desc
@@ -224,11 +247,14 @@ from
       "album"."id" = "shared_link"."albumId"
       and "album"."deletedAt" is null
   ) as "album" on true
+  left join "story" on "story"."id" = "shared_link"."storyId"
+  and "story"."deletedAt" is null
 where
   "shared_link"."userId" = $2
   and (
     "shared_link"."type" = $3
     or "album"."id" is not null
+    or "story"."id" is not null
   )
   and "shared_link"."albumId" = $4
 order by
@@ -239,6 +265,9 @@ select
   "shared_link"."id",
   "shared_link"."userId",
   "shared_link"."albumId",
+  "shared_link"."storyId",
+  "shared_link"."startPageId",
+  "shared_link"."startOffsetMs",
   "shared_link"."expiresAt",
   "shared_link"."showExif",
   "shared_link"."allowUpload",
@@ -265,11 +294,17 @@ select
 from
   "shared_link"
   left join "album" on "album"."id" = "shared_link"."albumId"
+  left join "story" on "story"."id" = "shared_link"."storyId"
 where
   "album"."deletedAt" is null
+  and "story"."deletedAt" is null
   and (
     "shared_link"."type" = $1
     or "album"."id" is not null
+    or (
+      "story"."id" is not null
+      and "story"."publishedRevisionId" is not null
+    )
   )
   and "shared_link"."key" = $2
 
@@ -278,6 +313,9 @@ select
   "shared_link"."id",
   "shared_link"."userId",
   "shared_link"."albumId",
+  "shared_link"."storyId",
+  "shared_link"."startPageId",
+  "shared_link"."startOffsetMs",
   "shared_link"."expiresAt",
   "shared_link"."showExif",
   "shared_link"."allowUpload",
@@ -304,11 +342,17 @@ select
 from
   "shared_link"
   left join "album" on "album"."id" = "shared_link"."albumId"
+  left join "story" on "story"."id" = "shared_link"."storyId"
 where
   "album"."deletedAt" is null
+  and "story"."deletedAt" is null
   and (
     "shared_link"."type" = $1
     or "album"."id" is not null
+    or (
+      "story"."id" is not null
+      and "story"."publishedRevisionId" is not null
+    )
   )
   and "shared_link"."slug" = $2
 

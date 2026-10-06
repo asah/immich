@@ -9,7 +9,10 @@ RELEASE_ENV="${IMMICH_RELEASE_ENV:-$REPO/.prod-release.env}"
 die() { echo "ERROR: $*" >&2; exit 1; }
 
 [[ -f "$RELEASE_ENV" ]] || die "missing $RELEASE_ENV"
+# The deployment-host environment file is not part of the repository.
+# shellcheck source=/dev/null
 source "$RELEASE_ENV"
+# shellcheck source=scripts/prod/common.sh disable=SC1091
 source "$REPO/scripts/prod/common.sh"
 
 sha="${1:?usage: $0 <commit-sha> <image-tag>}"
@@ -19,6 +22,8 @@ internal_health_url="${IMMICH_INTERNAL_HEALTH_URL:-http://[::1]:2283/api/server/
 image_id="$(docker image inspect --format '{{.Id}}' "$image")" || die "image not found: $image"
 
 echo "Checking Immich API from inside the running server container..."
+# Template literals are expanded by JavaScript, not the shell.
+# shellcheck disable=SC2016
 compose exec -T immich-server node -e '
   const url = process.argv[1];
   fetch(url).then(async (response) => {

@@ -12,6 +12,8 @@ if [[ -z "${DB_URL:-}" ]]; then
   : "${DB_DATABASE_NAME:=immich}"
   : "${DB_HOSTNAME:=database}"
   : "${DB_PORT:=5432}"
+  # Template literals are expanded by JavaScript, not the shell.
+  # shellcheck disable=SC2016
   DB_URL="$(node -e 'const [user,password,host,port,database]=process.argv.slice(1); const url=new URL(`postgres://${host}:${port}/${database}`); url.username=user; url.password=password; process.stdout.write(url.href)' "$DB_USERNAME" "$DB_PASSWORD" "$DB_HOSTNAME" "$DB_PORT" "$DB_DATABASE_NAME")"
   export DB_URL
 fi

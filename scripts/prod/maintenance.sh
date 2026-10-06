@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
+# shellcheck source=scripts/prod/common.sh disable=SC1091
 source "$(dirname "$0")/common.sh"
 
 action="${1:?enter or exit is required}"

@@ -85,3 +85,4 @@ where
     )
     or "asset"."id" is null
   )
+  and "activity"."parentActivityId" is null

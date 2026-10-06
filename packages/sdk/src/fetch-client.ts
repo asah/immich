@@ -923,8 +923,6 @@ export type AlbumVotingDto = {
 export type AlbumResponseDto = {
     /** Album name */
     albumName: string;
-    /** Custom album URL slug */
-    slug: string | null;
     /** Thumbnail asset ID */
     albumThumbnailAssetId: string | null;
     /** First entry is always the album owner. Second entry is the auth user, if it differs from the owner. The rest are ordered alphabetically. */
@@ -951,6 +949,8 @@ export type AlbumResponseDto = {
     presentation: (AlbumPresentationDto) | null;
     /** Is shared album */
     shared: boolean;
+    /** Custom album URL slug */
+    slug: string | null;
     /** UTC representation of (local) start date (earliest asset) */
     startDate?: string;
     /** Last update date */
@@ -997,8 +997,6 @@ export type AlbumStatisticsResponseDto = {
 export type UpdateAlbumDto = {
     /** Album name */
     albumName?: string;
-    /** Custom album URL slug */
-    slug?: string | null;
     /** Album thumbnail asset ID */
     albumThumbnailAssetId?: string;
     /** Album description */
@@ -1008,6 +1006,8 @@ export type UpdateAlbumDto = {
     order?: AssetOrder;
     /** Owner-published album presentation */
     presentation?: (AlbumPresentationDto) | null;
+    /** Custom album URL slug */
+    slug?: string | null;
     /** Owner-controlled community voting settings */
     voting?: (AlbumVotingDto) | null;
 };

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
+# shellcheck source=scripts/prod/common.sh disable=SC1091
 source "$(dirname "$0")/common.sh"
 
 image="${1:?candidate image is required}"
@@ -13,6 +14,8 @@ container_image_id="$(docker inspect --format '{{.Image}}' "$container_id")"
   echo "immich-server is running a different image than the candidate" >&2
   exit 1
 }
+# Template literals are expanded by JavaScript, not the shell.
+# shellcheck disable=SC2016
 compose exec -T immich-server node -e '
   fetch("http://[::1]:2283/api/server/ping")
     .then(async (response) => {

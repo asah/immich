@@ -16,6 +16,7 @@ compose() {
 load_env() {
   set -a
   # The production .env is administrator-controlled and is never committed.
+  # shellcheck source=/dev/null
   source "$ENV_FILE"
   set +a
 }

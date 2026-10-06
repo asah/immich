@@ -17,6 +17,7 @@ cd "$REPO"
 RELEASE_ENV="${IMMICH_RELEASE_ENV:-$REPO/.prod-release.env}"
 [[ -f "$RELEASE_ENV" ]] || die "missing $RELEASE_ENV; copy .prod-release.env.example on the deployment host"
 # The deployment-host file contains paths and URLs, never repository secrets.
+# shellcheck source=/dev/null
 source "$RELEASE_ENV"
 
 BUILD_CMD="${IMMICH_BUILD_CMD:-$REPO/scripts/prod/build.sh}"

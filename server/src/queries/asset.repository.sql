@@ -212,6 +212,7 @@ select
           "tag"."createdAt",
           "tag"."updatedAt",
           "tag"."color",
+          "tag"."description",
           "tag"."parentId"
         from
           "tag"

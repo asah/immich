@@ -32,8 +32,7 @@ from
   and "user"."deletedAt" is null
 where
   "album"."id" in ($1)
-  and "album"."isActivityEnabled" = $2
-  and "user"."id" = $3
+  and "user"."id" = $2
   and "album"."deletedAt" is null
 
 -- AccessRepository.album.checkOwnerAccess
@@ -287,6 +286,18 @@ from
 where
   "stack"."id" in ($1)
   and "stack"."ownerId" = $2
+
+-- AccessRepository.story.checkOwnerAccess
+select
+  "story"."id"
+from
+  "story"
+  inner join "story_user" on "story_user"."storyId" = "story"."id"
+where
+  "story"."id" in ($1)
+  and "story"."deletedAt" is null
+  and "story_user"."userId" = $2
+  and "story_user"."role" = $3
 
 -- AccessRepository.tag.checkOwnerAccess
 select
