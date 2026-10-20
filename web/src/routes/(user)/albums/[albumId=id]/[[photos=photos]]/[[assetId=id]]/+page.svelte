@@ -40,12 +40,7 @@
   import { toTimelineAsset } from '$lib/utils/timeline-util';
   import AlbumOptionsModal from '$lib/modals/AlbumOptionsModal.svelte';
   import { Route } from '$lib/route';
-  import {
-    getAlbumActions,
-    getAlbumAssetsActions,
-    handleDeleteAlbum,
-    isAlbumOwner,
-  } from '$lib/services/album.service';
+  import { getAlbumActions, getAlbumAssetsActions, handleDeleteAlbum, isAlbumOwner } from '$lib/services/album.service';
   import { getGlobalActions } from '$lib/services/app.service';
   import { openSlideshowAtAsset } from '$lib/services/slideshow.service';
   import { getAssetBulkActions } from '$lib/services/asset.service';
