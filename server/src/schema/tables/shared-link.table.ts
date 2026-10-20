@@ -3,15 +3,15 @@ import {
   Column,
   CreateDateColumn,
   ForeignKeyColumn,
-  Generated,
+  type Generated,
   PrimaryGeneratedColumn,
   Table,
   Timestamp,
 } from '@immich/sql-tools';
-import { SharedLinkType } from 'src/enum';
-import { AlbumTable } from 'src/schema/tables/album.table';
-import { StoryTable } from 'src/schema/tables/story.table';
-import { UserTable } from 'src/schema/tables/user.table';
+import { SharedLinkType } from 'src/enum.js';
+import { AlbumTable } from 'src/schema/tables/album.table.js';
+import { StoryTable } from 'src/schema/tables/story.table.js';
+import { UserTable } from 'src/schema/tables/user.table.js';
 
 @Table('shared_link')
 @Check({ name: 'shared_link_startOffsetMs_check', expression: `"startOffsetMs" IS NULL OR "startOffsetMs" >= 0` })

@@ -1,5 +1,5 @@
-import { SharedLinkCreateDto } from 'src/dtos/shared-link.dto';
-import { SharedLinkType } from 'src/enum';
+import { SharedLinkCreateDto } from 'src/dtos/shared-link.dto.js';
+import { SharedLinkType } from 'src/enum.js';
 
 describe('SharedLinkCreateDto', () => {
   it('requires a story ID when sharing a story', () => {

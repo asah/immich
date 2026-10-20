@@ -2,17 +2,17 @@ import {
   Column,
   CreateDateColumn,
   ForeignKeyColumn,
-  Generated,
-  Int8,
+  type Generated,
+  type Int8,
   PrimaryGeneratedColumn,
   Table,
   Timestamp,
   Unique,
 } from '@immich/sql-tools';
-import { StoryRevisionSource } from 'src/enum';
-import { story_revision_source_enum } from 'src/schema/enums';
-import { StoryTable } from 'src/schema/tables/story.table';
-import { UserTable } from 'src/schema/tables/user.table';
+import { StoryRevisionSource } from 'src/enum.js';
+import { story_revision_source_enum } from 'src/schema/enums.js';
+import { StoryTable } from 'src/schema/tables/story.table.js';
+import { UserTable } from 'src/schema/tables/user.table.js';
 
 @Table('story_revision')
 @Unique({ columns: ['storyId', 'revision'] })

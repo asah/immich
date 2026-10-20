@@ -1,7 +1,7 @@
 import { BadGatewayException, GatewayTimeoutException } from '@nestjs/common';
-import { AiProviderAdapter } from 'src/enum';
-import { StoryAiProviderService } from 'src/services/story-ai-provider.service';
 import { vitest } from 'vitest';
+import { AiProviderAdapter } from 'src/enum.js';
+import { StoryAiProviderService } from 'src/services/story-ai-provider.service.js';
 
 const request = {
   adapter: AiProviderAdapter.OpenAI,

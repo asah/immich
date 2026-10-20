@@ -3,16 +3,16 @@ import {
   Column,
   CreateDateColumn,
   ForeignKeyColumn,
-  Generated,
+  type Generated,
   Index,
   PrimaryColumn,
   Table,
   Timestamp,
   UpdateDateColumn,
 } from '@immich/sql-tools';
-import { UpdatedAtTrigger } from 'src/decorators';
-import { AiProviderTable } from 'src/schema/tables/ai-provider.table';
-import { UserTable } from 'src/schema/tables/user.table';
+import { UpdatedAtTrigger } from 'src/decorators.js';
+import { AiProviderTable } from 'src/schema/tables/ai-provider.table.js';
+import { UserTable } from 'src/schema/tables/user.table.js';
 
 @Table('user_ai_consent')
 @UpdatedAtTrigger('user_ai_consent_updatedAt')

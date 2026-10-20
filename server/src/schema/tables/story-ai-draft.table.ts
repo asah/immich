@@ -3,15 +3,15 @@ import {
   Column,
   CreateDateColumn,
   ForeignKeyColumn,
-  Generated,
-  Int8,
+  type Generated,
+  type Int8,
   PrimaryGeneratedColumn,
   Table,
-  Timestamp,
+  type Timestamp,
 } from '@immich/sql-tools';
-import { StoryRevisionTable } from 'src/schema/tables/story-revision.table';
-import { StoryTable } from 'src/schema/tables/story.table';
-import { UserTable } from 'src/schema/tables/user.table';
+import { StoryRevisionTable } from 'src/schema/tables/story-revision.table.js';
+import { StoryTable } from 'src/schema/tables/story.table.js';
+import { UserTable } from 'src/schema/tables/user.table.js';
 
 @Table('story_ai_draft')
 @Check({ name: 'story_ai_draft_baseRevision_check', expression: `"baseRevision" >= 0` })

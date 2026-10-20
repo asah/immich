@@ -10,10 +10,10 @@
   interface Props {
     id: string;
     description: string;
-    isOwned: boolean;
+    isEditor: boolean;
   }
 
-  let { id, description = $bindable(), isOwned }: Props = $props();
+  let { id, description = $bindable(), isEditor }: Props = $props();
   let editing = $state(false);
   let draft = $state(description);
 
@@ -39,7 +39,7 @@
   };
 </script>
 
-{#if isOwned && editing}
+{#if isEditor && editing}
   <RichTextEditor label={$t('description')} bind:value={draft} onSubmit={() => void save()} />
   <div class="mt-2 flex gap-2">
     <Button size="small" onclick={() => void save()}>{$t('save')}</Button>
@@ -59,7 +59,7 @@
       {@html sanitizeRichText(description)}
     </div>
   {/if}
-  {#if isOwned}
+  {#if isEditor}
     <button
       type="button"
       class="mt-2 text-sm text-primary underline underline-offset-2 hover:text-primary/80"

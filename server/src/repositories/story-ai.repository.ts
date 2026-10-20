@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Kysely, sql } from 'kysely';
 import { InjectKysely } from 'nestjs-kysely';
-import { AiCredentialTestStatus, AiProviderAdapter } from 'src/enum';
-import { DB } from 'src/schema';
+import { AiCredentialTestStatus, AiProviderAdapter } from 'src/enum.js';
+import { DB } from 'src/schema/index.js';
 
 @Injectable()
 export class StoryAiRepository {

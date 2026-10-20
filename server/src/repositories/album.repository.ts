@@ -1,24 +1,24 @@
 import { Injectable } from '@nestjs/common';
 import {
-  ExpressionBuilder,
-  Insertable,
-  Kysely,
-  NotNull,
-  Selectable,
-  ShallowDehydrateObject,
+  type ExpressionBuilder,
+  type Insertable,
+  type Kysely,
+  type NotNull,
+  type Selectable,
+  type ShallowDehydrateObject,
+  type Updateable,
   sql,
-  Updateable,
 } from 'kysely';
 import { jsonArrayFrom, jsonObjectFrom } from 'kysely/helpers/postgres';
 import { InjectKysely } from 'nestjs-kysely';
-import { columns } from 'src/database';
-import { Chunked, ChunkedArray, ChunkedSet, DummyValue, GenerateSql } from 'src/decorators';
-import { AlbumUserCreateDto, MapAlbumDto } from 'src/dtos/album.dto';
-import { AlbumUserRole } from 'src/enum';
-import { DB } from 'src/schema';
-import { AlbumTable } from 'src/schema/tables/album.table';
-import { AssetExifTable } from 'src/schema/tables/asset-exif.table';
-import { asUuid, dummy, withDefaultVisibility } from 'src/utils/database';
+import { columns } from 'src/database.js';
+import { Chunked, ChunkedArray, ChunkedSet, DummyValue, GenerateSql } from 'src/decorators.js';
+import { AlbumUserCreateDto, MapAlbumDto } from 'src/dtos/album.dto.js';
+import { AlbumUserRole } from 'src/enum.js';
+import { DB } from 'src/schema/index.js';
+import { AlbumTable } from 'src/schema/tables/album.table.js';
+import { AssetExifTable } from 'src/schema/tables/asset-exif.table.js';
+import { asUuid, dummy, withDefaultVisibility } from 'src/utils/database.js';
 
 export interface AlbumAssetCount {
   albumId: string;
@@ -211,7 +211,15 @@ export class AlbumRepository {
   @GenerateSql({ params: [DummyValue.UUID, { isOwned: true, isShared: true }] })
   getAll(
     ownerId: string,
-    options: { id?: string; isOwned?: boolean; isShared?: boolean; name?: string; slug?: string } = {},
+    options: {
+      id?: string;
+      isOwned?: boolean;
+      isShared?: boolean;
+      name?: string;
+      nameContains?: string;
+      limit?: number;
+      slug?: string;
+    } = {},
   ): Promise<MapAlbumDto[]> {
     return this.buildAlbumBaseQuery(ownerId, options)
       .selectAll('album')
@@ -219,8 +227,12 @@ export class AlbumRepository {
       .select(withSharedLink)
       .$if(!!options.id, (qb) => qb.where('album.id', '=', options.id!))
       .$if(!!options.name, (qb) => qb.where('album.albumName', '=', options.name!))
+      .$if(!!options.nameContains, (qb) =>
+        qb.where('album.albumName', 'ilike', `%${options.nameContains!.replaceAll(/[\\%_]/g, String.raw`\$&`)}%`),
+      )
       .$if(!!options.slug, (qb) => qb.where('album.slug', '=', options.slug!))
       .orderBy('album.createdAt', 'desc')
+      .$if(!!options.limit, (qb) => qb.limit(options.limit!))
       .execute();
   }
 

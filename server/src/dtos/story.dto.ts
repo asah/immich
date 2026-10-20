@@ -1,7 +1,7 @@
 import { createZodDto } from 'nestjs-zod';
-import { AlbumUserRole, AlbumUserRoleSchema, StoryAspectRatio, StoryAspectRatioSchema } from 'src/enum';
-import { isoDatetimeToDate } from 'src/validation';
 import z from 'zod';
+import { AlbumUserRole, AlbumUserRoleSchema, StoryAspectRatio, StoryAspectRatioSchema } from 'src/enum.js';
+import { isoDatetimeToDate } from 'src/validation.js';
 
 const uuid = z.uuidv4();
 const geometry = z.number().finite().multipleOf(0.001);

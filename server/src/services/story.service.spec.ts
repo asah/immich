@@ -1,9 +1,9 @@
 import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { StoryCommandBatchDto, StoryDocument } from 'src/dtos/story.dto';
-import { AlbumUserRole, AssetType, StoryAspectRatio } from 'src/enum';
-import { StoryService } from 'src/services/story.service';
 import { Mocked, vitest } from 'vitest';
+import { StoryCommandBatchDto, StoryDocument } from 'src/dtos/story.dto.js';
+import { AlbumUserRole, AssetType, StoryAspectRatio } from 'src/enum.js';
+import { StoryService } from 'src/services/story.service.js';
 
 const userId = randomUUID();
 const storyId = randomUUID();

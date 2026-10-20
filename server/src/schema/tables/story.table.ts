@@ -3,16 +3,16 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   ForeignKeyConstraint,
-  Generated,
+  type Generated,
   PrimaryGeneratedColumn,
   Table,
   Timestamp,
   UpdateDateColumn,
 } from '@immich/sql-tools';
-import { UpdatedAtTrigger, UpdateIdColumn } from 'src/decorators';
-import { StoryAspectRatio } from 'src/enum';
-import { story_aspect_ratio_enum } from 'src/schema/enums';
-import { StoryRevisionTable } from 'src/schema/tables/story-revision.table';
+import { UpdateIdColumn, UpdatedAtTrigger } from 'src/decorators.js';
+import { StoryAspectRatio } from 'src/enum.js';
+import { story_aspect_ratio_enum } from 'src/schema/enums.js';
+import { StoryRevisionTable } from 'src/schema/tables/story-revision.table.js';
 
 @Table('story')
 @ForeignKeyConstraint({

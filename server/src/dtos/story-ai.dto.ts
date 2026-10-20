@@ -1,8 +1,8 @@
 import { createZodDto } from 'nestjs-zod';
-import { StoryCommandBatchDto, StoryCommandResponseSchema, StoryCommandSchema } from 'src/dtos/story.dto';
-import { AiProviderAdapter } from 'src/enum';
-import { isoDatetimeToDate } from 'src/validation';
 import z from 'zod';
+import { StoryCommandBatchDto, StoryCommandResponseSchema, StoryCommandSchema } from 'src/dtos/story.dto.js';
+import { AiProviderAdapter } from 'src/enum.js';
+import { isoDatetimeToDate } from 'src/validation.js';
 
 const uuid = z.uuidv4();
 export class StoryAiProviderUpdateDto extends createZodDto(

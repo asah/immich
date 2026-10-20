@@ -37,6 +37,16 @@
   } from './search-bar-utils';
   import { onMount } from 'svelte';
   import { searchManager } from '$lib/managers/search-manager.svelte';
+  import { featureFlagsManager } from '$lib/managers/feature-flags-manager.svelte';
+  import { QueryType } from '$lib/constants';
+  import { Route } from '$lib/route';
+  import { lang } from '$lib/stores/preferences.store';
+  import { getAssetMediaUrl } from '$lib/utils';
+  import { handleError } from '$lib/utils/handle-error';
+  import { AssetMediaSize, AssetVisibility, getAllAlbums, searchAssets, searchSmart } from '@immich/sdk';
+  import { Icon } from '@immich/ui';
+  import { mdiImageMultiple } from '@mdi/js';
+  import { combineDirectSearchResults, type DirectSearchResult } from './direct-search-utils';
   import SearchButton from './SearchButton.svelte';
 
   interface Props {
@@ -60,6 +70,9 @@
   }: Props = $props();
 
   let searchHistory = $state<SearchHistorySection>();
+  let directResults = $state<DirectSearchResult[]>([]);
+  let directSelectedIndex = $state<number>();
+  let directRequestId = 0;
 
   let activeFilter = $state('type');
   let showAdvanced = $state(false);
@@ -161,24 +174,95 @@
   });
 
   $effect(() => {
-    if (tags) {
-      tagsTitle = getSearchTagsTitle(tags, searchManager.filter.tagIds!);
+    if (searchManager.filter.tagIds === null) {
+      tagsTitle = $t('untagged');
+    } else if (tags) {
+      tagsTitle = getSearchTagsTitle(tags, searchManager.filter.tagIds);
     }
   });
 
+  $effect(() => {
+    const term = searchManager.filter.query.trim();
+    const query = searchManager.getQuery();
+    const smartEnabled = featureFlagsManager.value.smartSearch;
+    const language = $lang;
+    const requestId = ++directRequestId;
+    directResults = [];
+    directSelectedIndex = undefined;
+
+    if (!isOpen || !term) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      const searchDto = { ...query, page: 1, size: 10, visibility: AssetVisibility.Timeline };
+      const assetRequest =
+        searchManager.filter.queryType === QueryType.SMART && smartEnabled
+          ? searchSmart({ smartSearchDto: { ...searchDto, query: term, language } })
+          : searchAssets({
+              metadataSearchDto: {
+                ...searchDto,
+                originalFileName:
+                  searchManager.filter.queryType === QueryType.SMART && !smartEnabled
+                    ? term
+                    : 'originalFileName' in searchDto
+                      ? searchDto.originalFileName
+                      : undefined,
+              },
+            });
+
+      void Promise.all([getAllAlbums({ nameContains: term, limit: 10 }), assetRequest])
+        .then(([albums, response]) => {
+          if (requestId === directRequestId) {
+            directResults = combineDirectSearchResults(albums, response.assets.items);
+            directSelectedIndex = undefined;
+            searchHistory?.clearSelection();
+          }
+        })
+        .catch((error: unknown) => {
+          if (requestId === directRequestId) {
+            directResults = [];
+            handleError(error, $t('loading_search_results_failed'));
+          }
+        });
+    }, 200);
+
+    return () => {
+      clearTimeout(timer);
+      directRequestId++;
+    };
+  });
+
   export function moveSelection(increment: 1 | -1) {
+    if (directResults.length > 0) {
+      const nextIndex =
+        directSelectedIndex === undefined
+          ? increment === 1
+            ? 0
+            : directResults.length - 1
+          : directSelectedIndex + increment;
+      directSelectedIndex = nextIndex >= 0 && nextIndex < directResults.length ? nextIndex : undefined;
+      searchHistory?.clearSelection();
+      onActiveSelectionChange(directSelectedIndex === undefined ? undefined : `${id}-direct-${directSelectedIndex}`);
+      return;
+    }
     if (searchHistory) {
       searchHistory.moveSelection(increment);
     }
   }
 
   export function clearSelection() {
+    directSelectedIndex = undefined;
     if (searchHistory) {
       searchHistory.clearSelection();
     }
   }
 
   export function selectActiveOption() {
+    if (directSelectedIndex !== undefined) {
+      document.querySelector<HTMLElement>(`#${CSS.escape(`${id}-direct-${directSelectedIndex}`)}`)?.click();
+      return;
+    }
     if (searchHistory) {
       searchHistory.selectActiveOption();
     }
@@ -189,8 +273,45 @@
   {#if isOpen}
     <div
       transition:fly={{ y: 25, duration: 250 }}
-      class="absolute z-1 w-full rounded-b-3xl bg-white shadow-[0_8px_20px_rgba(0,0,0,0.12)] transition-all dark:bg-immich-dark-gray dark:text-gray-300"
+      class="absolute z-1 max-h-[80svh] w-full overflow-y-auto rounded-b-3xl bg-white shadow-[0_8px_20px_rgba(0,0,0,0.12)] transition-all dark:bg-immich-dark-gray dark:text-gray-300"
     >
+      {#if directResults.length > 0}
+        <div class="border-b border-light-200 py-2 dark:border-dark-600">
+          {#each directResults as result, index (result.type === 'album' ? result.album.id : result.asset.id)}
+            {@const isAlbum = result.type === 'album'}
+            {@const assetId = isAlbum ? result.album.albumThumbnailAssetId : result.asset.id}
+            <a
+              id={`${id}-direct-${index}`}
+              href={isAlbum ? Route.viewAlbum(result.album) : Route.viewAsset(result.asset)}
+              role="option"
+              tabindex="-1"
+              aria-selected={directSelectedIndex === index}
+              class="flex items-center gap-3 px-5 py-2 text-immich-fg hover:bg-gray-100 aria-selected:bg-gray-100 dark:text-immich-dark-fg dark:hover:bg-gray-500/30 dark:aria-selected:bg-gray-500/30"
+            >
+              <span
+                class="relative flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-gray-200 dark:bg-gray-700"
+              >
+                {#if assetId}
+                  <img
+                    src={getAssetMediaUrl({ id: assetId, size: AssetMediaSize.Thumbnail })}
+                    alt=""
+                    class="size-full object-cover"
+                  />
+                {:else}
+                  <Icon icon={mdiImageMultiple} size="22" aria-hidden />
+                {/if}
+                {#if isAlbum}
+                  <span
+                    class="absolute inset-e-0 bottom-0 rounded-tl bg-primary px-1 text-[9px] font-semibold text-white dark:bg-immich-dark-primary dark:text-black"
+                    >{$t('album')}</span
+                  >
+                {/if}
+              </span>
+              <span class="min-w-0 truncate">{isAlbum ? result.album.albumName : result.asset.originalFileName}</span>
+            </a>
+          {/each}
+        </div>
+      {/if}
       <SearchHistorySection
         bind:this={searchHistory}
         {onSelectSearchTerm}
@@ -248,7 +369,7 @@
         </div>
       </div>
       <div class="my-5 h-px w-full bg-light-200 dark:bg-dark-600"></div>
-      <div class="flex gap-2 px-5 pb-5">
+      <div class="flex flex-wrap gap-2 px-5 pb-5">
         <Button
           size="small"
           variant={advancedFiltersSet ? 'outline' : 'ghost'}

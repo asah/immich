@@ -1,8 +1,8 @@
-import { Column, CreateDateColumn, ForeignKeyColumn, Generated, Table, Timestamp } from '@immich/sql-tools';
-import { AlbumTable } from 'src/schema/tables/album.table';
-import { AssetTable } from 'src/schema/tables/asset.table';
-import { StoryTable } from 'src/schema/tables/story.table';
-import { UserTable } from 'src/schema/tables/user.table';
+import { Column, CreateDateColumn, ForeignKeyColumn, type Generated, Table, Timestamp } from '@immich/sql-tools';
+import { AlbumTable } from 'src/schema/tables/album.table.js';
+import { AssetTable } from 'src/schema/tables/asset.table.js';
+import { StoryTable } from 'src/schema/tables/story.table.js';
+import { UserTable } from 'src/schema/tables/user.table.js';
 
 @Table('story_asset')
 export class StoryAssetTable {

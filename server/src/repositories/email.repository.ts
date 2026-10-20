@@ -1,15 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { render } from '@react-email/render';
 import { createTransport } from 'nodemailer';
-import React from 'react';
-import { ActivityEmail } from 'src/emails/activity.email';
-import { AlbumAccountInviteEmail } from 'src/emails/album-account-invite.email';
-import { AlbumInviteEmail } from 'src/emails/album-invite.email';
-import { AlbumUpdateEmail } from 'src/emails/album-update.email';
-import { TestEmail } from 'src/emails/test.email';
-import { WelcomeEmail } from 'src/emails/welcome.email';
-import { LoggingRepository } from 'src/repositories/logging.repository';
-import { EmailImageAttachment } from 'src/types';
+import { createElement } from 'react';
+import { ActivityEmail } from 'src/emails/activity.email.js';
+import { AlbumAccountInviteEmail } from 'src/emails/album-account-invite.email.js';
+import { AlbumInviteEmail } from 'src/emails/album-invite.email.js';
+import { AlbumUpdateEmail } from 'src/emails/album-update.email.js';
+import { TestEmail } from 'src/emails/test.email.js';
+import { WelcomeEmail } from 'src/emails/welcome.email.js';
+import { LoggingRepository } from 'src/repositories/logging.repository.js';
+import { EmailImageAttachment } from 'src/types.js';
 
 export type SendEmailOptions = {
   from: string;
@@ -170,25 +170,25 @@ export class EmailRepository {
   private render({ template, data, customTemplate }: EmailRenderRequest): React.FunctionComponentElement<any> {
     switch (template) {
       case EmailTemplate.TEST_EMAIL: {
-        return React.createElement(TestEmail, { ...data, customTemplate });
+        return createElement(TestEmail, { ...data, customTemplate });
       }
 
       case EmailTemplate.WELCOME: {
-        return React.createElement(WelcomeEmail, { ...data, customTemplate });
+        return createElement(WelcomeEmail, { ...data, customTemplate });
       }
 
       case EmailTemplate.ALBUM_INVITE: {
-        return React.createElement(AlbumInviteEmail, { ...data, customTemplate });
+        return createElement(AlbumInviteEmail, { ...data, customTemplate });
       }
       case EmailTemplate.ALBUM_ACCOUNT_INVITE: {
-        return React.createElement(AlbumAccountInviteEmail, { ...data, customTemplate });
+        return createElement(AlbumAccountInviteEmail, { ...data, customTemplate });
       }
 
       case EmailTemplate.ALBUM_UPDATE: {
-        return React.createElement(AlbumUpdateEmail, { ...data, customTemplate });
+        return createElement(AlbumUpdateEmail, { ...data, customTemplate });
       }
       case EmailTemplate.ACTIVITY: {
-        return React.createElement(ActivityEmail, { ...data, customTemplate });
+        return createElement(ActivityEmail, { ...data, customTemplate });
       }
     }
   }

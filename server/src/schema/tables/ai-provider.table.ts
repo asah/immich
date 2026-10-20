@@ -3,18 +3,18 @@ import {
   Column,
   CreateDateColumn,
   ForeignKeyColumn,
-  Generated,
+  type Generated,
   Index,
   PrimaryGeneratedColumn,
   Table,
   Timestamp,
   UpdateDateColumn,
 } from '@immich/sql-tools';
-import { UpdatedAtTrigger } from 'src/decorators';
-import { AiProviderAdapter } from 'src/enum';
-import { ai_provider_adapter_enum } from 'src/schema/enums';
-import { AiCredentialTable } from 'src/schema/tables/ai-credential.table';
-import { UserTable } from 'src/schema/tables/user.table';
+import { UpdatedAtTrigger } from 'src/decorators.js';
+import { AiProviderAdapter } from 'src/enum.js';
+import { ai_provider_adapter_enum } from 'src/schema/enums.js';
+import { AiCredentialTable } from 'src/schema/tables/ai-credential.table.js';
+import { UserTable } from 'src/schema/tables/user.table.js';
 
 @Table('ai_provider')
 @UpdatedAtTrigger('ai_provider_updatedAt')

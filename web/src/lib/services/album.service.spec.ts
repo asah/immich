@@ -10,7 +10,7 @@ describe('getAlbumAssetsActions', () => {
     const album = albumFactory.build({ id: 'album-id' });
     const { Upload } = getAlbumAssetsActions(vi.fn(String) as never, album, []);
 
-    Upload.onAction(Upload);
+    Upload.onAction({ action: Upload, event: new MouseEvent('click') });
 
     expect(openFileUploadDialog).toHaveBeenCalledWith({ albumId: 'album-id' });
   });

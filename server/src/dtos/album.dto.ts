@@ -1,15 +1,15 @@
 import { ShallowDehydrateObject } from 'kysely';
 import { createZodDto } from 'nestjs-zod';
-import { AlbumUser, AuthSharedLink } from 'src/database';
-import { HistoryBuilder } from 'src/decorators';
-import { BulkIdErrorReasonSchema } from 'src/dtos/asset-ids.response.dto';
-import { MapAsset } from 'src/dtos/asset-response.dto';
-import { UserResponseSchema, mapUser } from 'src/dtos/user.dto';
-import { AlbumUserRole, AlbumUserRoleSchema, AssetOrder, AssetOrderSchema } from 'src/enum';
-import { MaybeDehydrated } from 'src/types';
-import { asDateTimeString } from 'src/utils/date';
-import { stringToBool, toEmail } from 'src/validation';
 import z from 'zod';
+import type { MaybeDehydrated } from 'src/types.js';
+import { AlbumUser, AuthSharedLink } from 'src/database.js';
+import { HistoryBuilder } from 'src/decorators.js';
+import { BulkIdErrorReasonSchema } from 'src/dtos/asset-ids.response.dto.js';
+import { MapAsset } from 'src/dtos/asset-response.dto.js';
+import { UserResponseSchema, mapUser } from 'src/dtos/user.dto.js';
+import { AlbumUserRole, AlbumUserRoleSchema, AssetOrder, AssetOrderSchema } from 'src/enum.js';
+import { asDateTimeString } from 'src/utils/date.js';
+import { stringToBool, toEmail } from 'src/validation.js';
 
 const AlbumSlugSchema = z
   .string()
@@ -180,6 +180,8 @@ const GetAlbumsSchema = z
   .object({
     id: z.uuidv4().optional().describe('Album ID'),
     name: z.string().optional().describe('Album name (exact match)'),
+    nameContains: z.string().optional().describe('Album name (case-insensitive partial match)'),
+    limit: z.coerce.number().int().min(1).max(100).optional().describe('Maximum number of albums to return'),
     isOwned: stringToBool
       .optional()
       .describe('Filter by ownership: true = only owned, false = only shared-with-me, undefined = no filter'),

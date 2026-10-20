@@ -1,8 +1,8 @@
 import { ConflictException, ForbiddenException } from '@nestjs/common';
 import { createHash, randomUUID } from 'node:crypto';
-import { AiProviderAdapter } from 'src/enum';
-import { StoryAiService } from 'src/services/story-ai.service';
 import { vitest } from 'vitest';
+import { AiProviderAdapter } from 'src/enum.js';
+import { StoryAiService } from 'src/services/story-ai.service.js';
 
 const userId = randomUUID();
 const storyId = randomUUID();

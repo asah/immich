@@ -3,16 +3,16 @@ import {
   Column,
   CreateDateColumn,
   ForeignKeyColumn,
-  Generated,
+  type Generated,
   PrimaryGeneratedColumn,
   Table,
   Timestamp,
   UpdateDateColumn,
 } from '@immich/sql-tools';
-import { UpdatedAtTrigger } from 'src/decorators';
-import { AiCredentialTestStatus } from 'src/enum';
-import { ai_credential_test_status_enum } from 'src/schema/enums';
-import { UserTable } from 'src/schema/tables/user.table';
+import { UpdatedAtTrigger } from 'src/decorators.js';
+import { AiCredentialTestStatus } from 'src/enum.js';
+import { ai_credential_test_status_enum } from 'src/schema/enums.js';
+import { UserTable } from 'src/schema/tables/user.table.js';
 
 @Table('ai_credential')
 @UpdatedAtTrigger('ai_credential_updatedAt')

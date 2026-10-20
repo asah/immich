@@ -147,10 +147,12 @@
       for (const [index, suggestion] of selected.entries()) {
         suggestionProgress = `Applying ${index + 1} of ${selected.length}`;
         showSuggestion(suggestion);
-        if (await handleUpdate(suggestion.assetIds, false)) {
-          suggestions = suggestions.filter((item) => item !== suggestion);
-          selectedSuggestionKeys.delete(suggestionKey(suggestion));
+        if (!(await handleUpdate(suggestion.assetIds, false))) {
+          continue;
         }
+
+        suggestions = suggestions.filter((item) => item !== suggestion);
+        selectedSuggestionKeys.delete(suggestionKey(suggestion));
       }
     } finally {
       applyingSuggestions = false;

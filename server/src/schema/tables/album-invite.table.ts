@@ -2,16 +2,16 @@ import {
   Column,
   CreateDateColumn,
   ForeignKeyColumn,
-  Generated,
+  type Generated,
   Index,
   PrimaryGeneratedColumn,
   Table,
-  Timestamp,
+  type Timestamp,
 } from '@immich/sql-tools';
-import { AlbumUserRole } from 'src/enum';
-import { album_user_role_enum } from 'src/schema/enums';
-import { AlbumTable } from 'src/schema/tables/album.table';
-import { UserTable } from 'src/schema/tables/user.table';
+import { AlbumUserRole } from 'src/enum.js';
+import { album_user_role_enum } from 'src/schema/enums.js';
+import { AlbumTable } from 'src/schema/tables/album.table.js';
+import { UserTable } from 'src/schema/tables/user.table.js';
 
 /** An email-bound, one-time invitation. Tokens are stored only as SHA-256 hashes. */
 @Table('album_invite')

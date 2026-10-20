@@ -2,14 +2,14 @@ import {
   Column,
   CreateDateColumn,
   ForeignKeyColumn,
-  Generated,
+  type Generated,
   Index,
   PrimaryGeneratedColumn,
   Table,
   Timestamp,
 } from '@immich/sql-tools';
-import { ActivityTable } from 'src/schema/tables/activity.table';
-import { AssetTable } from 'src/schema/tables/asset.table';
+import { ActivityTable } from 'src/schema/tables/activity.table.js';
+import { AssetTable } from 'src/schema/tables/asset.table.js';
 
 @Table('activity_asset')
 @Index({ name: 'activity_asset_activityId_idx', columns: ['activityId'] })

@@ -1,7 +1,7 @@
 import { ForeignKeyColumn, Table } from '@immich/sql-tools';
-import { AssetTable } from 'src/schema/tables/asset.table';
-import { StoryRevisionTable } from 'src/schema/tables/story-revision.table';
-import { StoryTable } from 'src/schema/tables/story.table';
+import { AssetTable } from 'src/schema/tables/asset.table.js';
+import { StoryRevisionTable } from 'src/schema/tables/story-revision.table.js';
+import { StoryTable } from 'src/schema/tables/story.table.js';
 
 @Table('story_published_asset')
 export class StoryPublishedAssetTable {

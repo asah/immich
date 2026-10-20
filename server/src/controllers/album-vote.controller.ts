@@ -1,14 +1,19 @@
 import { Body, Controller, Get, Param, Put, Req, Res } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { Request, Response } from 'express';
+import { type Request, type Response } from 'express';
 import { randomBytes } from 'node:crypto';
-import { Endpoint, HistoryBuilder } from 'src/decorators';
-import { AlbumVoteDto, AlbumVoteLeaderboardDto, AlbumVoteParamDto, AlbumVoteSessionDto } from 'src/dtos/album-vote.dto';
-import { AuthDto } from 'src/dtos/auth.dto';
-import { ApiTag, Permission } from 'src/enum';
-import { Auth, Authenticated } from 'src/middleware/auth.guard';
-import { AlbumVoteService } from 'src/services/album-vote.service';
-import { UUIDParamDto } from 'src/validation';
+import { Endpoint, HistoryBuilder } from 'src/decorators.js';
+import {
+  AlbumVoteDto,
+  AlbumVoteLeaderboardDto,
+  AlbumVoteParamDto,
+  AlbumVoteSessionDto,
+} from 'src/dtos/album-vote.dto.js';
+import { type AuthDto } from 'src/dtos/auth.dto.js';
+import { ApiTag, Permission } from 'src/enum.js';
+import { Auth, Authenticated } from 'src/middleware/auth.guard.js';
+import { AlbumVoteService } from 'src/services/album-vote.service.js';
+import { UUIDParamDto } from 'src/validation.js';
 
 const cookieName = 'immich_album_vote';
 

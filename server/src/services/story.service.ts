@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { createHash, randomUUID } from 'node:crypto';
 import { PostgresError } from 'postgres';
-import { AuthDto } from 'src/dtos/auth.dto';
+import { AuthDto } from 'src/dtos/auth.dto.js';
 import {
   StoryCommand,
   StoryCommandBatchDto,
@@ -19,7 +19,7 @@ import {
   StoryUpdateDto,
   StoryUserAddDto,
   StoryUserUpdateDto,
-} from 'src/dtos/story.dto';
+} from 'src/dtos/story.dto.js';
 import {
   AlbumUserRole,
   AssetFileType,
@@ -28,15 +28,15 @@ import {
   Permission,
   StoryAspectRatio,
   StoryRevisionSource,
-} from 'src/enum';
-import { AccessRepository } from 'src/repositories/access.repository';
-import { AlbumRepository } from 'src/repositories/album.repository';
-import { AssetRepository } from 'src/repositories/asset.repository';
-import { StoryCommandResult, StoryRepository } from 'src/repositories/story.repository';
-import { UserRepository } from 'src/repositories/user.repository';
-import { checkAccess, requireAccess } from 'src/utils/access';
-import { getFilenameExtension, ImmichFileResponse } from 'src/utils/file';
-import { mimeTypes } from 'src/utils/mime-types';
+} from 'src/enum.js';
+import { AccessRepository } from 'src/repositories/access.repository.js';
+import { AlbumRepository } from 'src/repositories/album.repository.js';
+import { AssetRepository } from 'src/repositories/asset.repository.js';
+import { StoryCommandResult, StoryRepository } from 'src/repositories/story.repository.js';
+import { UserRepository } from 'src/repositories/user.repository.js';
+import { checkAccess, requireAccess } from 'src/utils/access.js';
+import { ImmichFileResponse, getFilenameExtension } from 'src/utils/file.js';
+import { mimeTypes } from 'src/utils/mime-types.js';
 
 const makeEmptyScene = () => ({
   id: randomUUID(),
@@ -848,10 +848,7 @@ export class StoryService {
     }
     const workingAssetIds = new Set([...document.unplacedAssetIds, ...placedAssetIds]);
     const curationAssetIds = new Set(Object.keys(document.curation));
-    if (
-      workingAssetIds.size !== curationAssetIds.size ||
-      [...workingAssetIds].some((assetId) => !curationAssetIds.has(assetId))
-    ) {
+    if (workingAssetIds.size !== curationAssetIds.size || !workingAssetIds.isSubsetOf(curationAssetIds)) {
       throw new BadRequestException('Curation state must exactly match the story working set');
     }
   }
@@ -880,21 +877,20 @@ export class StoryService {
         throw new BadRequestException('Sticker assets must be accessible raster images');
       }
     }
-    if (videoElements.length > 0) {
-      const assets = await this.assetRepository.getByIds([
-        ...new Set(videoElements.map((element) => element.assetId!)),
-      ]);
-      const byId = new Map(assets.map((asset) => [asset.id, asset]));
-      for (const element of videoElements) {
-        const asset = byId.get(element.assetId!);
-        if (!asset?.width || !asset.height) {
-          throw new BadRequestException('Video dimensions are unavailable');
-        }
-        const sourceRatio = asset.width / asset.height;
-        const frameRatio = element.frame.width / element.frame.height;
-        if (Math.abs(sourceRatio - frameRatio) / sourceRatio > 0.001) {
-          throw new BadRequestException('Video elements must preserve source aspect ratio');
-        }
+    if (videoElements.length === 0) {
+      return;
+    }
+    const assets = await this.assetRepository.getByIds([...new Set(videoElements.map((element) => element.assetId!))]);
+    const byId = new Map(assets.map((asset) => [asset.id, asset]));
+    for (const element of videoElements) {
+      const asset = byId.get(element.assetId!);
+      if (!asset?.width || !asset.height) {
+        throw new BadRequestException('Video dimensions are unavailable');
+      }
+      const sourceRatio = asset.width / asset.height;
+      const frameRatio = element.frame.width / element.frame.height;
+      if (Math.abs(sourceRatio - frameRatio) / sourceRatio > 0.001) {
+        throw new BadRequestException('Video elements must preserve source aspect ratio');
       }
     }
   }

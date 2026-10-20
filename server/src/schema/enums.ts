@@ -1,4 +1,5 @@
 import { registerEnum } from '@immich/sql-tools';
+import { PersonUserRole } from 'src/dtos/person.dto.js';
 import {
   AiCredentialTestStatus,
   AiProviderAdapter,
@@ -10,7 +11,7 @@ import {
   StoryAspectRatio,
   StoryRevisionSource,
   VideoCodec,
-} from 'src/enum';
+} from 'src/enum.js';
 
 export const ai_provider_adapter_enum = registerEnum({
   name: 'ai_provider_adapter_enum',
@@ -60,4 +61,9 @@ export const asset_checksum_algorithm_enum = registerEnum({
 export const video_stream_variant_codec_enum = registerEnum({
   name: 'video_stream_variant_codec_enum',
   values: [VideoCodec.Av1, VideoCodec.Hevc, VideoCodec.H264],
+});
+
+export const person_user_role_enum = registerEnum({
+  name: 'person_user_role_enum',
+  values: Object.values(PersonUserRole),
 });

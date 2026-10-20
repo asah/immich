@@ -1,8 +1,8 @@
 import { Link, Section, Text } from '@react-email/components';
 import * as React from 'react';
-import { ImmichButton } from 'src/emails/components/button.component';
-import ImmichLayout from 'src/emails/components/immich.layout';
-import { AlbumAccountInviteEmailProps } from 'src/repositories/email.repository';
+import { ImmichButton } from 'src/emails/components/button.component.js';
+import ImmichLayout from 'src/emails/components/immich.layout.js';
+import { AlbumAccountInviteEmailProps } from 'src/repositories/email.repository.js';
 
 export const AlbumAccountInviteEmail = ({ albumName, senderName, inviteUrl }: AlbumAccountInviteEmailProps) => (
   <ImmichLayout preview={`Join ${senderName}'s shared album.`}>

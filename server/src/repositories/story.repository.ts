@@ -2,10 +2,10 @@ import { ConflictException, Injectable } from '@nestjs/common';
 import { Insertable, Kysely } from 'kysely';
 import { InjectKysely } from 'nestjs-kysely';
 import { createHash, randomUUID } from 'node:crypto';
-import { StoryDocument } from 'src/dtos/story.dto';
-import { AlbumUserRole, StoryRevisionSource } from 'src/enum';
-import { DB } from 'src/schema';
-import { StoryMutationTable } from 'src/schema/tables/story-mutation.table';
+import { StoryDocument } from 'src/dtos/story.dto.js';
+import { AlbumUserRole, StoryRevisionSource } from 'src/enum.js';
+import { DB } from 'src/schema/index.js';
+import { StoryMutationTable } from 'src/schema/tables/story-mutation.table.js';
 
 const hash = (value: unknown) => createHash('sha256').update(JSON.stringify(value)).digest();
 export type StoryCommandResult = { revisionId: string; revision: number; document: StoryDocument };

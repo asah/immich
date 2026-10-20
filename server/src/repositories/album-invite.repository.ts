@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { Insertable, Kysely } from 'kysely';
 import { InjectKysely } from 'nestjs-kysely';
-import { AlbumUserRole } from 'src/enum';
-import { DB } from 'src/schema';
-import { AlbumInviteTable } from 'src/schema/tables/album-invite.table';
+import { AlbumUserRole } from 'src/enum.js';
+import { DB } from 'src/schema/index.js';
+import { AlbumInviteTable } from 'src/schema/tables/album-invite.table.js';
 
 @Injectable()
 export class AlbumInviteRepository {

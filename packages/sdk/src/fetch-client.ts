@@ -1,6 +1,6 @@
 /**
  * Immich
- * 3.2.0
+ * 3.3.4
  * DO NOT MODIFY - This file has been generated using oazapfts.
  * See https://www.npmjs.com/package/oazapfts
  */
@@ -714,6 +714,7 @@ export type PeopleResponse = {
     minimumFaces?: number;
     /** Whether people appear in web sidebar */
     sidebarWeb: boolean;
+    updateStrategy: PersonUpdateStrategy;
 };
 export type PurchaseResponse = {
     /** Date until which to hide buy button */
@@ -810,6 +811,7 @@ export type PeopleUpdate = {
     minimumFaces?: number;
     /** Whether people appear in web sidebar */
     sidebarWeb?: boolean;
+    updateStrategy?: PersonUpdateStrategy;
 };
 export type PurchaseUpdate = {
     /** Date until which to hide buy button */
@@ -1346,6 +1348,27 @@ export type ExifResponseDto = {
     /** Time zone */
     timeZone?: string | null;
 };
+export type PersonOtherResponseDto = {
+    birthDate: string | null;
+    name: string;
+    role: PersonUserRole;
+    sharedById: string;
+};
+export type PeopleUserResponseDto = {
+    avatarColor: UserAvatarColor;
+    /** User email */
+    email: string;
+    /** User ID */
+    id: string;
+    /** User name */
+    name: string;
+    /** Profile change date */
+    profileChangedAt: string;
+    /** Profile image path */
+    profileImagePath: string;
+    /** Access role */
+    role: PersonUserRole;
+};
 export type PersonResponseDto = {
     /** Person date of birth */
     birthDate: string | null;
@@ -1359,6 +1382,11 @@ export type PersonResponseDto = {
     isHidden: boolean;
     /** Person name */
     name: string;
+    otherPeople: PersonOtherResponseDto[];
+    /** Users that gave the current user access to this person */
+    sharedBy: PeopleUserResponseDto[];
+    /** Users the current user gave access to this person */
+    sharedWith: PeopleUserResponseDto[];
     /** Thumbnail path */
     thumbnailPath: string;
     /** Last update date */
@@ -1876,6 +1904,8 @@ export type AssetFaceCreateDto = {
     imageWidth: number;
     /** Person ID */
     personId: string;
+    /** User ID */
+    userId?: string;
     /** Face bounding box width */
     width: number;
     /** Face bounding box X coordinate */
@@ -2018,15 +2048,19 @@ export type MapReverseGeocodeResponseDto = {
     /** State/Province name */
     state: string | null;
 };
-export type OnThisDayDto = {
-    /** Year for on this day memory */
+export type MemoryDataDto = {
+    /** Person ID (birthday memories) */
+    personId?: string;
+    /** Name of the person when the memory was created (birthday memories) */
+    personName?: string;
+    /** Year of the memory */
     year: number;
 };
 export type MemoryResponseDto = {
     assets: AssetResponseDto[];
     /** Creation date */
     createdAt: string;
-    data: OnThisDayDto;
+    data: MemoryDataDto;
     /** Deletion date */
     deletedAt?: string;
     /** Date when memory should be hidden */
@@ -2050,7 +2084,7 @@ export type MemoryResponseDto = {
 export type MemoryCreateDto = {
     /** Asset IDs to associate with memory */
     assetIds?: string[];
-    data: OnThisDayDto;
+    data: MemoryDataDto;
     /** Date when memory should be hidden */
     hideAt?: string;
     /** Is memory saved */
@@ -2136,6 +2170,11 @@ export type PartnerUpdateDto = {
     /** Show partner assets in timeline */
     inTimeline: boolean;
 };
+export type PeopleDeleteDto = {
+    /** IDs to process */
+    ids: string[];
+    userId?: string;
+};
 export type PeopleResponseDto = {
     /** Whether there are more pages */
     hasNextPage?: boolean;
@@ -2172,10 +2211,50 @@ export type PeopleUpdateItem = {
     isHidden?: boolean;
     /** Person name */
     name?: string;
+    /** Restrict the update to the person record of this User ID */
+    userId?: string;
 };
 export type PeopleUpdateDto = {
     /** People to update */
     people: PeopleUpdateItem[];
+};
+export type MergePersonDto = {
+    /** Person IDs to merge */
+    ids: string[];
+};
+export type PersonUsersDeleteDto = {
+    /** Person ID */
+    personId: string;
+    /** User ID of the user that gave access to the person */
+    sharedById?: string;
+    /** User ID of the user that was given access to the person */
+    sharedWithId: string;
+}[];
+export type PersonUsersResponseDto = {
+    /** Person ID */
+    personId: string;
+    /** Access role */
+    role: PersonUserRole;
+    /** The user that gave access to this person */
+    sharedBy: UserResponseDto;
+    /** User ID of the user that gave access to this person */
+    sharedById: string;
+    /** The user that was given access to this person */
+    sharedWith: UserResponseDto;
+    /** User ID of the user that was given access to this person */
+    sharedWithId: string;
+}[];
+export type PeopleUsersUpsertDto = {
+    /** Person IDs, required when type is omitted */
+    personIds?: string[];
+    /** Role that should be applied */
+    role: PersonUserRole;
+    /** User IDs that should be given access to the person */
+    sharedWithIds: string[];
+    "type"?: PeopleUsersUpsertType;
+};
+export type PersonDeleteDto = {
+    userId?: string;
 };
 export type PersonUpdateDto = {
     /** Person date of birth */
@@ -2190,16 +2269,16 @@ export type PersonUpdateDto = {
     isHidden?: boolean;
     /** Person name */
     name?: string;
-};
-export type MergePersonDto = {
-    /** Person IDs to merge */
-    ids: string[];
+    /** Restrict the update to the person record of this User ID */
+    userId?: string;
 };
 export type AssetFaceUpdateItem = {
     /** Asset ID */
     assetId: string;
     /** Person ID */
     personId: string;
+    /** User ID */
+    userId?: string;
 };
 export type AssetFaceUpdateDto = {
     /** Face update items */
@@ -4604,7 +4683,7 @@ export type SyncAssetFaceV1 = {
     /** Source type */
     sourceType: string;
 };
-export type SyncAssetFaceV2 = {
+export type SyncAssetFaceV3 = {
     /** Asset ID */
     assetId: string;
     /** Bounding box X1 */
@@ -4791,6 +4870,33 @@ export type SyncAuthUserV1 = {
     /** User storage label */
     storageLabel: string | null;
 };
+export type SyncAuthUserV2 = {
+    avatarColor?: (UserAvatarColor) | null;
+    /** User deleted at */
+    deletedAt: string | null;
+    /** User email */
+    email: string;
+    /** User has profile image */
+    hasProfileImage: boolean;
+    /** User ID */
+    id: string;
+    /** User is admin */
+    isAdmin: boolean;
+    /** User name */
+    name: string;
+    /** User OAuth ID */
+    oauthId: string | null;
+    /** User pin code */
+    pinCode: string | null;
+    /** User profile changed at */
+    profileChangedAt: string;
+    /** Quota size in bytes */
+    quotaSizeInBytes: number | null;
+    /** Quota usage in bytes */
+    quotaUsageInBytes: number;
+    /** User storage label */
+    storageLabel: string | null;
+};
 export type SyncCompleteV1 = {};
 export type SyncMemoryAssetDeleteV1 = {
     /** Asset ID */
@@ -4809,6 +4915,33 @@ export type SyncMemoryDeleteV1 = {
     memoryId: string;
 };
 export type SyncMemoryV1 = {
+    /** Created at */
+    createdAt: string;
+    /** Data */
+    data: {
+        [key: string]: any;
+    };
+    /** Deleted at */
+    deletedAt: string | null;
+    /** Hide at */
+    hideAt: string | null;
+    /** Memory ID */
+    id: string;
+    /** Is saved */
+    isSaved: boolean;
+    /** Memory at */
+    memoryAt: string;
+    /** Owner ID */
+    ownerId: string;
+    /** Seen at */
+    seenAt: string | null;
+    /** Show at */
+    showAt: string | null;
+    "type": MemoryTypeV1;
+    /** Updated at */
+    updatedAt: string;
+};
+export type SyncMemoryV2 = {
     /** Created at */
     createdAt: string;
     /** Data */
@@ -5434,12 +5567,14 @@ export function getUserStatisticsAdmin({ id, isFavorite, isTrashed, visibility }
 /**
  * List all albums
  */
-export function getAllAlbums({ assetId, id, isOwned, isShared, name, slug }: {
+export function getAllAlbums({ assetId, id, isOwned, isShared, limit, name, nameContains, slug }: {
     assetId?: string;
     id?: string;
     isOwned?: boolean;
     isShared?: boolean;
+    limit?: number;
     name?: string;
+    nameContains?: string;
     slug?: string;
 }, opts?: Oazapfts.RequestOpts) {
     return oazapfts.ok(oazapfts.fetchJson<{
@@ -5450,7 +5585,9 @@ export function getAllAlbums({ assetId, id, isOwned, isShared, name, slug }: {
         id,
         isOwned,
         isShared,
+        limit,
         name,
+        nameContains,
         slug
     }))}`, {
         ...opts
@@ -7329,22 +7466,27 @@ export function updatePartner({ id, partnerUpdateDto }: {
 /**
  * Delete people
  */
-export function deletePeople({ bulkIdsDto }: {
-    bulkIdsDto: BulkIdsDto;
+export function deletePeople({ peopleDeleteDto }: {
+    peopleDeleteDto: PeopleDeleteDto;
 }, opts?: Oazapfts.RequestOpts) {
     return oazapfts.ok(oazapfts.fetchText("/people", oazapfts.json({
         ...opts,
         method: "DELETE",
-        body: bulkIdsDto
+        body: peopleDeleteDto
     })));
 }
 /**
  * Get all people
  */
-export function getAllPeople({ closestAssetId, closestPersonId, page, size, withHidden }: {
+export function getAllPeople({ closestAssetId, closestPersonId, isFavorite, isHidden, name, page, sharedById, sharedWithId, size, withHidden }: {
     closestAssetId?: string;
     closestPersonId?: string;
+    isFavorite?: boolean;
+    isHidden?: boolean;
+    name?: string;
     page?: number;
+    sharedById?: string;
+    sharedWithId?: string;
     size?: number;
     withHidden?: boolean;
 }, opts?: Oazapfts.RequestOpts) {
@@ -7354,7 +7496,12 @@ export function getAllPeople({ closestAssetId, closestPersonId, page, size, with
     }>(`/people${QS.query(QS.explode({
         closestAssetId,
         closestPersonId,
+        isFavorite,
+        isHidden,
+        name,
         page,
+        sharedById,
+        sharedWithId,
         size,
         withHidden
     }))}`, {
@@ -7392,15 +7539,79 @@ export function updatePeople({ peopleUpdateDto }: {
     })));
 }
 /**
+ * Merge people
+ */
+export function mergePeople({ mergePersonDto }: {
+    mergePersonDto: MergePersonDto;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 200;
+        data: BulkIdResponseDto[];
+    }>("/people/merge", oazapfts.json({
+        ...opts,
+        method: "POST",
+        body: mergePersonDto
+    })));
+}
+/**
+ * Remove users from people
+ */
+export function removeUsersFromPeople({ personUsersDeleteDto }: {
+    personUsersDeleteDto: PersonUsersDeleteDto;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchText("/people/users", oazapfts.json({
+        ...opts,
+        method: "DELETE",
+        body: personUsersDeleteDto
+    })));
+}
+/**
+ * Get people access
+ */
+export function getUsersForPeople({ direction, personId, role, sharedById, sharedWithId }: {
+    direction?: SharingDirection;
+    personId?: string;
+    role?: PersonUserRole;
+    sharedById?: string;
+    sharedWithId?: string;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 200;
+        data: PersonUsersResponseDto;
+    }>(`/people/users${QS.query(QS.explode({
+        direction,
+        personId,
+        role,
+        sharedById,
+        sharedWithId
+    }))}`, {
+        ...opts
+    }));
+}
+/**
+ * Upsert user access
+ */
+export function upsertPeopleUsers({ peopleUsersUpsertDto }: {
+    peopleUsersUpsertDto: PeopleUsersUpsertDto;
+}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchText("/people/users", oazapfts.json({
+        ...opts,
+        method: "PUT",
+        body: peopleUsersUpsertDto
+    })));
+}
+/**
  * Delete person
  */
-export function deletePerson({ id }: {
+export function deletePerson({ id, personDeleteDto }: {
     id: string;
+    personDeleteDto: PersonDeleteDto;
 }, opts?: Oazapfts.RequestOpts) {
-    return oazapfts.ok(oazapfts.fetchText(`/people/${encodeURIComponent(id)}`, {
+    return oazapfts.ok(oazapfts.fetchText(`/people/${encodeURIComponent(id)}`, oazapfts.json({
         ...opts,
-        method: "DELETE"
-    }));
+        method: "DELETE",
+        body: personDeleteDto
+    })));
 }
 /**
  * Get a person
@@ -7434,7 +7645,7 @@ export function updatePerson({ id, personUpdateDto }: {
 /**
  * Merge people
  */
-export function mergePerson({ id, mergePersonDto }: {
+export function mergePersonLegacy({ id, mergePersonDto }: {
     id: string;
     mergePersonDto: MergePersonDto;
 }, opts?: Oazapfts.RequestOpts) {
@@ -9774,6 +9985,10 @@ export enum Frequency {
     Hourly = "hourly",
     Daily = "daily"
 }
+export enum PersonUpdateStrategy {
+    Self = "self",
+    Everyone = "everyone"
+}
 export enum AssetVisibility {
     Archive = "archive",
     Timeline = "timeline",
@@ -10013,6 +10228,11 @@ export enum AssetJobName {
     RegenerateThumbnail = "regenerate-thumbnail",
     TranscodeVideo = "transcode-video"
 }
+export enum PersonUserRole {
+    Read = "read",
+    Write = "write",
+    Admin = "admin"
+}
 export enum AssetTypeEnum {
     Image = "IMAGE",
     Video = "VIDEO",
@@ -10090,11 +10310,19 @@ export enum MemorySearchOrder {
     Random = "random"
 }
 export enum MemoryType {
-    OnThisDay = "on_this_day"
+    OnThisDay = "on_this_day",
+    Birthday = "birthday"
 }
 export enum PartnerDirection {
     SharedBy = "shared-by",
     SharedWith = "shared-with"
+}
+export enum SharingDirection {
+    SharedBy = "shared-by",
+    SharedWith = "shared-with"
+}
+export enum PeopleUsersUpsertType {
+    Everyone = "everyone"
 }
 export enum WorkflowType {
     AssetV1 = "AssetV1"
@@ -10405,6 +10633,7 @@ export enum Mode3 {
 }
 export enum SyncEntityType {
     AuthUserV1 = "AuthUserV1",
+    AuthUserV2 = "AuthUserV2",
     UserV1 = "UserV1",
     UserDeleteV1 = "UserDeleteV1",
     AssetV1 = "AssetV1",
@@ -10448,8 +10677,10 @@ export enum SyncEntityType {
     AlbumToAssetDeleteV1 = "AlbumToAssetDeleteV1",
     AlbumToAssetBackfillV1 = "AlbumToAssetBackfillV1",
     MemoryV1 = "MemoryV1",
+    MemoryV2 = "MemoryV2",
     MemoryDeleteV1 = "MemoryDeleteV1",
     MemoryToAssetV1 = "MemoryToAssetV1",
+    MemoryToAssetV2 = "MemoryToAssetV2",
     MemoryToAssetDeleteV1 = "MemoryToAssetDeleteV1",
     StackV1 = "StackV1",
     StackDeleteV1 = "StackDeleteV1",
@@ -10457,6 +10688,7 @@ export enum SyncEntityType {
     PersonDeleteV1 = "PersonDeleteV1",
     AssetFaceV1 = "AssetFaceV1",
     AssetFaceV2 = "AssetFaceV2",
+    AssetFaceV3 = "AssetFaceV3",
     AssetFaceDeleteV1 = "AssetFaceDeleteV1",
     UserMetadataV1 = "UserMetadataV1",
     UserMetadataDeleteV1 = "UserMetadataDeleteV1",
@@ -10479,8 +10711,11 @@ export enum SyncRequestType {
     AssetMetadataV1 = "AssetMetadataV1",
     AssetOcrV1 = "AssetOcrV1",
     AuthUsersV1 = "AuthUsersV1",
+    AuthUsersV2 = "AuthUsersV2",
     MemoriesV1 = "MemoriesV1",
+    MemoriesV2 = "MemoriesV2",
     MemoryToAssetsV1 = "MemoryToAssetsV1",
+    MemoryToAssetsV2 = "MemoryToAssetsV2",
     PartnersV1 = "PartnersV1",
     PartnerAssetsV1 = "PartnerAssetsV1",
     PartnerAssetsV2 = "PartnerAssetsV2",
@@ -10491,6 +10726,7 @@ export enum SyncRequestType {
     PeopleV1 = "PeopleV1",
     AssetFacesV1 = "AssetFacesV1",
     AssetFacesV2 = "AssetFacesV2",
+    AssetFacesV3 = "AssetFacesV3",
     UserMetadataV1 = "UserMetadataV1"
 }
 export enum AssetOrderBy {
@@ -10501,6 +10737,9 @@ export enum WorkflowResult {
     Completed = "completed",
     Halted = "halted",
     Error = "error"
+}
+export enum MemoryTypeV1 {
+    OnThisDay = "on_this_day"
 }
 export enum ReleaseType {
     Major = "major",

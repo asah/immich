@@ -11,23 +11,20 @@
   import ChangeDate from '$lib/components/timeline/actions/ChangeDateAction.svelte';
   import ChangeDescription from '$lib/components/timeline/actions/ChangeDescriptionAction.svelte';
   import ChangeLocation from '$lib/components/timeline/actions/ChangeLocationAction.svelte';
-  import CreateSharedLink from '$lib/components/timeline/actions/CreateSharedLinkAction.svelte';
   import DeleteAssets from '$lib/components/timeline/actions/DeleteAssetsAction.svelte';
   import DownloadAction from '$lib/components/timeline/actions/DownloadAction.svelte';
   import FavoriteAction from '$lib/components/timeline/actions/FavoriteAction.svelte';
   import SetVisibilityAction from '$lib/components/timeline/actions/SetVisibilityAction.svelte';
-  import TagAction from '$lib/components/timeline/actions/TagAction.svelte';
   import AssetSelectControlBar from '$lib/components/timeline/AssetSelectControlBar.svelte';
   import { QueryParameter } from '$lib/constants';
   import { assetMultiSelectManager } from '$lib/managers/asset-multi-select-manager.svelte';
-  import { authManager } from '$lib/managers/auth-manager.svelte';
   import { featureFlagsManager } from '$lib/managers/feature-flags-manager.svelte';
   import { searchManager } from '$lib/managers/search-manager.svelte';
   import type { Viewport } from '$lib/managers/timeline-manager/types';
   import { Route } from '$lib/route';
   import { getAssetBulkActions } from '$lib/services/asset.service';
   import { lang, locale } from '$lib/stores/preferences.store';
-  import { handlePromiseError } from '$lib/utils';
+  import { getAssetMediaUrl, handlePromiseError } from '$lib/utils';
   import { parseUtcDate } from '$lib/utils/date-time';
   import { handleError } from '$lib/utils/handle-error';
   import { isAlbumsRoute, isPeopleRoute } from '$lib/utils/navigation';
@@ -36,6 +33,7 @@
     type AlbumResponseDto,
     type AssetResponseDto,
     AssetVisibility,
+    getAllAlbums,
     getPerson,
     getTagById,
     type MetadataSearchDto,
@@ -44,7 +42,7 @@
     type SmartSearchDto,
   } from '@immich/sdk';
   import { ActionButton, CommandPaletteDefaultProvider, Icon, IconButton, LoadingSpinner } from '@immich/ui';
-  import { mdiArrowLeft, mdiClose, mdiDotsVertical, mdiImageOffOutline, mdiSelectAll } from '@mdi/js';
+  import { mdiArrowLeft, mdiClose, mdiDotsVertical, mdiImageMultiple, mdiImageOffOutline, mdiSelectAll } from '@mdi/js';
   import { onMount, tick, untrack } from 'svelte';
   import { t } from 'svelte-i18n';
 
@@ -57,9 +55,11 @@
   let previousRoute = $state<string>(Route.explore());
 
   let nextPage = $state(1);
+  let searchRequestId = 0;
   let searchResultAlbums: AlbumResponseDto[] = $state([]);
   let searchResultAssets: AssetResponseDto[] = $state([]);
   let isLoading = $state(true);
+  let isAlbumLoading = $state(false);
   let scrollY = $state(0);
   let scrollYHistory = 0;
 
@@ -121,10 +121,31 @@
   };
 
   async function onSearchQueryUpdate() {
+    const requestId = ++searchRequestId;
     nextPage = 1;
     searchResultAssets = [];
     searchResultAlbums = [];
-    await loadNextPage(true);
+    const albumSearchTerm = [terms.query, terms.originalFileName, terms.description, terms.originalPath, terms.ocr]
+      .find((value) => typeof value === 'string' && value.trim())
+      ?.trim();
+    isAlbumLoading = Boolean(albumSearchTerm);
+    await Promise.all([
+      loadNextPage(true),
+      albumSearchTerm
+        ? getAllAlbums({ nameContains: albumSearchTerm, limit: 100 })
+            .then((albums) => {
+              if (requestId === searchRequestId) {
+                searchResultAlbums = albums;
+              }
+            })
+            .catch((error: unknown) => handleError(error, $t('loading_search_results_failed')))
+            .finally(() => {
+              if (requestId === searchRequestId) {
+                isAlbumLoading = false;
+              }
+            })
+        : Promise.resolve(),
+    ]);
   }
 
   // eslint-disable-next-line svelte/valid-prop-names-in-kit-pages
@@ -133,6 +154,7 @@
       return;
     }
     isLoading = true;
+    const requestId = searchRequestId;
 
     const searchDto: SearchTerms = {
       page: nextPage,
@@ -146,16 +168,29 @@
           ? await searchSmart({
               smartSearchDto: { visibility: AssetVisibility.Timeline, ...searchDto, language: $lang },
             })
-          : await searchAssets({ metadataSearchDto: { visibility: AssetVisibility.Timeline, ...searchDto } });
+          : await searchAssets({
+              metadataSearchDto: {
+                visibility: AssetVisibility.Timeline,
+                ...searchDto,
+                originalFileName: searchDto.query && !smartSearchEnabled ? searchDto.query : searchDto.originalFileName,
+              },
+            });
 
-      searchResultAlbums.push(...albums.items);
-      searchResultAssets.push(...assets.items);
+      if (requestId !== searchRequestId) {
+        return;
+      }
+      if (albums.items.length > 0) {
+        searchResultAlbums = [...searchResultAlbums, ...albums.items];
+      }
+      searchResultAssets = [...searchResultAssets, ...assets.items];
 
       nextPage = Number(assets.nextPage) || 0;
     } catch (error) {
       handleError(error, $t('loading_search_results_failed'));
     } finally {
-      isLoading = false;
+      if (requestId === searchRequestId) {
+        isLoading = false;
+      }
     }
   };
 
@@ -257,7 +292,7 @@
 
 {#if searchTermKeys.length > 0}
   <section id="search-chips" class="mx-auto mt-24 w-full max-w-7xl px-4 sm:px-8 lg:px-12">
-    <div class="flex w-full flex-wrap place-content-center place-items-center gap-2.5 sm:gap-3">
+    <div class="flex w-full flex-wrap items-center justify-start gap-2.5 sm:gap-3">
       {#each searchTermKeys as searchKey (searchKey)}
         {@const value = terms[searchKey]}
         <div
@@ -302,6 +337,24 @@
           </button>
         </div>
       {/each}
+      {#each searchResultAlbums as album (album.id)}
+        <a
+          href={Route.viewAlbum(album)}
+          class="inline-flex max-w-full items-center gap-2 rounded-full bg-gray-100 py-1 ps-1 pe-3 text-xs text-immich-fg ring-1 ring-gray-200 hover:bg-gray-200 dark:bg-immich-dark-gray dark:text-immich-dark-fg dark:ring-gray-700 dark:hover:bg-gray-700"
+        >
+          <span
+            class="relative flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700"
+          >
+            {#if album.albumThumbnailAssetId}
+              <img src={getAssetMediaUrl({ id: album.albumThumbnailAssetId })} alt="" class="size-full object-cover" />
+            {:else}
+              <Icon icon={mdiImageMultiple} size="16" />
+            {/if}
+          </span>
+          <span class="shrink-0 font-medium text-primary dark:text-immich-dark-primary">{$t('album')}</span>
+          <span class="max-w-40 truncate">{album.albumName}</span>
+        </a>
+      {/each}
     </div>
   </section>
 {/if}
@@ -323,7 +376,7 @@
         onReload={onSearchQueryUpdate}
         slidingWindowOffset={searchResultsElement.offsetTop}
       />
-    {:else if !isLoading}
+    {:else if !isLoading && !isAlbumLoading && searchResultAlbums.length === 0}
       <div class="flex min-h-[calc(66vh-11rem)] w-full place-content-center items-center dark:text-white">
         <div class="flex flex-col content-center items-center text-center">
           <Icon icon={mdiImageOffOutline} size="3.5em" />
@@ -347,7 +400,7 @@
           {@const Actions = getAssetBulkActions($t)}
           <CommandPaletteDefaultProvider name={$t('assets')} actions={Object.values(Actions)} />
 
-          <CreateSharedLink />
+          <ActionButton action={Actions.CreateSharedLink} />
           <IconButton
             shape="round"
             color="secondary"
@@ -378,9 +431,7 @@
               <ChangeLocation menuItem />
               <ArchiveAction menuItem unarchive={assetMultiSelectManager.isAllArchived} />
               <SetVisibilityAction menuItem onVisibilitySet={handleSetVisibility} />
-              {#if authManager.preferences.tags.enabled}
-                <TagAction menuItem />
-              {/if}
+              <ActionMenuItem action={Actions.Tag} />
               <DeleteAssets menuItem {onAssetDelete} onUndoDelete={onSearchQueryUpdate} />
               <hr />
               <ActionMenuItem action={Actions.RegenerateThumbnailJob} />

@@ -3,14 +3,14 @@ import {
   Column,
   CreateDateColumn,
   ForeignKeyColumn,
-  Generated,
-  Int8,
+  type Generated,
+  type Int8,
   Table,
   Timestamp,
   Unique,
 } from '@immich/sql-tools';
-import { StoryRevisionTable } from 'src/schema/tables/story-revision.table';
-import { StoryTable } from 'src/schema/tables/story.table';
+import { StoryRevisionTable } from 'src/schema/tables/story-revision.table.js';
+import { StoryTable } from 'src/schema/tables/story.table.js';
 
 @Table('story_mutation')
 @Unique({ columns: ['storyId', 'clientMutationId'] })

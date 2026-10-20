@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
-import { AuthDto } from 'src/dtos/auth.dto';
+import { AuthDto } from 'src/dtos/auth.dto.js';
 import {
   StoryAiApplyResponseDto,
   StoryAiConsentDto,
@@ -16,13 +16,13 @@ import {
   StoryAiDraftResponseDto,
   StoryAiProviderResponseDto,
   StoryAiProviderUpdateDto,
-} from 'src/dtos/story-ai.dto';
-import { StoryCommand, StoryCommandBatchDto, StoryDocument } from 'src/dtos/story.dto';
-import { ConfigRepository } from 'src/repositories/config.repository';
-import { StoryAiRepository } from 'src/repositories/story-ai.repository';
-import { StoryAiProviderService, StoryAiThumbnail } from 'src/services/story-ai-provider.service';
-import { StoryAiThumbnailService } from 'src/services/story-ai-thumbnail.service';
-import { StoryService } from 'src/services/story.service';
+} from 'src/dtos/story-ai.dto.js';
+import { StoryCommand, StoryCommandBatchDto, StoryDocument } from 'src/dtos/story.dto.js';
+import { ConfigRepository } from 'src/repositories/config.repository.js';
+import { StoryAiRepository } from 'src/repositories/story-ai.repository.js';
+import { StoryAiProviderService, StoryAiThumbnail } from 'src/services/story-ai-provider.service.js';
+import { StoryAiThumbnailService } from 'src/services/story-ai-thumbnail.service.js';
+import { StoryService } from 'src/services/story.service.js';
 
 const disclosure = (provider: { adapter: string; approvedEndpointId: string; model: string }) =>
   createHash('sha256')

@@ -2,10 +2,10 @@ import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/com
 import { Kysely, sql } from 'kysely';
 import { InjectKysely } from 'nestjs-kysely';
 import { createHash } from 'node:crypto';
-import { AlbumVoteDto } from 'src/dtos/album-vote.dto';
-import { AlbumVoting } from 'src/dtos/album.dto';
-import { AuthDto } from 'src/dtos/auth.dto';
-import { DB } from 'src/schema';
+import { AlbumVoteDto } from 'src/dtos/album-vote.dto.js';
+import { AlbumVoting } from 'src/dtos/album.dto.js';
+import { AuthDto } from 'src/dtos/auth.dto.js';
+import { DB } from 'src/schema/index.js';
 
 const DEFAULT_VOTING: AlbumVoting = {
   enabled: false,

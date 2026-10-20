@@ -3,17 +3,17 @@ import {
   Column,
   CreateDateColumn,
   ForeignKeyColumn,
-  Generated,
+  type Generated,
   PrimaryGeneratedColumn,
   Table,
   Timestamp,
   UpdateDateColumn,
 } from '@immich/sql-tools';
-import { UpdatedAtTrigger } from 'src/decorators';
-import { AlbumTable } from 'src/schema/tables/album.table';
-import { AssetTable } from 'src/schema/tables/asset.table';
-import { SharedLinkTable } from 'src/schema/tables/shared-link.table';
-import { UserTable } from 'src/schema/tables/user.table';
+import { UpdatedAtTrigger } from 'src/decorators.js';
+import { AlbumTable } from 'src/schema/tables/album.table.js';
+import { AssetTable } from 'src/schema/tables/asset.table.js';
+import { SharedLinkTable } from 'src/schema/tables/shared-link.table.js';
+import { UserTable } from 'src/schema/tables/user.table.js';
 
 @Table('album_vote')
 @UpdatedAtTrigger('album_vote_updatedAt')

@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import sharp from 'sharp';
-import { AssetFileType, AssetType } from 'src/enum';
-import { AssetRepository } from 'src/repositories/asset.repository';
-import { StoryAiThumbnail } from 'src/services/story-ai-provider.service';
+import { AssetFileType, AssetType } from 'src/enum.js';
+import { AssetRepository } from 'src/repositories/asset.repository.js';
+import { StoryAiThumbnail } from 'src/services/story-ai-provider.service.js';
 
 const MAX_THUMBNAILS = 8;
 const MAX_EDGE_PIXELS = 128;

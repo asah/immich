@@ -14,9 +14,9 @@ import {
   Res,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { NextFunction, Response } from 'express';
-import { Endpoint, HistoryBuilder } from 'src/decorators';
-import { AuthDto } from 'src/dtos/auth.dto';
+import { type NextFunction, type Response } from 'express';
+import { Endpoint, HistoryBuilder } from 'src/decorators.js';
+import { type AuthDto } from 'src/dtos/auth.dto.js';
 import {
   SharedStoryResponseDto,
   StoryCommandBatchDto,
@@ -34,13 +34,13 @@ import {
   StoryUserAddDto,
   StoryUserResponseDto,
   StoryUserUpdateDto,
-} from 'src/dtos/story.dto';
-import { ApiTag, Permission } from 'src/enum';
-import { Auth, Authenticated } from 'src/middleware/auth.guard';
-import { LoggingRepository } from 'src/repositories/logging.repository';
-import { StoryService } from 'src/services/story.service';
-import { sendFile } from 'src/utils/file';
-import { UUIDParamDto } from 'src/validation';
+} from 'src/dtos/story.dto.js';
+import { ApiTag, Permission } from 'src/enum.js';
+import { Auth, Authenticated } from 'src/middleware/auth.guard.js';
+import { LoggingRepository } from 'src/repositories/logging.repository.js';
+import { StoryService } from 'src/services/story.service.js';
+import { sendFile } from 'src/utils/file.js';
+import { UUIDParamDto } from 'src/validation.js';
 
 @ApiTags(ApiTag.Stories)
 @Controller('stories')

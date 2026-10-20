@@ -111,3 +111,8 @@
 1787148183731-AddTagDescription
 1787148183732-ReconcileAlbumVoteSchema
 1788000000000-AddAlbumSlug
+1789419229196-ConvertUserOAuthIdEmptyStringToNull
+1790587508209-RenameGeoNamesCountries
+1790616293884-PersonSharing
+1790693088454-AddPersonUserTableSharedBySharedWithConstraint
+1792213725597-AddAssetFaceAssetState

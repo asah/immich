@@ -1,7 +1,7 @@
 import { BadGatewayException, BadRequestException, GatewayTimeoutException, Injectable } from '@nestjs/common';
-import { StoryCommand, StoryCommandSchema } from 'src/dtos/story.dto';
-import { AiProviderAdapter } from 'src/enum';
 import z from 'zod';
+import { StoryCommand, StoryCommandSchema } from 'src/dtos/story.dto.js';
+import { AiProviderAdapter } from 'src/enum.js';
 
 const OPENAI_RESPONSES_URL = 'https://api.openai.com/v1/responses';
 const DEFAULT_OPENAI_MODEL = 'gpt-5.6-sol';
