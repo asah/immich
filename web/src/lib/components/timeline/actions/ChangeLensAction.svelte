@@ -8,13 +8,17 @@
 
   type Props = {
     menuItem?: boolean;
+    onLensChanged?: () => void;
   };
 
-  let { menuItem = false }: Props = $props();
+  let { menuItem = false, onLensChanged }: Props = $props();
 
   const onAction = async () => {
     const assetIds = assetMultiSelectManager.assets.map(({ id }) => id);
-    await modalManager.show(AssetSelectionChangeLensModal, { assetIds });
+    const changed = await modalManager.show(AssetSelectionChangeLensModal, { assetIds });
+    if (changed) {
+      onLensChanged?.();
+    }
   };
 </script>
 

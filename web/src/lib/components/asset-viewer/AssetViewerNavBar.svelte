@@ -8,6 +8,7 @@
   import SetVisibilityAction from '$lib/components/asset-viewer/actions/SetVisibilityAction.svelte';
   import LoadingDots from '$lib/components/LoadingDots.svelte';
   import ButtonContextMenu from '$lib/components/shared-components/context-menu/ButtonContextMenu.svelte';
+  import MenuOption from '$lib/components/shared-components/context-menu/MenuOption.svelte';
   import { assetViewerManager } from '$lib/managers/asset-viewer-manager.svelte';
   import { authManager } from '$lib/managers/auth-manager.svelte';
   import { languageManager } from '$lib/managers/language-manager.svelte';
@@ -17,6 +18,7 @@
   import { getPersonAssetActions } from '$lib/services/person.service';
   import { getStackActions } from '$lib/services/stack.service';
   import { getSharedLink, withoutIcons } from '$lib/utils';
+  import AssetSelectionChangeLensModal from '$lib/modals/AssetSelectionChangeLensModal.svelte';
   import type { OnUndoDelete } from '$lib/utils/actions';
   import { toTimelineAsset } from '$lib/utils/timeline-util';
   import {
@@ -27,8 +29,8 @@
     type PersonResponseDto,
     type StackResponseDto,
   } from '@immich/sdk';
-  import { ActionButton, CommandPaletteDefaultProvider, Tooltip, type ActionItem } from '@immich/ui';
-  import { mdiArrowLeft, mdiArrowRight, mdiDotsVertical, mdiVideoOutline } from '@mdi/js';
+  import { ActionButton, CommandPaletteDefaultProvider, modalManager, Tooltip, type ActionItem } from '@immich/ui';
+  import { mdiArrowLeft, mdiArrowRight, mdiCameraIris, mdiDotsVertical, mdiVideoOutline } from '@mdi/js';
   import { t } from 'svelte-i18n';
 
   interface Props {
@@ -157,6 +159,14 @@
         {/if}
 
         <ActionMenuItem action={Actions.SetProfilePicture} />
+
+        {#if isOwner}
+          <MenuOption
+            text={$t('change_lens')}
+            icon={mdiCameraIris}
+            onClick={() => modalManager.show(AssetSelectionChangeLensModal, { assetIds: [asset.id] })}
+          />
+        {/if}
 
         {#if isOwner && !isLocked}
           <ArchiveAction {asset} {onAction} {preAction} />

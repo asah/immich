@@ -1,14 +1,15 @@
 <script lang="ts">
   import Combobox, { asComboboxOptions, type ComboBoxOption } from '$lib/components/shared-components/Combobox.svelte';
+  import { eventManager } from '$lib/managers/event-manager.svelte';
   import { handleError } from '$lib/utils/handle-error';
-  import { SearchSuggestionType, getSearchSuggestions, updateAssets } from '@immich/sdk';
+  import { SearchSuggestionType, getSearchSuggestions, updateAsset, updateAssets } from '@immich/sdk';
   import { FormModal, toastManager } from '@immich/ui';
   import { onMount } from 'svelte';
   import { t } from 'svelte-i18n';
 
   type Props = {
     assetIds: string[];
-    onClose: () => void;
+    onClose: (success: boolean) => void;
   };
 
   let { assetIds, onClose }: Props = $props();
@@ -38,16 +39,27 @@
 
     try {
       const lensModel = selectedOption.value === clearLensValue ? null : selectedOption.value;
-      await updateAssets({ assetBulkUpdateDto: { ids: assetIds, lensModel } });
+      if (assetIds.length === 1) {
+        const updatedAsset = await updateAsset({ id: assetIds[0], updateAssetDto: { lensModel } });
+        eventManager.emit('AssetUpdate', updatedAsset);
+      } else {
+        await updateAssets({ assetBulkUpdateDto: { ids: assetIds, lensModel } });
+      }
       toastManager.primary($t('lens_updated'));
-      onClose();
+      onClose(true);
     } catch (error) {
       handleError(error, $t('errors.unable_to_update_lens'));
     }
   };
 </script>
 
-<FormModal title={$t('change_lens')} submitText={$t('save')} disabled={loading || !selectedOption} {onClose} {onSubmit}>
+<FormModal
+  title={$t('change_lens')}
+  submitText={$t('save')}
+  disabled={loading || !selectedOption}
+  onClose={() => onClose(false)}
+  {onSubmit}
+>
   <Combobox
     bind:selectedOption
     allowCreate

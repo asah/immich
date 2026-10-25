@@ -9,6 +9,7 @@
   import { assetViewerManager } from '$lib/managers/asset-viewer-manager.svelte';
   import { authManager } from '$lib/managers/auth-manager.svelte';
   import { featureFlagsManager } from '$lib/managers/feature-flags-manager.svelte';
+  import AssetSelectionChangeLensModal from '$lib/modals/AssetSelectionChangeLensModal.svelte';
   import { Route } from '$lib/route';
   import { locale } from '$lib/stores/preferences.store';
   import { getAssetMediaUrl } from '$lib/utils';
@@ -23,8 +24,8 @@
     type AlbumResponseDto,
     type AssetResponseDto,
   } from '@immich/sdk';
-  import { Icon, IconButton, Link, LoadingSpinner, Text } from '@immich/ui';
-  import { mdiCamera, mdiCameraIris, mdiClose, mdiImageOutline, mdiInformationOutline } from '@mdi/js';
+  import { Icon, IconButton, Link, LoadingSpinner, modalManager, Text } from '@immich/ui';
+  import { mdiCamera, mdiCameraIris, mdiClose, mdiImageOutline, mdiInformationOutline, mdiPencil } from '@mdi/js';
   import { onDestroy } from 'svelte';
   import { t } from 'svelte-i18n';
   import { slide } from 'svelte/transition';
@@ -244,33 +245,49 @@
         </div>
       {/if}
 
-      {#if asset.exifInfo?.lensModel || asset.exifInfo?.fNumber || asset.exifInfo?.focalLength}
-        <div class="flex gap-4 py-4">
-          <div><Icon icon={mdiCameraIris} size="24" /></div>
+      {#if isOwner || asset.exifInfo?.lensModel || asset.exifInfo?.fNumber || asset.exifInfo?.focalLength}
+        <div class="flex w-full items-start justify-between gap-4 py-4">
+          <div class="flex min-w-0 gap-4">
+            <div><Icon icon={mdiCameraIris} size="24" /></div>
 
-          <div>
-            {#if asset.exifInfo?.lensModel}
-              <p>
-                <a
-                  href={Route.search({ lensModel: asset.exifInfo.lensModel })}
-                  title="{$t('search_for')} {asset.exifInfo.lensModel}"
-                  class="line-clamp-1 hover:text-primary"
-                >
-                  {asset.exifInfo.lensModel}
-                </a>
-              </p>
-            {/if}
-
-            <div class="flex gap-2 text-sm">
-              {#if asset.exifInfo?.fNumber}
-                <p>ƒ/{asset.exifInfo.fNumber.toLocaleString($locale)}</p>
+            <div class="min-w-0">
+              {#if asset.exifInfo?.lensModel}
+                <p>
+                  <a
+                    href={Route.search({ lensModel: asset.exifInfo.lensModel })}
+                    title="{$t('search_for')} {asset.exifInfo.lensModel}"
+                    class="line-clamp-1 hover:text-primary"
+                  >
+                    {asset.exifInfo.lensModel}
+                  </a>
+                </p>
+              {:else if isOwner}
+                <p>{$t('lens_model')}</p>
               {/if}
 
-              {#if asset.exifInfo.focalLength}
-                <p>{`${asset.exifInfo.focalLength.toLocaleString($locale)} mm`}</p>
-              {/if}
+              <div class="flex gap-2 text-sm">
+                {#if asset.exifInfo?.fNumber}
+                  <p>ƒ/{asset.exifInfo.fNumber.toLocaleString($locale)}</p>
+                {/if}
+
+                {#if asset.exifInfo?.focalLength}
+                  <p>{`${asset.exifInfo.focalLength.toLocaleString($locale)} mm`}</p>
+                {/if}
+              </div>
             </div>
           </div>
+
+          {#if isOwner}
+            <IconButton
+              icon={mdiPencil}
+              aria-label={$t('change_lens')}
+              size="small"
+              shape="round"
+              color="secondary"
+              variant="ghost"
+              onclick={() => modalManager.show(AssetSelectionChangeLensModal, { assetIds: [asset.id] })}
+            />
+          {/if}
         </div>
       {/if}
 
