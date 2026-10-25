@@ -2,6 +2,8 @@
 # Fail-closed production release for the custom Immich fork.
 # Database migrations are forward-only; do not bypass the required hooks below.
 set -Eeuo pipefail
+# Do not expose the PAT if this script is invoked with bash -x.
+set +x
 
 REPO="${IMMICH_REPO:-/home/asah/projects/immich}"
 
@@ -19,6 +21,9 @@ RELEASE_ENV="${IMMICH_RELEASE_ENV:-$REPO/.prod-release.env}"
 # The deployment-host file contains paths and URLs, never repository secrets.
 # shellcheck source=/dev/null
 source "$RELEASE_ENV"
+github_pat="${IMMICH_GITHUB_DEV_PAT:-}"
+unset IMMICH_GITHUB_DEV_PAT
+export -n github_pat
 
 BUILD_CMD="${IMMICH_BUILD_CMD:-$REPO/scripts/prod/build.sh}"
 DEPLOY_CMD="${IMMICH_DEPLOY_CMD:-$REPO/scripts/prod/deploy.sh}"
@@ -43,8 +48,31 @@ if [[ -n "$(git status --porcelain)" ]]; then
   die "working tree is dirty; commit changes first"
 fi
 
-git remote get-url "$EXPECTED_REMOTE" >/dev/null || die "unknown production remote: $EXPECTED_REMOTE"
-git fetch --quiet "$EXPECTED_REMOTE"
+remote_url="$(git remote get-url "$EXPECTED_REMOTE")" || die "unknown production remote: $EXPECTED_REMOTE"
+remote_target="$EXPECTED_REMOTE"
+askpass_helper="$REPO/scripts/prod/github-askpass.sh"
+if [[ -n "$github_pat" ]]; then
+  case "$remote_url" in
+    https://github.com/*) remote_target="$remote_url" ;;
+    git@github.com:*) remote_target="https://github.com/${remote_url#git@github.com:}" ;;
+    ssh://git@github.com/*) remote_target="https://github.com/${remote_url#ssh://git@github.com/}" ;;
+    *) die "IMMICH_GITHUB_DEV_PAT requires a GitHub remote" ;;
+  esac
+  [[ "$remote_target" =~ ^https://github\.com/[[:alnum:]_.-]+/[[:alnum:]_.-]+$ ]] ||
+    die "IMMICH_GITHUB_DEV_PAT requires a GitHub repository URL without embedded credentials"
+  require_hook GIT_ASKPASS "$askpass_helper"
+fi
+
+git_release_remote() {
+  if [[ -n "$github_pat" ]]; then
+    IMMICH_GITHUB_DEV_PAT="$github_pat" GIT_ASKPASS="$askpass_helper" GIT_TERMINAL_PROMPT=0 \
+      git -c credential.helper= "$@"
+  else
+    git "$@"
+  fi
+}
+
+git_release_remote fetch --quiet "$remote_target"
 SHA="$(git rev-parse HEAD)"
 SHORT_SHA="${SHA:0:12}"
 IMAGE="immich-custom:${SHORT_SHA}"
@@ -75,8 +103,8 @@ image_source="$(docker image inspect --format '{{range .Config.Env}}{{println .}
 [[ "$image_source" == "$SHA" ]] || die "image provenance mismatch: expected $SHA, found ${image_source:-unset}"
 
 echo "[3/8] Publishing exact commit..."
-git push --porcelain "$EXPECTED_REMOTE" "HEAD:refs/heads/$EXPECTED_BRANCH"
-[[ "$(git ls-remote "$EXPECTED_REMOTE" "refs/heads/$EXPECTED_BRANCH" | awk '{print $1}')" == "$SHA" ]] ||
+git_release_remote push --porcelain "$remote_target" "HEAD:refs/heads/$EXPECTED_BRANCH"
+[[ "$(git_release_remote ls-remote "$remote_target" "refs/heads/$EXPECTED_BRANCH" | awk '{print $1}')" == "$SHA" ]] ||
   die "production remote does not resolve $EXPECTED_BRANCH to $SHA"
 
 echo "[4/8] Entering maintenance mode..."
