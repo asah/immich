@@ -31,7 +31,7 @@ BACKUP_CMD="${IMMICH_BACKUP_CMD:-$REPO/scripts/prod/backup.sh}"
 MAINTENANCE_CMD="${IMMICH_MAINTENANCE_CMD:-$REPO/scripts/prod/maintenance.sh}"
 MIGRATE_CMD="${IMMICH_MIGRATE_CMD:-$REPO/scripts/prod/migrate.sh}"
 CHECK_CMD="${IMMICH_POST_DEPLOY_CHECK_CMD:-$REPO/scripts/prod/check.sh}"
-PIN_CMD="${IMMICH_PIN_IMAGE_CMD:-$REPO/scripts/prod/pin-image.sh}"
+VERIFY_PIN_CMD="${IMMICH_VERIFY_IMAGE_PIN_CMD:-$REPO/scripts/prod/verify-image-pin.sh}"
 HEALTH_URL="${IMMICH_HEALTH_URL:-}"
 HEALTH_INSECURE_TLS="${IMMICH_HEALTH_INSECURE_TLS:-false}"
 LOCK_FILE="${IMMICH_DEPLOY_LOCK_FILE:-/tmp/immich-production-deploy.lock}"
@@ -84,7 +84,7 @@ require_hook IMMICH_BACKUP_CMD "$BACKUP_CMD"
 require_hook IMMICH_MAINTENANCE_CMD "$MAINTENANCE_CMD"
 require_hook IMMICH_MIGRATE_CMD "$MIGRATE_CMD"
 require_hook IMMICH_POST_DEPLOY_CHECK_CMD "$CHECK_CMD"
-require_hook IMMICH_PIN_IMAGE_CMD "$PIN_CMD"
+require_hook IMMICH_VERIFY_IMAGE_PIN_CMD "$VERIFY_PIN_CMD"
 [[ -n "$HEALTH_URL" ]] || die "IMMICH_HEALTH_URL must be the production /api/server/ping URL"
 
 echo "Commit: $SHA"
@@ -103,7 +103,7 @@ docker image inspect "$IMAGE" >/dev/null 2>&1 || die "expected image not found: 
 image_id="$(docker image inspect --format '{{.Id}}' "$IMAGE")"
 image_source="$(docker image inspect --format '{{range .Config.Env}}{{println .}}{{end}}' "$IMAGE" | sed -n 's/^IMMICH_SOURCE_COMMIT=//p')"
 [[ "$image_source" == "$SHA" ]] || die "image provenance mismatch: expected $SHA, found ${image_source:-unset}"
-"$PIN_CMD" check "$IMAGE"
+"$VERIFY_PIN_CMD" "$IMAGE"
 
 echo "[3/8] Publishing exact commit..."
 git_release_remote push --porcelain "$remote_target" "HEAD:refs/heads/$EXPECTED_BRANCH"
@@ -140,7 +140,7 @@ for _ in $(seq 1 30); do
   if curl "${health_curl_args[@]}" "$HEALTH_URL" >/dev/null; then
     # Must verify container image/digest, migration state, schema, and smoke endpoints.
     "$CHECK_CMD" "$IMAGE" "$SHA" "$image_id" "$backup_artifact"
-    "$PIN_CMD" save "$IMAGE"
+    "$VERIFY_PIN_CMD" "$IMAGE"
     "$MAINTENANCE_CMD" exit "$SHA" "$IMAGE" "$image_id"
     maintenance_entered=false
     echo "DEPLOYED AND VERIFIED: $SHA"
