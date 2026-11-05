@@ -37,6 +37,7 @@ compose exec -T immich-server node -e '
 
 echo "Verifying deployed image and schema..."
 "$REPO/scripts/prod/check.sh" "$image" "$sha" "$image_id" manual-health-recovery
+"$REPO/scripts/prod/pin-image.sh" save "$image"
 
 echo "Exiting maintenance mode..."
 "$REPO/scripts/prod/maintenance.sh" exit "$sha" "$image" "$image_id"

@@ -61,6 +61,13 @@
    ./git-push-prod.sh
 ```
 
+Production releases build and verify a commit-specific server image. The release
+script pins that image in the deployment `.env`, so a later `docker compose up`
+uses the verified version. If startup reports a missing migration and names an
+older Immich version, stop the restart loop and run the release script from the
+current checkout. Do not remove migration records or roll the database back to
+match an older image.
+
 ## Links
 
 - [Documentation](https://docs.immich.app/)
