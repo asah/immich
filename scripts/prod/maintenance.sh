@@ -10,11 +10,9 @@ case "$action" in
     compose stop immich-server immich-machine-learning
     ;;
   exit)
-    # Keep the server on the candidate image selected by the release. Without
-    # this, Compose expands its default image value and can silently replace
-    # the newly deployed server with an older image during maintenance exit.
-    IMMICH_SERVER_IMAGE="$image" compose up -d --no-deps immich-server
-    compose up -d immich-machine-learning
+    # Start every configured service, including the proxy and dependencies.
+    # Keep the candidate override even though the .env pin was just updated.
+    IMMICH_SERVER_IMAGE="$image" compose up -d
     ;;
   *)
     echo "unknown maintenance action: $action" >&2
