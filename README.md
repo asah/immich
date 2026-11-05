@@ -61,14 +61,13 @@
    ./git-push-prod.sh
 ```
 
-Production releases build and verify a commit-specific server image. Before
-running the release script, set `IMMICH_SERVER_IMAGE=immich-custom:<first 12
-characters of the release commit>` in the deployment `.env`. The script checks
-the image selection without writing to the deployment directory, so an ordinary
-`docker compose up` uses the verified version. If startup reports a missing
-migration and names an older Immich version, stop the restart loop and run the
-release script from the current checkout. Do not remove migration records or
-roll the database back to match an older image.
+Production releases build and verify a commit-specific server image. The release
+script selects it for deployment, then updates the deployment `.env` through
+sudo after health and schema checks pass. The deployment directory can remain
+root-owned, and an ordinary `docker compose up` uses the verified version.
+If startup reports a missing migration and names an older Immich version, stop
+the restart loop and run the release script from the current checkout. Do not
+remove migration records or roll the database back to match an older image.
 
 ## Links
 
