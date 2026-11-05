@@ -62,9 +62,10 @@
 ```
 
 Production releases build and verify a commit-specific server image. The release
-script selects it for deployment, then updates the deployment `.env` through
-sudo after health and schema checks pass. The deployment directory can remain
-root-owned, and an ordinary `docker compose up` uses the verified version.
+script selects it for deployment, then updates the deployment `.env` after
+health and schema checks pass. The release user needs write access to that file;
+the deployment directory can remain root-owned. An ordinary `docker compose up`
+then uses the verified version.
 If startup reports a missing migration and names an older Immich version, stop
 the restart loop and run the release script from the current checkout. Do not
 remove migration records or roll the database back to match an older image.

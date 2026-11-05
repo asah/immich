@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Persist the verified image after deployment, using sudo only for the .env update.
+# Persist the verified image without write access to the deployment directory.
 set -Eeuo pipefail
 # shellcheck source=scripts/prod/common.sh disable=SC1091
 source "$(dirname "$0")/common.sh"
@@ -35,40 +35,60 @@ if [[ "$configured_image" == "$image" ]]; then
   exit 0
 fi
 
+[[ -r "$ENV_FILE" && -w "$ENV_FILE" ]] || {
+  echo "deployment .env must be readable and writable by the release user: $ENV_FILE" >&2
+  exit 1
+}
+
 if [[ "$action" == check ]]; then
-  # Authorize and check the privileged update before maintenance begins.
-  if (( EUID != 0 )); then
-    sudo -v
-    sudo test -w "$ENV_FILE"
-    sudo test -w "$(dirname "$ENV_FILE")"
-  else
-    [[ -w "$ENV_FILE" && -w "$(dirname "$ENV_FILE")" ]]
-  fi
   echo "Will pin $image after the release checks pass (currently $configured_image)"
   exit 0
 fi
 
-if (( EUID != 0 )); then
-  # Pass only the deployment paths across sudo; keep Git credentials unprivileged.
-  exec sudo env \
-    IMMICH_DEPLOY_DIR="$DEPLOY_DIR" \
-    IMMICH_COMPOSE_FILE="$COMPOSE_FILE" \
-    IMMICH_ENV_FILE="$ENV_FILE" \
-    "$0" save "$image"
-fi
+# Stage and validate the new contents outside the root-owned deployment directory.
+# The existing file is replaced in place, preserving its inode, owner, and mode.
+temporary_env="$(mktemp /tmp/immich-env-new.XXXXXX)"
+backup_env="$(mktemp /tmp/immich-env-backup.XXXXXX)"
+write_started=false
+write_verified=false
+cleanup() {
+  local status=$?
+  if [[ "$write_started" == true && "$write_verified" != true ]]; then
+    if ! cat "$backup_env" > "$ENV_FILE"; then
+      echo "could not restore $ENV_FILE from $backup_env; backup retained" >&2
+      rm -f "$temporary_env"
+      exit "$status"
+    fi
+  fi
+  rm -f "$temporary_env" "$backup_env"
+  exit "$status"
+}
+trap cleanup EXIT
 
-# Preserve the administrator's ownership and mode with an atomic replacement.
-temporary_env="$(mktemp "${ENV_FILE}.XXXXXX")"
-trap 'rm -f "$temporary_env"' EXIT
-chmod --reference="$ENV_FILE" "$temporary_env"
-chown --reference="$ENV_FILE" "$temporary_env"
-awk '!/^[[:space:]]*(export[[:space:]]+)?IMMICH_SERVER_IMAGE[[:space:]]*=/' "$ENV_FILE" > "$temporary_env"
+cp -- "$ENV_FILE" "$backup_env"
+awk '!/^[[:space:]]*(export[[:space:]]+)?IMMICH_SERVER_IMAGE[[:space:]]*=/' "$backup_env" > "$temporary_env"
 printf '\nIMMICH_SERVER_IMAGE=%s\n' "$image" >> "$temporary_env"
-mv -f "$temporary_env" "$ENV_FILE"
+staged_image="$( (unset IMMICH_SERVER_IMAGE; ENV_FILE="$temporary_env"; server_image) )"
+[[ "$staged_image" == "$image" ]] || {
+  echo "staged deployment .env would select $staged_image instead of $image" >&2
+  exit 1
+}
+
+exec {env_fd}<>"$ENV_FILE"
+flock -x "$env_fd"
+cmp -s "$ENV_FILE" "$backup_env" || {
+  echo "deployment .env changed during the release; refusing to overwrite it" >&2
+  exit 1
+}
+write_started=true
+cat "$temporary_env" > "$ENV_FILE"
+sync -f "$ENV_FILE"
 
 configured_image="$( (unset IMMICH_SERVER_IMAGE; server_image) )"
 [[ "$configured_image" == "$image" ]] || {
   echo "ordinary Compose startup would select $configured_image instead of $image" >&2
   exit 1
 }
+write_verified=true
+exec {env_fd}>&-
 echo "Pinned ordinary Compose startup to $image"
