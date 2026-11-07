@@ -29,8 +29,19 @@ allowBuilds:
   postman-code-generators: false
   unrs-resolver: false
 overrides:
+  '@grpc/grpc-js': 1.14.5
+  'brace-expansion@^2': 2.1.6
+  'brace-expansion@^5': 5.0.11
   canvas: 3.2.3
+  engine.io: 6.6.10
+  multer: 2.5.0
+  proxy-addr: 2.0.8
   sharp: ^0.35.3
+  socket.io-parser: 4.2.7
+  systeminformation: 5.33.16
+  'tar@^7': 7.5.21
+  'undici@^6': 6.29.1
+  'ws@^8': 8.21.0
   # 1.9.3-1.9.5 are confirmed broken
   tsc-alias: 1.9.2
 packageExtensions:
