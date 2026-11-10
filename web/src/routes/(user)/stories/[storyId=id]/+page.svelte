@@ -1,30 +1,35 @@
 <script lang="ts">
+  import {
+    getAssetInfo,
+    getAssetThumbnailPath,
+    getBaseUrl,
+    type StoryAiConsentResponseDto,
+    type StoryAiProviderResponseDto,
+  } from '@immich/sdk';
+  import { Badge, Button, modalManager, toastManager } from '@immich/ui';
+  import { mdiArrowDown, mdiArrowUp, mdiDelete, mdiPlay, mdiPublish, mdiShareVariant } from '@mdi/js';
+  import { onMount } from 'svelte';
+  import { t } from 'svelte-i18n';
   import { goto, invalidateAll } from '$app/navigation';
   import UserPageLayout from '$lib/components/layouts/UserPageLayout.svelte';
+  import { StoryEditorCanvas, StoryPageViewport } from '$lib/components/stories';
+  import StoryAiAssistant from '$lib/components/stories/StoryAiAssistant.svelte';
+  import StoryAiSetup from '$lib/components/story-page/StoryAiSetup.svelte';
+  import StoryCollaborators from '$lib/components/story-page/StoryCollaborators.svelte';
   import StoryCurationShell, { type CurationItem } from '$lib/components/story-page/StoryCurationShell.svelte';
   import StoryHistory from '$lib/components/story-page/StoryHistory.svelte';
   import StoryShareModal from '$lib/components/story-page/StoryShareModal.svelte';
-  import StoryAiSetup from '$lib/components/story-page/StoryAiSetup.svelte';
-  import StoryCollaborators from '$lib/components/story-page/StoryCollaborators.svelte';
-  import { StoryEditorCanvas, StoryPageViewport } from '$lib/components/stories';
-  import StoryAiAssistant from '$lib/components/stories/StoryAiAssistant.svelte';
-  import type { StoryAiConsent, StoryAiState } from '$lib/utils/story-ai-state';
-  import type { StoryAspectRatio, StoryScene } from '$lib/utils/story-model';
-  import { createBlankStoryPageCommand, createStoryPageMoveCommand } from '$lib/utils/story-page-actions';
-  import { Route } from '$lib/route';
   import AlbumPickerModal from '$lib/modals/AlbumPickerModal.svelte';
+  import { Route } from '$lib/route';
   import { storyService, type StoryCommandBatchDto } from '$lib/services/story.service';
+  import type { StoryAiConsent, StoryAiState } from '$lib/utils/story-ai-state';
   import {
     LocalStorageStoryRecoveryStore,
     StoryEditorTransactionManager,
     type StoryCommandBatch,
   } from '$lib/utils/story-editor-state';
-  import { Badge, Button, modalManager, toastManager } from '@immich/ui';
-  import { getAssetInfo, getAssetThumbnailPath, getBaseUrl } from '@immich/sdk';
-  import type { StoryAiConsentResponseDto, StoryAiProviderResponseDto } from '@immich/sdk';
-  import { mdiArrowDown, mdiArrowUp, mdiDelete, mdiPlay, mdiPublish, mdiShareVariant } from '@mdi/js';
-  import { t } from 'svelte-i18n';
-  import { onMount } from 'svelte';
+  import type { StoryAspectRatio, StoryScene } from '$lib/utils/story-model';
+  import { createBlankStoryPageCommand, createStoryPageMoveCommand } from '$lib/utils/story-page-actions';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();

@@ -1,26 +1,4 @@
 <script lang="ts">
-  import ActionMenuItem from '$lib/components/ActionMenuItem.svelte';
-  import type { OnAction, PreAction } from '$lib/components/asset-viewer/actions/action';
-  import ArchiveAction from '$lib/components/asset-viewer/actions/ArchiveAction.svelte';
-  import DeleteAction from '$lib/components/asset-viewer/actions/DeleteAction.svelte';
-  import RestoreAction from '$lib/components/asset-viewer/actions/RestoreAction.svelte';
-  import RatingAction from '$lib/components/asset-viewer/actions/RatingAction.svelte';
-  import SetVisibilityAction from '$lib/components/asset-viewer/actions/SetVisibilityAction.svelte';
-  import LoadingDots from '$lib/components/LoadingDots.svelte';
-  import ButtonContextMenu from '$lib/components/shared-components/context-menu/ButtonContextMenu.svelte';
-  import MenuOption from '$lib/components/shared-components/context-menu/MenuOption.svelte';
-  import { assetViewerManager } from '$lib/managers/asset-viewer-manager.svelte';
-  import { authManager } from '$lib/managers/auth-manager.svelte';
-  import { languageManager } from '$lib/managers/language-manager.svelte';
-  import { getAlbumAssetActions } from '$lib/services/album.service';
-  import { getGlobalActions } from '$lib/services/app.service';
-  import { getAssetActions } from '$lib/services/asset.service';
-  import { getPersonAssetActions } from '$lib/services/person.service';
-  import { getStackActions } from '$lib/services/stack.service';
-  import { getSharedLink, withoutIcons } from '$lib/utils';
-  import AssetSelectionChangeLensModal from '$lib/modals/AssetSelectionChangeLensModal.svelte';
-  import type { OnUndoDelete } from '$lib/utils/actions';
-  import { toTimelineAsset } from '$lib/utils/timeline-util';
   import {
     AssetTypeEnum,
     AssetVisibility,
@@ -29,9 +7,31 @@
     type PersonResponseDto,
     type StackResponseDto,
   } from '@immich/sdk';
-  import { ActionButton, CommandPaletteDefaultProvider, modalManager, Tooltip, type ActionItem } from '@immich/ui';
+  import { ActionButton, CommandPaletteDefaultProvider, Tooltip, modalManager, type ActionItem } from '@immich/ui';
   import { mdiArrowLeft, mdiArrowRight, mdiCameraIris, mdiDotsVertical, mdiVideoOutline } from '@mdi/js';
   import { t } from 'svelte-i18n';
+  import ActionMenuItem from '$lib/components/ActionMenuItem.svelte';
+  import LoadingDots from '$lib/components/LoadingDots.svelte';
+  import ArchiveAction from '$lib/components/asset-viewer/actions/ArchiveAction.svelte';
+  import DeleteAction from '$lib/components/asset-viewer/actions/DeleteAction.svelte';
+  import RatingAction from '$lib/components/asset-viewer/actions/RatingAction.svelte';
+  import RestoreAction from '$lib/components/asset-viewer/actions/RestoreAction.svelte';
+  import SetVisibilityAction from '$lib/components/asset-viewer/actions/SetVisibilityAction.svelte';
+  import type { OnAction, PreAction } from '$lib/components/asset-viewer/actions/action';
+  import ButtonContextMenu from '$lib/components/shared-components/context-menu/ButtonContextMenu.svelte';
+  import MenuOption from '$lib/components/shared-components/context-menu/MenuOption.svelte';
+  import { assetViewerManager } from '$lib/managers/asset-viewer-manager.svelte';
+  import { authManager } from '$lib/managers/auth-manager.svelte';
+  import { languageManager } from '$lib/managers/language-manager.svelte';
+  import AssetSelectionChangeLensModal from '$lib/modals/AssetSelectionChangeLensModal.svelte';
+  import { getAlbumAssetActions } from '$lib/services/album.service';
+  import { getGlobalActions } from '$lib/services/app.service';
+  import { getAssetActions } from '$lib/services/asset.service';
+  import { getPersonAssetActions } from '$lib/services/person.service';
+  import { getStackActions } from '$lib/services/stack.service';
+  import { getSharedLink, withoutIcons } from '$lib/utils';
+  import type { OnUndoDelete } from '$lib/utils/actions';
+  import { toTimelineAsset } from '$lib/utils/timeline-util';
 
   interface Props {
     asset: AssetResponseDto;
@@ -87,8 +87,9 @@
 <CommandPaletteDefaultProvider name={$t('assets')} actions={withoutIcons([Close, Cast, ...Object.values(Actions)])} />
 
 <div
-  class="flex h-16 place-items-center justify-between bg-linear-to-b from-black/40 px-3 drop-shadow-[0_0_1px_rgba(0,0,0,0.4)] transition-transform duration-200"
+  class="relative isolate flex h-16 place-items-center justify-between px-3 drop-shadow-[0_0_1px_rgba(0,0,0,0.4)] transition-transform duration-200"
 >
+  <div class="pointer-events-none absolute inset-x-0 top-0 -z-10 h-24 bg-black/40 mask-smoothstep-to-bottom"></div>
   <div class="dark">
     <ActionButton action={Close} />
   </div>
@@ -150,11 +151,11 @@
         <ActionMenuItem action={StackActions.RemoveAsset} />
 
         {#if album}
-          {@const { SetCover } = getAlbumAssetActions($t, album, asset)}
+          {const { SetCover } = $derived(getAlbumAssetActions($t, album, asset))}
           <ActionMenuItem action={SetCover} />
         {/if}
         {#if person}
-          {@const { SetFeaturedPhoto } = getPersonAssetActions($t, person, asset)}
+          {const { SetFeaturedPhoto } = $derived(getPersonAssetActions($t, person, asset))}
           <ActionMenuItem action={SetFeaturedPhoto} />
         {/if}
 

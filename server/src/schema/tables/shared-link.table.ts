@@ -3,10 +3,10 @@ import {
   Column,
   CreateDateColumn,
   ForeignKeyColumn,
-  type Generated,
   PrimaryGeneratedColumn,
   Table,
   Timestamp,
+  type Generated,
 } from '@immich/sql-tools';
 import { SharedLinkType } from 'src/enum.js';
 import { AlbumTable } from 'src/schema/tables/album.table.js';

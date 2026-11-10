@@ -1,8 +1,16 @@
 <script lang="ts">
+  import { type AlbumResponseDto, type AssetResponseDto } from '@immich/sdk';
+  import { Icon, modalManager } from '@immich/ui';
+  import { mdiChevronDown, mdiChevronRight, mdiLink } from '@mdi/js';
+  import { debounce } from 'lodash-es';
+  import { untrack, type Snippet } from 'svelte';
+  import { t } from 'svelte-i18n';
+  import type { ClassValue } from 'svelte/elements';
+  import { SvelteMap, SvelteSet } from 'svelte/reactivity';
   import { goto } from '$app/navigation';
   import { shortcuts, type ShortcutOptions } from '$lib/actions/shortcut';
-  import type { Action } from '$lib/components/asset-viewer/actions/action';
   import type { AssetCursor } from '$lib/components/asset-viewer/AssetViewer.svelte';
+  import type { Action } from '$lib/components/asset-viewer/actions/action';
   import Thumbnail from '$lib/components/assets/thumbnail/Thumbnail.svelte';
   import GalleryAssetInfo from '$lib/components/shared-components/gallery-viewer/GalleryAssetInfo.svelte';
   import { AssetAction } from '$lib/constants';
@@ -16,27 +24,18 @@
   import ShortcutsModal from '$lib/modals/ShortcutsModal.svelte';
   import { Route } from '$lib/route';
   import { keyboardManager } from '$lib/stores/keyboard-manager.svelte';
-  import { showDeleteModal } from '$lib/stores/preferences.store';
-  import type { AlbumAssetDisplayInfo } from '$lib/stores/preferences.store';
+  import { showDeleteModal, type AlbumAssetDisplayInfo } from '$lib/stores/preferences.store';
   import { handlePromiseError } from '$lib/utils';
   import { deleteAssets } from '$lib/utils/actions';
-  import { archiveAssets, getNextAsset, getPreviousAsset, navigateToAsset } from '$lib/utils/asset-utils';
+  import { getNextAsset, getPreviousAsset, navigateToAsset } from '$lib/utils/asset-utils';
   import { moveFocus } from '$lib/utils/focus-util';
   import { handleError } from '$lib/utils/handle-error';
-  import { sanitizeRichText } from '$lib/utils/sanitize-rich-text';
-  import { PersistedLocalStorage } from '$lib/utils/persisted';
   import { getGroupedJustifiedLayoutFromAssets, getJustifiedLayoutFromAssets } from '$lib/utils/layout-utils';
   import { navigate } from '$lib/utils/navigation';
+  import { PersistedLocalStorage } from '$lib/utils/persisted';
+  import { sanitizeRichText } from '$lib/utils/sanitize-rich-text';
   import { isTimelineAsset, toTimelineAsset } from '$lib/utils/timeline-util';
   import { TUNABLES } from '$lib/utils/tunables';
-  import { AssetVisibility, type AlbumResponseDto, type AssetResponseDto } from '@immich/sdk';
-  import { Icon, modalManager } from '@immich/ui';
-  import { mdiChevronDown, mdiChevronRight, mdiLink } from '@mdi/js';
-  import { debounce } from 'lodash-es';
-  import { t } from 'svelte-i18n';
-  import { untrack, type Snippet } from 'svelte';
-  import { SvelteMap, SvelteSet } from 'svelte/reactivity';
-  import type { ClassValue } from 'svelte/elements';
 
   const {
     TIMELINE: { INTERSECTION_EXPAND_TOP, INTERSECTION_EXPAND_BOTTOM },
@@ -47,7 +46,6 @@
     assets: AssetResponseDto[];
     viewerAssets?: AssetResponseDto[];
     assetInteraction: AssetMultiSelectManager;
-    disableAssetSelect?: boolean;
     showArchiveIcon?: boolean;
     viewport: Viewport;
     onEndReached?: (() => void) | undefined;
@@ -73,13 +71,13 @@
     /** Render one fixed caption line below each album thumbnail instead of over its crop. */
     captionsBelow?: boolean;
     instantCameraStyle?: boolean;
+    disableAssetSelect?: boolean;
   };
 
   let {
     assets = $bindable(),
     viewerAssets,
     assetInteraction,
-    disableAssetSelect = false,
     showArchiveIcon = false,
     viewport,
     onEndReached = undefined,
@@ -103,6 +101,7 @@
     forceSectionsOpen = false,
     captionsBelow = false,
     instantCameraStyle = false,
+    disableAssetSelect = false,
   }: Props = $props();
 
   const navigationAssets = $derived(viewerAssets ?? assets);
@@ -386,17 +385,6 @@
     assetInteraction.clear();
   };
 
-  const toggleArchive = async () => {
-    const ids = await archiveAssets(
-      assetInteraction.assets,
-      assetInteraction.isAllArchived ? AssetVisibility.Timeline : AssetVisibility.Archive,
-    );
-    if (ids) {
-      assets = assets.filter((asset) => !ids.includes(asset.id));
-      assetInteraction.clear();
-    }
-  };
-
   const focusNextAsset = () => moveFocus((element) => element.dataset.thumbnailFocusContainer !== undefined, 'next');
   const focusPreviousAsset = () =>
     moveFocus((element) => element.dataset.thumbnailFocusContainer !== undefined, 'previous');
@@ -440,7 +428,6 @@
           shortcuts.push(
             { shortcut: { key: 'Delete' }, onShortcut: onDelete },
             { shortcut: { key: 'Delete', shift: true }, onShortcut: () => trashOrDelete(true) },
-            { shortcut: { key: 'a', shift: true }, onShortcut: toggleArchive },
           );
         }
       }
@@ -530,7 +517,7 @@
     style:width={geometry.containerWidth + 'px'}
   >
     {#each dividerLabels as label (label.top + label.key)}
-      {@const sectionHref = getSectionHref(label.assetId)}
+      {const sectionHref = getSectionHref(label.assetId)}
       <div
         data-section-bar={label.assetId}
         data-collapsed={isSectionCollapsed(label.key)}
@@ -590,7 +577,7 @@
     {/each}
     {#each assets as asset, index (asset.id + '-' + index)}
       {#if !isAssetInCollapsedSection(index) && isInOrNearViewport(index)}
-        {@const currentAsset = toTimelineAsset(asset)}
+        {const currentAsset = toTimelineAsset(asset)}
         <div class="absolute" style={getStyle(index)}>
           <div
             class="absolute inset-x-0 top-0 overflow-clip"
@@ -652,7 +639,7 @@
 <!-- Overlay Asset Viewer -->
 {#if assetViewerManager.isViewing}
   <Portal target="body">
-    {#await import('$lib/components/asset-viewer/AssetViewer.svelte') then { default: AssetViewer }}
+    {#await import('#lib/components/asset-viewer/AssetViewer.svelte') then { default: AssetViewer }}
       <AssetViewer
         cursor={assetCursor}
         {album}

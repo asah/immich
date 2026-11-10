@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Button, Field, Select } from '@immich/ui';
   import { t } from 'svelte-i18n';
+
   export type CurationState = 'include' | 'must_include' | 'maybe' | 'exclude';
   export type CurationItem = { id: string; used: boolean; state: CurationState; name?: string; thumbnailUrl?: string };
   let {

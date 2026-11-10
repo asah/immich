@@ -1,27 +1,30 @@
 <script lang="ts">
-  import AlbumViewer from '$lib/components/album-page/AlbumViewer.svelte';
-  import IndividualSharedViewer from '$lib/components/share-page/IndividualSharedViewer.svelte';
-  import StoryPlaybackViewer from '$lib/components/story-page/StoryPlaybackViewer.svelte';
-  import { getBaseUrl } from '@immich/sdk';
-  import ControlAppBar from '$lib/components/shared-components/ControlAppBar.svelte';
-  import ThemeButton from '$lib/components/shared-components/ThemeButton.svelte';
-  import { assetViewerManager } from '$lib/managers/asset-viewer-manager.svelte';
-  import { authManager } from '$lib/managers/auth-manager.svelte';
-  import { setSharedLink } from '$lib/utils';
-  import { storyService } from '$lib/services/story.service';
-  import { handleError } from '$lib/utils/handle-error';
-  import { navigate } from '$lib/utils/navigation';
-  import { sharedLinkLogin, SharedLinkType, type AssetResponseDto, type SharedLinkResponseDto } from '@immich/sdk';
+  import {
+    SharedLinkType,
+    getBaseUrl,
+    sharedLinkLogin,
+    type AssetResponseDto,
+    type SharedLinkResponseDto,
+  } from '@immich/sdk';
   import { Button, Logo, PasswordInput } from '@immich/ui';
   import { onDestroy, tick } from 'svelte';
   import { t } from 'svelte-i18n';
+  import AlbumViewer from '$lib/components/album-page/AlbumViewer.svelte';
+  import IndividualSharedViewer from '$lib/components/share-page/IndividualSharedViewer.svelte';
+  import ControlAppBar from '$lib/components/shared-components/ControlAppBar.svelte';
+  import ThemeButton from '$lib/components/shared-components/ThemeButton.svelte';
+  import StoryPlaybackViewer from '$lib/components/story-page/StoryPlaybackViewer.svelte';
+  import { assetViewerManager } from '$lib/managers/asset-viewer-manager.svelte';
+  import { authManager } from '$lib/managers/auth-manager.svelte';
+  import { storyService } from '$lib/services/story.service';
+  import { setSharedLink } from '$lib/utils';
+  import { handleError } from '$lib/utils/handle-error';
+  import { navigate } from '$lib/utils/navigation';
 
   type Props = {
     data: {
       meta: {
         title: string;
-        description?: string;
-        imageUrl?: string;
       };
 
       sharedLink?: SharedLinkResponseDto;
@@ -36,7 +39,7 @@
   const { data }: Props = $props();
 
   let { sharedLink, passwordRequired, key, slug, meta, publishedStory } = $state(data);
-  let { title, description } = $state(meta);
+  let { title } = $state(meta);
   let isOwned = $derived(authManager.authenticated && authManager.user.id === sharedLink?.userId);
   let password = $state('');
   const shareQuery = $derived(new URLSearchParams(key ? { key } : slug ? { slug } : {}).toString());
@@ -54,13 +57,10 @@
       }
       passwordRequired = false;
       title = (sharedLink.album ? sharedLink.album.albumName : $t('public_share')) + ' - Immich';
-      description =
-        sharedLink.description ||
-        $t('shared_photos_and_videos_count', { values: { assetCount: sharedLink.assets.length } });
       await tick();
       await navigate(
         { targetRoute: 'current', assetId: null, assetGridRouteSearchParams: assetViewerManager.gridScrollTarget },
-        { forceNavigate: true, replaceState: true },
+        { forceNavigate: true, replace: true },
       );
     } catch (error) {
       handleError(error, $t('errors.unable_to_get_shared_link'));
@@ -79,7 +79,6 @@
 
 <svelte:head>
   <title>{title}</title>
-  <meta name="description" content={description} />
 </svelte:head>
 {#if passwordRequired}
   <main

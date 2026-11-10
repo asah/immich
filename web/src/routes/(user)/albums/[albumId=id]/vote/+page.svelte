@@ -1,6 +1,7 @@
 <script lang="ts">
   import AlbumVotingPage from '$lib/components/album-page/AlbumVotingPage.svelte';
   import type { PageData } from './$types';
+
   let { data }: { data: PageData } = $props();
 </script>
 

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { Button, Field, Input, Select, Textarea } from '@immich/ui';
   import { StoryAspectRatio } from '@immich/sdk';
+  import { Button, Field, Input, Select, Textarea } from '@immich/ui';
   import { t } from 'svelte-i18n';
 
   type Brief = { title: string; description: string; aspectRatio: StoryAspectRatio };

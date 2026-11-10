@@ -1,19 +1,18 @@
 <script lang="ts">
-  import { shortcut } from '$lib/actions/shortcut';
-  import { eventManager } from '$lib/managers/event-manager.svelte';
-  import { getAssetMediaUrl } from '$lib/utils';
-  import { handleError } from '$lib/utils/handle-error';
-  import { updateAlbumInfo } from '@immich/sdk';
+  import { updateAlbumInfoMutation } from '#lib/queries/album.query.ts';
+  import { executeMutation } from '#lib/queries/client.ts';
   import { Textarea } from '@immich/ui';
   import { t } from 'svelte-i18n';
   import { fromAction } from 'svelte/attachments';
+  import { shortcut } from '$lib/actions/shortcut';
+  import { getAssetMediaUrl } from '$lib/utils';
 
   type Props = {
     id: string;
     albumName: string;
     albumThumbnailAssetId?: string | null;
     isEditor: boolean;
-    onUpdate: (albumName: string) => void;
+    onUpdate?: (albumName: string) => void;
   };
 
   let { id, albumName = $bindable(), albumThumbnailAssetId, isEditor, onUpdate }: Props = $props();
@@ -27,14 +26,11 @@
       return;
     }
 
-    try {
-      const response = await updateAlbumInfo({ id, updateAlbumDto: { albumName: newAlbumName } });
-      ({ albumName } = response);
-      eventManager.emit('AlbumUpdate', response);
-      onUpdate(albumName);
-    } catch (error) {
-      handleError(error, $t('errors.unable_to_save_album'));
-    }
+    await executeMutation(
+      () => updateAlbumInfoMutation({ error: { toast: 'errors.unable_to_save_album' } }),
+      [{ id, updateAlbumDto: { albumName: newAlbumName } }],
+    );
+    onUpdate?.(newAlbumName);
   };
 
   const textClasses = 'text-2xl lg:text-6xl text-primary';

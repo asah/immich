@@ -1,14 +1,14 @@
 <script lang="ts">
+  import type { StoryMotionPolicy } from '$lib/utils/story-clock';
   import {
     STORY_PAGE_SIZES,
     getStoryElementLabel,
+    type StoryAspectRatio,
     type StoryElement,
     type StoryMediaResolver,
     type StoryScene,
     type StoryStickerResolver,
-    type StoryAspectRatio,
   } from '$lib/utils/story-model';
-  import type { StoryMotionPolicy } from '$lib/utils/story-clock';
   import StoryElementView from './StoryElement.svelte';
 
   type Props = {

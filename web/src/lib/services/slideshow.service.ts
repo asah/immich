@@ -11,11 +11,9 @@ const defaultLauncher: SlideshowLauncher = {
   start: () => slideshowStore.slideshowState.set(SlideshowState.PlaySlideshow),
 };
 
-/**
- * Opens the asset viewer route and starts its slideshow after the route loader has
- * supplied the full asset to the portal-backed viewer. Timeline records are compact
- * and must not be used as an asset-viewer payload.
- */
+// Opens the asset viewer route and starts its slideshow after the route loader has
+// supplied the full asset to the portal-backed viewer. Timeline records are compact
+// and must not be used as an asset-viewer payload.
 export const openSlideshowAtAsset = async (assetId: string, launcher = defaultLauncher) => {
   await launcher.navigateToAsset(assetId);
   launcher.start();

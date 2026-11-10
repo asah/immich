@@ -1,10 +1,11 @@
 <script lang="ts">
-  import SharedLinkFormFields from '$lib/components/SharedLinkFormFields.svelte';
-  import { Route } from '$lib/route';
-  import { storyService } from '$lib/services/story.service';
   import { Checkbox, Field, FormModal, Label, toastManager } from '@immich/ui';
   import { mdiShareVariant } from '@mdi/js';
   import { t } from 'svelte-i18n';
+  import SharedLinkFormFields from '$lib/components/SharedLinkFormFields.svelte';
+  import { Route } from '$lib/route';
+  import { storyService } from '$lib/services/story.service';
+
   let {
     storyId,
     pageId,

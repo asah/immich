@@ -1,11 +1,11 @@
 <script lang="ts">
-  import Combobox, { asComboboxOptions, type ComboBoxOption } from '$lib/components/shared-components/Combobox.svelte';
-  import { eventManager } from '$lib/managers/event-manager.svelte';
-  import { handleError } from '$lib/utils/handle-error';
   import { SearchSuggestionType, getSearchSuggestions, updateAsset, updateAssets } from '@immich/sdk';
   import { FormModal, toastManager } from '@immich/ui';
   import { onMount } from 'svelte';
   import { t } from 'svelte-i18n';
+  import Combobox, { asComboboxOptions, type ComboBoxOption } from '$lib/components/shared-components/Combobox.svelte';
+  import { eventManager } from '$lib/managers/event-manager.svelte';
+  import { handleError } from '$lib/utils/handle-error';
 
   type Props = {
     assetIds: string[];

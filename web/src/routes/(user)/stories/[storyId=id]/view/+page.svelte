@@ -1,15 +1,16 @@
 <script lang="ts">
+  import { getAssetPlaybackPath, getBaseUrl } from '@immich/sdk';
+  import { Button, modalManager } from '@immich/ui';
+  import { mdiArrowLeft } from '@mdi/js';
+  import { t } from 'svelte-i18n';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
   import StoryPlaybackViewer from '$lib/components/story-page/StoryPlaybackViewer.svelte';
   import StoryShareModal from '$lib/components/story-page/StoryShareModal.svelte';
   import { Route } from '$lib/route';
-  import { getAssetPlaybackPath, getBaseUrl } from '@immich/sdk';
-  import { Button, modalManager } from '@immich/ui';
-  import { mdiArrowLeft } from '@mdi/js';
-  import { t } from 'svelte-i18n';
   import type { StoryDocumentDto } from '$lib/services/story.service';
   import type { PageData } from './$types';
+
   let { data }: { data: PageData } = $props();
   const initialOffsetMs = Math.max(0, Number(page.url.searchParams.get('t') || 0));
   const revisionId =

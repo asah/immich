@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { assetViewerManager } from '$lib/managers/asset-viewer-manager.svelte';
-  import { authManager } from '$lib/managers/auth-manager.svelte';
-  import MapModal from '$lib/modals/MapModal.svelte';
-  import { handleError } from '$lib/utils/handle-error';
-  import { navigate } from '$lib/utils/navigation';
+  import { assetViewerManager } from '#lib/managers/asset-viewer-manager.svelte.ts';
+  import { authManager } from '#lib/managers/auth-manager.svelte.ts';
+  import MapModal from '#lib/modals/MapModal.svelte';
+  import { handleError } from '#lib/utils/handle-error.ts';
+  import { navigate } from '#lib/utils/navigation.ts';
   import { getAlbumMapMarkers, type AlbumResponseDto, type MapMarkerResponseDto } from '@immich/sdk';
   import { IconButton, modalManager } from '@immich/ui';
   import { mdiMapOutline } from '@mdi/js';
@@ -15,17 +15,16 @@
   }
 
   let { album }: Props = $props();
-  let cancelable: AbortController;
 
   let returnToMap = $state(false);
   let mapMarkers: MapMarkerResponseDto[] = $state([]);
+  let cancelable: AbortController | undefined;
 
   onMount(() => {
     void refreshMapMarkers();
   });
 
   onDestroy(() => {
-    cancelable?.abort();
     assetViewerManager.showAssetViewer(false);
   });
 

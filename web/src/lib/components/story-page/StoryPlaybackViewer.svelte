@@ -1,11 +1,12 @@
 <script lang="ts">
-  import { StoryPageViewport } from '$lib/components/stories';
-  import type { StoryAspectRatio, StoryMediaResolver, StoryScene } from '$lib/utils/story-model';
-  import type { StoryDocumentDto, StoryAspectRatio as ApiAspectRatio } from '$lib/services/story.service';
   import { Button } from '@immich/ui';
   import { mdiChevronLeft, mdiChevronRight, mdiPause, mdiPlay } from '@mdi/js';
-  import { onMount, tick as domTick } from 'svelte';
+  import { tick as domTick, onMount } from 'svelte';
   import { t } from 'svelte-i18n';
+  import { StoryPageViewport } from '$lib/components/stories';
+  import type { StoryAspectRatio as ApiAspectRatio, StoryDocumentDto } from '$lib/services/story.service';
+  import type { StoryAspectRatio, StoryMediaResolver, StoryScene } from '$lib/utils/story-model';
+
   let {
     document: storyDocument,
     aspectRatio,

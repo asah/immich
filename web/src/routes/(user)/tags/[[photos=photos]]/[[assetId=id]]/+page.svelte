@@ -1,4 +1,8 @@
 <script lang="ts">
+  import { getAllTags, type TagResponseDto } from '@immich/sdk';
+  import { ActionButton, CommandPaletteDefaultProvider, Text } from '@immich/ui';
+  import { mdiDotsVertical, mdiTag, mdiTagMultiple } from '@mdi/js';
+  import { t } from 'svelte-i18n';
   import { goto } from '$app/navigation';
   import ActionMenuItem from '$lib/components/ActionMenuItem.svelte';
   import OnEvents from '$lib/components/OnEvents.svelte';
@@ -10,11 +14,10 @@
   import Sidebar from '$lib/components/sidebar/Sidebar.svelte';
   import AssetSelectControlBar from '$lib/components/timeline/AssetSelectControlBar.svelte';
   import Timeline from '$lib/components/timeline/Timeline.svelte';
-  import ArchiveAction from '$lib/components/timeline/actions/ArchiveAction.svelte';
   import ChangeDate from '$lib/components/timeline/actions/ChangeDateAction.svelte';
   import ChangeDescription from '$lib/components/timeline/actions/ChangeDescriptionAction.svelte';
-  import ChangeLocation from '$lib/components/timeline/actions/ChangeLocationAction.svelte';
   import ChangeLens from '$lib/components/timeline/actions/ChangeLensAction.svelte';
+  import ChangeLocation from '$lib/components/timeline/actions/ChangeLocationAction.svelte';
   import DeleteAssets from '$lib/components/timeline/actions/DeleteAssetsAction.svelte';
   import DownloadAction from '$lib/components/timeline/actions/DownloadAction.svelte';
   import FavoriteAction from '$lib/components/timeline/actions/FavoriteAction.svelte';
@@ -27,11 +30,7 @@
   import { Route } from '$lib/route';
   import { getAssetBulkActions } from '$lib/services/asset.service';
   import { getTagActions } from '$lib/services/tag.service';
-  import { joinPaths, TreeNode } from '$lib/utils/tree-utils';
-  import { getAllTags, type TagResponseDto } from '@immich/sdk';
-  import { ActionButton, CommandPaletteDefaultProvider, Text } from '@immich/ui';
-  import { mdiDotsVertical, mdiTag, mdiTagMultiple } from '@mdi/js';
-  import { t } from 'svelte-i18n';
+  import { TreeNode, joinPaths } from '$lib/utils/tree-utils';
   import type { PageData } from './$types';
 
   interface Props {
@@ -121,7 +120,7 @@
   {#if assetMultiSelectManager.selectionActive}
     <div class="fixed inset-s-0 top-0 w-full">
       <AssetSelectControlBar>
-        {@const Actions = getAssetBulkActions($t)}
+        {const Actions = $derived(getAssetBulkActions($t))}
         <CommandPaletteDefaultProvider name={$t('assets')} actions={Object.values(Actions)} />
         <ActionButton action={Actions.CreateSharedLink} />
         <SelectAllAssets {timelineManager} assetInteraction={assetMultiSelectManager} />
@@ -136,10 +135,7 @@
           <ChangeDescription menuItem />
           <ChangeLocation menuItem />
           <ChangeLens menuItem />
-          <ArchiveAction
-            menuItem
-            onArchive={(ids, visibility) => timelineManager.update(ids, (asset) => (asset.visibility = visibility))}
-          />
+          <ActionMenuItem action={assetMultiSelectManager.isAllArchived ? Actions.Unarchive : Actions.Archive} />
           <ActionMenuItem action={Actions.Tag} />
           <DeleteAssets
             menuItem

@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { eventManager } from '$lib/managers/event-manager.svelte';
-  import { removeTag, tagAssets } from '$lib/utils/asset-utils';
   import { getAllTags, getAssetInfo, upsertTags, type TagResponseDto } from '@immich/sdk';
   import { Button, Checkbox, Label, Modal, ModalBody, ModalFooter, Text } from '@immich/ui';
   import { mdiTag } from '@mdi/js';
   import { onMount } from 'svelte';
   import { t } from 'svelte-i18n';
   import { SvelteMap, SvelteSet } from 'svelte/reactivity';
+  import { eventManager } from '$lib/managers/event-manager.svelte';
+  import { removeTag, tagAssets } from '$lib/utils/asset-utils';
   import Combobox, { type ComboBoxOption } from '../components/shared-components/Combobox.svelte';
   import TagPill from '../components/shared-components/TagPill.svelte';
 
@@ -146,7 +146,7 @@
           <Text color="muted" size="small">{$t('tags')}</Text>
           <div class="flex max-h-48 shrink overflow-y-auto">
             {#each existingTags as tag (tag.id)}
-              {@const id = `tag-checkbox-${tag.id}`}
+              {const id = `tag-checkbox-${tag.id}`}
               <div class="flex items-center gap-2">
                 <Checkbox
                   {id}
@@ -164,7 +164,7 @@
 
       <section class="flex flex-wrap gap-1 pt-2">
         {#each selectedIds as tagId (tagId)}
-          {@const tag = tagMap[tagId]}
+          {const tag = tagMap[tagId]}
           {#if tag}
             <TagPill label={tag.value} onRemove={() => handleRemove(tagId)} />
           {/if}

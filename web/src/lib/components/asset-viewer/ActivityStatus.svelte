@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { assetViewerManager } from '$lib/managers/asset-viewer-manager.svelte';
-  import { activityManager } from '$lib/managers/activity-manager.svelte';
-  import { locale } from '$lib/stores/preferences.store';
-  import { reactionEmoji } from '$lib/utils/reaction-emoji';
   import type { ActivityResponseDto } from '@immich/sdk';
   import { Button } from '@immich/ui';
   import { mdiCommentOutline } from '@mdi/js';
+  import { activityManager } from '$lib/managers/activity-manager.svelte';
+  import { assetViewerManager } from '$lib/managers/asset-viewer-manager.svelte';
+  import { locale } from '$lib/stores/preferences.store';
+  import { reactionEmoji } from '$lib/utils/reaction-emoji';
   import ReactionPicker from './ReactionPicker.svelte';
 
   interface Props {
@@ -83,7 +83,13 @@
     </Button>
   {/if}
   <Button
-    onclick={() => onComments?.() ?? assetViewerManager.toggleActivityPanel()}
+    onclick={() => {
+      if (onComments) {
+        onComments();
+      } else {
+        assetViewerManager.toggleActivityPanel();
+      }
+    }}
     aria-label={onComments ? 'Show photos with comments' : 'Open activity'}
     leadingIcon={mdiCommentOutline}
     shape="round"

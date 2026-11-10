@@ -1,8 +1,8 @@
 <script lang="ts">
-  import Timeline from '$lib/components/timeline/Timeline.svelte';
-  import UserPageLayout from '$lib/components/layouts/UserPageLayout.svelte';
-  import { assetMultiSelectManager } from '$lib/managers/asset-multi-select-manager.svelte';
   import { AssetVisibility } from '@immich/sdk';
+  import UserPageLayout from '$lib/components/layouts/UserPageLayout.svelte';
+  import Timeline from '$lib/components/timeline/Timeline.svelte';
+  import { assetMultiSelectManager } from '$lib/managers/asset-multi-select-manager.svelte';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();

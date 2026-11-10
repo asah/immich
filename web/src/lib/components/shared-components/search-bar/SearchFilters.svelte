@@ -1,30 +1,50 @@
 <script lang="ts">
-  import SearchHistorySection from './SearchHistorySection.svelte';
-  import { t } from 'svelte-i18n';
-  import { fly } from 'svelte/transition';
-  import { Button, Text } from '@immich/ui';
+  import { authManager } from '#lib/managers/auth-manager.svelte.ts';
+  import { searchManager } from '#lib/managers/search-manager.svelte.ts';
+  import {
+    AssetMediaSize,
+    AssetVisibility,
+    getAllAlbums,
+    getAllTags,
+    searchAssets,
+    searchSmart,
+    type PersonResponseDto,
+    type TagResponseDto,
+  } from '@immich/sdk';
+  import { Button, Icon, Text } from '@immich/ui';
   import {
     mdiAccount,
     mdiCalendarBlank,
     mdiChevronDown,
     mdiChevronUp,
     mdiImage,
+    mdiImageMultiple,
     mdiMagnify,
     mdiMapMarker,
     mdiTagMultiple,
     mdiTune,
   } from '@mdi/js';
-  import SearchLocationSection from './SearchLocationSection.svelte';
-  import { getAllTags, type PersonResponseDto, type TagResponseDto } from '@immich/sdk';
-  import SearchMediaSection from './SearchMediaSection.svelte';
+  import { onMount } from 'svelte';
+  import { t } from 'svelte-i18n';
+  import { fly } from 'svelte/transition';
+  import { QueryType } from '$lib/constants';
+  import { featureFlagsManager } from '$lib/managers/feature-flags-manager.svelte';
+  import { Route } from '$lib/route';
+  import { lang } from '$lib/stores/preferences.store';
+  import { getAssetMediaUrl } from '$lib/utils';
+  import { handleError } from '$lib/utils/handle-error';
+  import SearchButton from './SearchButton.svelte';
   import SearchCameraSection from './SearchCameraSection.svelte';
   import SearchDateSection from './SearchDateSection.svelte';
+  import SearchDisplaySection from './SearchDisplaySection.svelte';
+  import SearchHistorySection from './SearchHistorySection.svelte';
+  import SearchLocationSection from './SearchLocationSection.svelte';
+  import SearchMediaSection from './SearchMediaSection.svelte';
   import SearchPeopleSection from './SearchPeopleSection.svelte';
+  import SearchRatingsSection from './SearchRatingsSection.svelte';
   import SearchTagsSection from './SearchTagsSection.svelte';
   import SearchTextSection from './SearchTextSection.svelte';
-  import SearchDisplaySection from './SearchDisplaySection.svelte';
-  import SearchRatingsSection from './SearchRatingsSection.svelte';
-  import { authManager } from '$lib/managers/auth-manager.svelte';
+  import { combineDirectSearchResults, type DirectSearchResult } from './direct-search-utils';
   import {
     getPeople,
     getSearchDatePreset,
@@ -35,19 +55,6 @@
     getSearchTagsTitle,
     getSearchTypeTitle,
   } from './search-bar-utils';
-  import { onMount } from 'svelte';
-  import { searchManager } from '$lib/managers/search-manager.svelte';
-  import { featureFlagsManager } from '$lib/managers/feature-flags-manager.svelte';
-  import { QueryType } from '$lib/constants';
-  import { Route } from '$lib/route';
-  import { lang } from '$lib/stores/preferences.store';
-  import { getAssetMediaUrl } from '$lib/utils';
-  import { handleError } from '$lib/utils/handle-error';
-  import { AssetMediaSize, AssetVisibility, getAllAlbums, searchAssets, searchSmart } from '@immich/sdk';
-  import { Icon } from '@immich/ui';
-  import { mdiImageMultiple } from '@mdi/js';
-  import { combineDirectSearchResults, type DirectSearchResult } from './direct-search-utils';
-  import SearchButton from './SearchButton.svelte';
 
   interface Props {
     id: string;
@@ -278,8 +285,8 @@
       {#if directResults.length > 0}
         <div class="border-b border-light-200 py-2 dark:border-dark-600">
           {#each directResults as result, index (result.type === 'album' ? result.album.id : result.asset.id)}
-            {@const isAlbum = result.type === 'album'}
-            {@const assetId = isAlbum ? result.album.albumThumbnailAssetId : result.asset.id}
+            {const isAlbum = result.type === 'album'}
+            {const assetId = isAlbum ? result.album.albumThumbnailAssetId : result.asset.id}
             <a
               id={`${id}-direct-${index}`}
               href={isAlbum ? Route.viewAlbum(result.album) : Route.viewAsset(result.asset)}

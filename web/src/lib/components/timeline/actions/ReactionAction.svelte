@@ -1,11 +1,11 @@
 <script lang="ts">
+  import { ReactionType, createActivity } from '@immich/sdk';
+  import { toastManager } from '@immich/ui';
+  import { t } from 'svelte-i18n';
   import ReactionPicker from '$lib/components/asset-viewer/ReactionPicker.svelte';
   import { activityManager } from '$lib/managers/activity-manager.svelte';
   import { assetMultiSelectManager } from '$lib/managers/asset-multi-select-manager.svelte';
   import { handleError } from '$lib/utils/handle-error';
-  import { createActivity, ReactionType } from '@immich/sdk';
-  import { toastManager } from '@immich/ui';
-  import { t } from 'svelte-i18n';
 
   interface Props {
     albumId: string;

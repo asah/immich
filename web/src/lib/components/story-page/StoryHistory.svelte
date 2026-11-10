@@ -1,7 +1,8 @@
 <script lang="ts">
-  import type { StoryRevisionResponseDto } from '$lib/services/story.service';
   import { Button, Input } from '@immich/ui';
   import { t } from 'svelte-i18n';
+  import type { StoryRevisionResponseDto } from '$lib/services/story.service';
+
   let {
     revisions,
     canRestore,

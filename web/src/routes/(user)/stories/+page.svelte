@@ -1,12 +1,13 @@
 <script lang="ts">
+  import { Button } from '@immich/ui';
+  import { mdiPlus } from '@mdi/js';
+  import { t } from 'svelte-i18n';
   import UserPageLayout from '$lib/components/layouts/UserPageLayout.svelte';
   import EmptyPlaceholder from '$lib/components/shared-components/EmptyPlaceholder.svelte';
   import StoryCard from '$lib/components/story-page/StoryCard.svelte';
   import { Route } from '$lib/route';
-  import { Button } from '@immich/ui';
-  import { mdiPlus } from '@mdi/js';
-  import { t } from 'svelte-i18n';
   import type { PageData } from './$types';
+
   let { data }: { data: PageData } = $props();
 </script>
 

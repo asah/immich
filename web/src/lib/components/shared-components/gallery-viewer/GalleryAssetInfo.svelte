@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { locale, type AlbumAssetDisplayInfo } from '$lib/stores/preferences.store';
-  import { getByteUnitString } from '$lib/utils/byte-units';
   import type { AssetResponseDto } from '@immich/sdk';
   import { DateTime } from 'luxon';
+  import { locale, type AlbumAssetDisplayInfo } from '$lib/stores/preferences.store';
+  import { getByteUnitString } from '$lib/utils/byte-units';
 
   type Props = {
     asset: AssetResponseDto;

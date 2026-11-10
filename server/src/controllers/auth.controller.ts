@@ -8,7 +8,6 @@ import {
   AlbumInviteClaimDto,
   AlbumInvitePreviewDto,
   AlbumInviteTokenDto,
-  type AuthDto,
   AuthStatusResponseDto,
   ChangePasswordDto,
   LoginCredentialDto,
@@ -20,6 +19,7 @@ import {
   SessionUnlockDto,
   SignUpDto,
   ValidateAccessTokenResponseDto,
+  type AuthDto,
 } from 'src/dtos/auth.dto.js';
 import { UserAdminResponseDto } from 'src/dtos/user.dto.js';
 import { ApiTag, AuthType, ImmichCookie, Permission } from 'src/enum.js';

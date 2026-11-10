@@ -1,14 +1,14 @@
 <script lang="ts">
+  import { acceptAlbumInvite, getAlbumInvitePreview, type AlbumInvitePreviewDto } from '@immich/sdk';
+  import { Alert, Button, Field, Input, PasswordInput, Stack, Text } from '@immich/ui';
+  import { onMount } from 'svelte';
+  import { t } from 'svelte-i18n';
   import { goto } from '$app/navigation';
   import AuthPageLayout from '$lib/components/layouts/AuthPageLayout.svelte';
   import { authManager } from '$lib/managers/auth-manager.svelte';
   import { eventManager } from '$lib/managers/event-manager.svelte';
   import { Route } from '$lib/route';
   import { getServerErrorMessage } from '$lib/utils/handle-error';
-  import { acceptAlbumInvite, getAlbumInvitePreview, type AlbumInvitePreviewDto } from '@immich/sdk';
-  import { Alert, Button, Field, Input, PasswordInput, Stack, Text } from '@immich/ui';
-  import { onMount } from 'svelte';
-  import { t } from 'svelte-i18n';
 
   let name = $state('');
   let password = $state('');

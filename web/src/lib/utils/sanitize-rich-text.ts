@@ -14,10 +14,8 @@ const safeHref = (value: string) => {
 
 const safeColor = (value: string) => (/^#[0-9a-f]{3,8}$/i.test(value) ? value : undefined);
 
-/**
- * Keep album prose intentionally small and portable: formatting and safe links,
- * with no executable attributes, embeds, or arbitrary styles.
- */
+// Keep album prose intentionally small and portable: formatting and safe links,
+// with no executable attributes, embeds, or arbitrary styles.
 export const sanitizeRichText = (value: string) =>
   value.replaceAll(/<!--[^]*?-->/g, '').replaceAll(/<\/?[^>]+>/g, (tag) => {
     const match = /^<(\/)?\s*([a-z0-9]+)([^>]*)>$/i.exec(tag);

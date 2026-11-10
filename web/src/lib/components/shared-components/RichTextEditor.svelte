@@ -1,10 +1,9 @@
 <script lang="ts">
   /* eslint-disable unicorn/prefer-dom-node-html-methods -- innerHTML supports older browsers and this editor has no shadow roots. */
-  import ReactionPicker from '$lib/components/asset-viewer/ReactionPicker.svelte';
-  import { Button, Field } from '@immich/ui';
+  import { Button, Field, Icon } from '@immich/ui';
   import { mdiFormatBold, mdiFormatItalic, mdiFormatUnderline, mdiLink, mdiPalette } from '@mdi/js';
-  import { Icon } from '@immich/ui';
   import { onMount } from 'svelte';
+  import ReactionPicker from '$lib/components/asset-viewer/ReactionPicker.svelte';
 
   type Props = { value?: string; label?: string; onSubmit?: () => void; onBlur?: () => void };
   let { value = $bindable(''), label = '', onSubmit, onBlur }: Props = $props();

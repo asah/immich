@@ -3,6 +3,7 @@
   import { FormModal, Input, LoadingSpinner } from '@immich/ui';
   import { onMount } from 'svelte';
   import { t } from 'svelte-i18n';
+
   let { onClose }: { onClose: (assets?: AssetResponseDto[]) => void } = $props();
   let assets = $state<AssetResponseDto[]>([]);
   let selected = $state<AssetResponseDto[]>([]);

@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { activityManager } from '$lib/managers/activity-manager.svelte';
-  import { SlideshowMetadataOverlayMode, slideshowStore } from '$lib/stores/slideshow.store';
-  import { fromISODateTime, fromISODateTimeUTC } from '$lib/utils/timeline-util';
-  import { reactionEmoji } from '$lib/utils/reaction-emoji';
   import { ReactionType, type AssetResponseDto } from '@immich/sdk';
   import { Text } from '@immich/ui';
   import { DateTime } from 'luxon';
+  import { activityManager } from '$lib/managers/activity-manager.svelte';
+  import { SlideshowMetadataOverlayMode, slideshowStore } from '$lib/stores/slideshow.store';
+  import { reactionEmoji } from '$lib/utils/reaction-emoji';
+  import { fromISODateTime, fromISODateTimeUTC } from '$lib/utils/timeline-util';
 
   type Props = {
     asset: AssetResponseDto;

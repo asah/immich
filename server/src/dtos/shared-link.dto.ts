@@ -4,6 +4,7 @@ import { SharedLink } from 'src/database.js';
 import { HistoryBuilder } from 'src/decorators.js';
 import { AlbumResponseSchema, mapAlbum } from 'src/dtos/album.dto.js';
 import { AssetResponseSchema, mapAsset } from 'src/dtos/asset-response.dto.js';
+import { AuthDto } from 'src/dtos/auth.dto.js';
 import { SharedLinkType, SharedLinkTypeSchema } from 'src/enum.js';
 import { isoDatetimeToDate } from 'src/validation.js';
 
@@ -126,10 +127,7 @@ export class SharedLinkEditDto extends createZodDto(SharedLinkEditSchema) {}
 export class SharedLinkLoginDto extends createZodDto(SharedLinkLoginSchema) {}
 export class SharedLinkResponseDto extends createZodDto(SharedLinkResponseSchema) {}
 
-export function mapSharedLink(sharedLink: SharedLink, options: { stripAssetMetadata: boolean }): SharedLinkResponseDto {
-  // Album links do not use the shared_link_asset join table. Their assets are
-  // loaded on the album relation instead, but clients consume the top-level
-  // `assets` field for every shared-link type.
+export function mapSharedLink(sharedLink: SharedLink, { auth }: { auth: AuthDto }): SharedLinkResponseDto {
   const assets = sharedLink.type === SharedLinkType.Album ? sharedLink.album?.assets || [] : sharedLink.assets || [];
 
   const response = {
@@ -141,8 +139,8 @@ export function mapSharedLink(sharedLink: SharedLink, options: { stripAssetMetad
     type: sharedLink.type,
     createdAt: sharedLink.createdAt,
     expiresAt: sharedLink.expiresAt,
-    assets: assets.map((asset) => mapAsset(asset, { stripMetadata: options.stripAssetMetadata })),
-    album: sharedLink.album ? mapAlbum(sharedLink.album) : undefined,
+    assets: assets.map((asset) => mapAsset(asset, { auth })),
+    album: sharedLink.album ? mapAlbum(sharedLink.album, { auth }) : undefined,
     storyId: sharedLink.storyId ?? null,
     startPageId: sharedLink.startPageId ?? null,
     startOffsetMs: sharedLink.startOffsetMs ?? null,

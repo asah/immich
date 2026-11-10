@@ -25,7 +25,8 @@ const sdk = vi.hoisted(() => ({
   updateStoryUser: vi.fn(),
   removeStoryUser: vi.fn(),
 }));
-vi.mock('@immich/sdk', () => ({
+vi.mock('@immich/sdk', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@immich/sdk')>()),
   ...sdk,
   SharedLinkType: { Story: 'STORY' },
   StoryAspectRatio: { Portrait45: 'portrait_4_5' },

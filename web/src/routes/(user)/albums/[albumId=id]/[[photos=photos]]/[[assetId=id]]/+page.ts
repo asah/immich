@@ -1,4 +1,5 @@
-import { getAlbumInfo } from '@immich/sdk';
+import { getAlbumInfoQuery } from '#lib/queries/album.query.ts';
+import { queryClient } from '#lib/queries/client.ts';
 import { redirect } from '@sveltejs/kit';
 import { authenticate } from '$lib/utils/auth';
 import type { PageLoad } from './$types';
@@ -8,13 +9,12 @@ export const load = (async ({ params, url, depends }) => {
 
   depends('album:data');
 
-  const album = await getAlbumInfo({ id: params.albumId });
+  const album = await queryClient.query({ ...getAlbumInfoQuery(params.albumId), staleTime: 0 });
   if (album.slug) {
     throw redirect(308, url.pathname.replace(`/albums/${params.albumId}`, () => `/albums/${album.slug}`) + url.search);
   }
 
   return {
-    album,
     meta: {
       title: album.albumName,
     },

@@ -189,9 +189,8 @@ export class StoryService {
     const ids = new Set(dto.assetIds);
     for (const albumId of dto.albumIds) {
       await requireAccess(this.accessRepository, { auth, permission: Permission.AlbumRead, ids: [albumId] });
-      const album = await this.albumRepository.getById(albumId, { withAssets: true }, auth.user.id);
-      for (const asset of album?.assets ?? []) {
-        ids.add(asset.id);
+      for (const assetId of await this.albumRepository.listAssetIds(albumId)) {
+        ids.add(assetId);
       }
     }
     const allowed = await checkAccess(this.accessRepository, { auth, permission: Permission.AssetRead, ids });

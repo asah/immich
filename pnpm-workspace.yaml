@@ -14,6 +14,7 @@ allowBuilds:
   '@scarf/scarf': false
   '@swc/core': false
   bcrypt: true
+  better-sqlite3: true
   canvas: false
   core-js: false
   cpu-features: false
@@ -30,20 +31,35 @@ allowBuilds:
   unrs-resolver: false
 overrides:
   '@grpc/grpc-js': 1.14.5
+  'body-parser@^1': 1.20.9
+  'brace-expansion@^1': 1.1.20
   'brace-expansion@^2': 2.1.6
   'brace-expansion@^5': 5.0.11
   canvas: 3.2.3
+  dompurify: 3.4.17
   engine.io: 6.6.10
+  fast-uri: 3.1.7
+  follow-redirects: 1.16.2
+  image-size: 2.0.3
+  immutable: 5.1.8
+  joi: 17.13.9
+  launch-editor: 2.14.2
   multer: 2.5.0
   proxy-addr: 2.0.8
+  serialize-javascript: 7.0.3
   sharp: ^0.35.3
+  shell-quote: 1.11.0
   socket.io-parser: 4.2.7
+  svgo: 3.3.5
   systeminformation: 5.33.16
+  'tar@^6': 7.5.21
   'tar@^7': 7.5.21
+  tinypool: 2.1.2
   'undici@^6': 6.29.1
+  'undici@^8': 8.12.2
   'ws@^8': 8.21.0
   # 1.9.3-1.9.5 are confirmed broken
-  tsc-alias: 1.9.2
+  tsc-alias: 1.9.9
 packageExtensions:
   nestjs-kysely:
     dependencies:
@@ -81,5 +97,6 @@ shamefullyHoist: false
 verifyDepsBeforeRun: install
 minimumReleaseAgeExclude:
   - '@immich/ui'
-  - '@immich/sql-tools@0.6.3 || 0.6.6'
+  - '@immich/sql-tools@0.7.0'
   - '@nestjs/cli@12.0.1'
+  - '@futo-org/*'

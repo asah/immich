@@ -1,11 +1,11 @@
 <script lang="ts">
+  import { updateAlbumInfo } from '@immich/sdk';
+  import { Button } from '@immich/ui';
+  import { t } from 'svelte-i18n';
   import RichTextEditor from '$lib/components/shared-components/RichTextEditor.svelte';
   import { eventManager } from '$lib/managers/event-manager.svelte';
   import { handleError } from '$lib/utils/handle-error';
   import { sanitizeRichText } from '$lib/utils/sanitize-rich-text';
-  import { updateAlbumInfo } from '@immich/sdk';
-  import { Button } from '@immich/ui';
-  import { t } from 'svelte-i18n';
 
   interface Props {
     id: string;

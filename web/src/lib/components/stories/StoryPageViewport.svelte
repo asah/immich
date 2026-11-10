@@ -1,7 +1,7 @@
 <script lang="ts">
+  import type { StoryMotionPolicy } from '$lib/utils/story-clock';
   import { getStoryViewportMetrics } from '$lib/utils/story-geometry';
   import type { StoryAspectRatio, StoryMediaResolver, StoryScene, StoryStickerResolver } from '$lib/utils/story-model';
-  import type { StoryMotionPolicy } from '$lib/utils/story-clock';
   import StoryPage from './StoryPage.svelte';
 
   type Props = {

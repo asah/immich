@@ -1,4 +1,10 @@
 <script lang="ts">
+  import {
+    StorySerializedCommandQueue,
+    type StoryCommand,
+    type StoryCommandBatch,
+    type StoryEditorTransactionManager,
+  } from '$lib/utils/story-editor-state';
   import { getStoryViewportMetrics, normalizeStoryRotation } from '$lib/utils/story-geometry';
   import { StoryGestureController, type StoryGestureResult } from '$lib/utils/story-gesture';
   import {
@@ -11,12 +17,6 @@
     type StoryMediaResolver,
     type StoryScene,
   } from '$lib/utils/story-model';
-  import {
-    StorySerializedCommandQueue,
-    type StoryCommand,
-    type StoryCommandBatch,
-    type StoryEditorTransactionManager,
-  } from '$lib/utils/story-editor-state';
   import StoryAuthoringOverlay from './StoryAuthoringOverlay.svelte';
   import StoryObjectList from './StoryObjectList.svelte';
   import StoryPage from './StoryPage.svelte';
@@ -256,7 +256,7 @@
     event.preventDefault();
   };
 
-  const addElement = (type: 'text' | 'shape' | 'sticker', stickerToken?: string) => {
+  const addElement = (type: 'text' | 'shape' | 'sticker', stickerToken = 'builtin:heart') => {
     const id = crypto.randomUUID();
     const base = {
       id,
@@ -285,7 +285,7 @@
               ...base,
               type,
               frame: { x: 250, y: 250, width: 240, height: 240 },
-              style: { stickerToken: stickerToken ?? 'builtin:heart', opacity: 1 },
+              style: { stickerToken, opacity: 1 },
             }
           : { ...base, type, style: { shape: 'rectangle', fill: '#DDE4FF' } };
     const commands: StoryCommand[] = [{ op: 'element.add', sceneId: scene.id, element }];

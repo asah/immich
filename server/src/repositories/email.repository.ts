@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { render } from '@react-email/render';
 import { createTransport } from 'nodemailer';
-import { createElement } from 'react';
+import React, { createElement } from 'react';
+import { render } from 'react-email';
 import { ActivityEmail } from 'src/emails/activity.email.js';
 import { AlbumAccountInviteEmail } from 'src/emails/album-account-invite.email.js';
 import { AlbumInviteEmail } from 'src/emails/album-invite.email.js';
@@ -9,7 +9,7 @@ import { AlbumUpdateEmail } from 'src/emails/album-update.email.js';
 import { TestEmail } from 'src/emails/test.email.js';
 import { WelcomeEmail } from 'src/emails/welcome.email.js';
 import { LoggingRepository } from 'src/repositories/logging.repository.js';
-import { EmailImageAttachment } from 'src/types.js';
+import type { EmailImageAttachment } from 'src/types.js';
 
 export type SendEmailOptions = {
   from: string;

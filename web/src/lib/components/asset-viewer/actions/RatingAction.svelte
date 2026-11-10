@@ -1,12 +1,12 @@
 <script lang="ts">
+  import { updateAsset, type AssetResponseDto } from '@immich/sdk';
+  import { t } from 'svelte-i18n';
   import { shortcuts } from '$lib/actions/shortcut';
   import type { OnAction } from '$lib/components/asset-viewer/actions/action';
   import { AssetAction } from '$lib/constants';
   import { authManager } from '$lib/managers/auth-manager.svelte';
   import { handleError } from '$lib/utils/handle-error';
   import { toTimelineAsset } from '$lib/utils/timeline-util';
-  import { updateAsset, type AssetResponseDto } from '@immich/sdk';
-  import { t } from 'svelte-i18n';
 
   type Props = {
     asset: AssetResponseDto;

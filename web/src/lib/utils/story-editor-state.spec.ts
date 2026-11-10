@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
-  MemoryStoryRecoveryStore,
   LocalStorageStoryRecoveryStore,
+  MemoryStoryRecoveryStore,
   StoryEditorTransactionManager,
-  type StoryRecoveryStore,
   StorySerializedCommandQueue,
+  type StoryRecoveryStore,
 } from './story-editor-state';
 
 const createManager = (

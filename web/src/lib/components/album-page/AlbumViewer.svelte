@@ -1,32 +1,6 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
-  import { page } from '$app/state';
-  import { shortcut } from '$lib/actions/shortcut';
-  import AlbumMap from '$lib/components/album-page/AlbumMap.svelte';
-  import AssetEngagementBadge from '$lib/components/album-page/AssetEngagementBadge.svelte';
-  import ButtonContextMenu from '$lib/components/shared-components/context-menu/ButtonContextMenu.svelte';
-  import MenuOption from '$lib/components/shared-components/context-menu/MenuOption.svelte';
-  import GalleryViewer from '$lib/components/shared-components/gallery-viewer/GalleryViewer.svelte';
-  import DownloadAction from '$lib/components/timeline/actions/DownloadAction.svelte';
-  import ReactionAction from '$lib/components/timeline/actions/ReactionAction.svelte';
-  import AssetSelectControlBar from '$lib/components/timeline/AssetSelectControlBar.svelte';
-  import { assetMultiSelectManager } from '$lib/managers/asset-multi-select-manager.svelte';
-  import { assetViewerManager } from '$lib/managers/asset-viewer-manager.svelte';
-  import { activityManager } from '$lib/managers/activity-manager.svelte';
-  import { authManager } from '$lib/managers/auth-manager.svelte';
-  import { featureFlagsManager } from '$lib/managers/feature-flags-manager.svelte';
-  import { handleDownloadAlbum } from '$lib/services/album.service';
-  import { Route } from '$lib/route';
-  import { getGlobalActions } from '$lib/services/app.service';
-  import { openSlideshowAtAsset } from '$lib/services/slideshow.service';
-  import { dragAndDropFilesStore } from '$lib/stores/drag-and-drop-files.store';
-  import { mediaQueryManager } from '$lib/stores/media-query-manager.svelte';
-  import { SlideshowNavigation, slideshowStore } from '$lib/stores/slideshow.store';
-  import { getAlbumPresentationSettings } from '$lib/utils/album-presentation';
-  import { compareAlbumTagSections, getAlbumTagSection } from '$lib/utils/album-tag-sections';
-  import { sanitizeRichText } from '$lib/utils/sanitize-rich-text';
-  import { handlePromiseError } from '$lib/utils';
-  import { fileUploadHandler, openFileUploadDialog } from '$lib/utils/file-uploader';
+  import { createPreloadedQuery } from '#lib/queries/client.ts';
+  import { getPublicConfigQuery } from '#lib/queries/config-public.query.ts';
   import {
     AlbumUserRole,
     AssetOrder,
@@ -36,15 +10,45 @@
   } from '@immich/sdk';
   import { ActionButton, IconButton, Logo } from '@immich/ui';
   import { mdiDownload, mdiFileImagePlusOutline, mdiPresentationPlay, mdiSort } from '@mdi/js';
+  import { DateTime } from 'luxon';
+  import { onDestroy } from 'svelte';
   import { t } from 'svelte-i18n';
+  import { goto } from '$app/navigation';
+  import { page } from '$app/state';
+  import { shortcut } from '$lib/actions/shortcut';
+  import AlbumMap from '$lib/components/album-page/AlbumMap.svelte';
+  import AssetEngagementBadge from '$lib/components/album-page/AssetEngagementBadge.svelte';
+  import ButtonContextMenu from '$lib/components/shared-components/context-menu/ButtonContextMenu.svelte';
+  import MenuOption from '$lib/components/shared-components/context-menu/MenuOption.svelte';
+  import GalleryViewer from '$lib/components/shared-components/gallery-viewer/GalleryViewer.svelte';
+  import AssetSelectControlBar from '$lib/components/timeline/AssetSelectControlBar.svelte';
+  import DownloadAction from '$lib/components/timeline/actions/DownloadAction.svelte';
+  import ReactionAction from '$lib/components/timeline/actions/ReactionAction.svelte';
+  import { activityManager } from '$lib/managers/activity-manager.svelte';
+  import { assetMultiSelectManager } from '$lib/managers/asset-multi-select-manager.svelte';
+  import { assetViewerManager } from '$lib/managers/asset-viewer-manager.svelte';
+  import { authManager } from '$lib/managers/auth-manager.svelte';
+  import type { Viewport } from '$lib/managers/timeline-manager/types';
+  import { Route } from '$lib/route';
+  import { handleDownloadAlbum } from '$lib/services/album.service';
+  import { getGlobalActions } from '$lib/services/app.service';
+  import { openSlideshowAtAsset } from '$lib/services/slideshow.service';
+  import { dragAndDropFilesStore } from '$lib/stores/drag-and-drop-files.store';
+  import { mediaQueryManager } from '$lib/stores/media-query-manager.svelte';
+  import { AlbumAssetSortBy, SortOrder, defaultAlbumAssetDisplayInfo } from '$lib/stores/preferences.store';
+  import { SlideshowNavigation, slideshowStore } from '$lib/stores/slideshow.store';
+  import { handlePromiseError } from '$lib/utils';
+  import { getAlbumPresentationSettings } from '$lib/utils/album-presentation';
+  import { compareAlbumTagSections, getAlbumTagSection } from '$lib/utils/album-tag-sections';
+  import { fileUploadHandler, openFileUploadDialog } from '$lib/utils/file-uploader';
+  import { sanitizeRichText } from '$lib/utils/sanitize-rich-text';
+  import { toTimelineAsset } from '$lib/utils/timeline-util';
   import ControlAppBar from '../shared-components/ControlAppBar.svelte';
   import ThemeButton from '../shared-components/ThemeButton.svelte';
   import AlbumSummary from './AlbumSummary.svelte';
-  import { AlbumAssetSortBy, SortOrder, defaultAlbumAssetDisplayInfo } from '$lib/stores/preferences.store';
-  import type { Viewport } from '$lib/managers/timeline-manager/types';
-  import { DateTime } from 'luxon';
-  import { onDestroy } from 'svelte';
-  import { toTimelineAsset } from '$lib/utils/timeline-util';
+
+  const query = createPreloadedQuery(getPublicConfigQuery);
+  const publicConfig = $derived(query.data);
 
   interface Props {
     sharedLink: SharedLinkResponseDto;
@@ -224,7 +228,7 @@
   };
 
   const setSortOverride = async (sortBy?: AlbumAssetSortBy, sortOrder: SortOrder = SortOrder.Desc) => {
-    const url = new URL(page.url);
+    const url = new URL(page.url.toString());
     if (sortBy) {
       url.searchParams.set('sortBy', sortBy);
       url.searchParams.set('sortOrder', sortOrder);
@@ -232,7 +236,7 @@
       url.searchParams.delete('sortBy');
       url.searchParams.delete('sortOrder');
     }
-    await goto(url, { keepFocus: true, noScroll: true });
+    await goto(url);
   };
 
   const { Cast } = $derived(getGlobalActions($t));
@@ -306,7 +310,7 @@
           instantCameraStyle={presentationSettings.instantCameraStyle}
         >
           {#snippet assetOverlay(asset)}
-            {@const engagement = engagementByAsset[asset.id] ?? { reactions: {}, comments: 0 }}
+            {const engagement = engagementByAsset[asset.id] ?? { reactions: {}, comments: 0 }}
             {#if presentationSettings.displayInfo?.reactions ?? true}
               <AssetEngagementBadge reactions={engagement.reactions} comments={engagement.comments} />
             {/if}
@@ -430,7 +434,7 @@
             icon={mdiDownload}
           />
         {/if}
-        {#if sharedLink.showMetadata && featureFlagsManager.value.map}
+        {#if sharedLink.showMetadata && publicConfig.map.enabled}
           <AlbumMap {album} />
         {/if}
         <ThemeButton />

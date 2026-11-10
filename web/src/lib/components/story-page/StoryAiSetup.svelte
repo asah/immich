@@ -1,7 +1,8 @@
 <script lang="ts">
-  import { storyService } from '$lib/services/story.service';
   import { Button, Field, Input, PasswordInput } from '@immich/ui';
   import { t } from 'svelte-i18n';
+  import { storyService } from '$lib/services/story.service';
+
   let { onSaved }: { onSaved: () => void } = $props();
   let key = $state('');
   let model = $state('gpt-5.6-sol');

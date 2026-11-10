@@ -1,11 +1,11 @@
 <script lang="ts">
+  import { claimAlbumInvite } from '@immich/sdk';
+  import { Alert, Stack, Text } from '@immich/ui';
+  import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import AuthPageLayout from '$lib/components/layouts/AuthPageLayout.svelte';
   import { Route } from '$lib/route';
   import { getServerErrorMessage } from '$lib/utils/handle-error';
-  import { claimAlbumInvite } from '@immich/sdk';
-  import { Alert, Stack, Text } from '@immich/ui';
-  import { onMount } from 'svelte';
 
   const token = sessionStorage.getItem('albumInviteToken') ?? '';
   let error = $state('');

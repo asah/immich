@@ -2,6 +2,7 @@
   import { Adapter, ApprovedEndpointId, updateServerStoryAiProvider } from '@immich/sdk';
   import { Button, Field, Input, PasswordInput, toastManager } from '@immich/ui';
   import { t } from 'svelte-i18n';
+
   let key = $state('');
   let model = $state('gpt-5.6-sol');
   let busy = $state(false);

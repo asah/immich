@@ -1,10 +1,11 @@
 <script lang="ts">
-  import { storyService } from '$lib/services/story.service';
   import { AlbumUserRole, searchUsers, type StoryUserResponseDto, type UserResponseDto } from '@immich/sdk';
   import { Button, Select } from '@immich/ui';
-  import UserAvatar from '$lib/components/shared-components/UserAvatar.svelte';
   import { onMount } from 'svelte';
   import { t } from 'svelte-i18n';
+  import UserAvatar from '$lib/components/shared-components/UserAvatar.svelte';
+  import { storyService } from '$lib/services/story.service';
+
   let {
     storyId,
     users = $bindable(),
@@ -48,7 +49,7 @@
     </div>{/if}
   <ul class="mt-2 space-y-2">
     {#each users as user (user.userId)}
-      {@const candidate = detail(user.userId)}
+      {const candidate = detail(user.userId)}
       <li class="flex items-center gap-2 rounded-lg border p-2">
         {#if candidate}<UserAvatar user={candidate} size="sm" />{/if}
         <span class="min-w-0 flex-1 truncate text-sm" title={candidate?.email ?? user.userId}

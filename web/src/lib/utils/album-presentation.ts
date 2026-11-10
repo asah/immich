@@ -1,16 +1,16 @@
 import {
-  type AlbumPresentationDto,
-  type AlbumResponseDto,
+  Version as PresentationVersion,
   SortBy as PublishedSortBy,
   SortOrder as PublishedSortOrder,
-  Version as PresentationVersion,
+  type AlbumPresentationDto,
+  type AlbumResponseDto,
 } from '@immich/sdk';
 import {
   AlbumAssetSortBy,
+  SortOrder,
+  defaultAlbumAssetDisplayInfo,
   type AlbumAssetSortCriterion,
   type AlbumAssetViewSettings,
-  defaultAlbumAssetDisplayInfo,
-  SortOrder,
 } from '$lib/stores/preferences.store';
 
 const defaultSortCriteria: AlbumAssetSortCriterion[] = [

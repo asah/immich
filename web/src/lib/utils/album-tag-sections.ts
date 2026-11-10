@@ -5,11 +5,9 @@ export const untaggedAlbumSection = 'Untagged';
 
 export const getAlbumTagSection = (asset: AssetResponseDto) => asset.tags?.[0]?.name ?? untaggedAlbumSection;
 
-/**
- * Tags follow the requested direction, while assets with no tag are always a
- * final synthetic section. Using tag presence (rather than the display label)
- * keeps a real tag called “Untagged” behaving like any other tag.
- */
+// Tags follow the requested direction, while assets with no tag are always a
+// final synthetic section. Using tag presence (rather than the display label)
+// keeps a real tag called “Untagged” behaving like any other tag.
 export const compareAlbumTagSections = (left: AssetResponseDto, right: AssetResponseDto, order: SortOrder) => {
   const leftUntagged = !left.tags?.length;
   const rightUntagged = !right.tags?.length;

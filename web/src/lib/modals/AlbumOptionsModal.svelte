@@ -1,31 +1,20 @@
 <script lang="ts">
-  import AlbumSharedLink from '$lib/components/album-page/AlbumSharedLink.svelte';
-  import HeaderActionButton from '$lib/components/HeaderActionButton.svelte';
-  import OnEvents from '$lib/components/OnEvents.svelte';
-  import UserAvatar from '$lib/components/shared-components/UserAvatar.svelte';
+  import HeaderActionButton from '#lib/components/HeaderActionButton.svelte';
+  import AlbumSharedLink from '#lib/components/album-page/AlbumSharedLink.svelte';
+  import UserAvatar from '#lib/components/shared-components/UserAvatar.svelte';
+  import { updateAlbumInfoMutation } from '#lib/queries/album.query.ts';
+  import { executeMutation, queryClient } from '#lib/queries/client.ts';
+  import { getAllSharedLinksQuery } from '#lib/queries/shared-link.query.ts';
   import {
     getAlbumActions,
     handleRemoveUserFromAlbum,
-    handleUpdateAlbum,
     handleUpdateUserAlbumRole,
-  } from '$lib/services/album.service';
-  import {
-    AlbumAssetSortBy,
-    defaultAlbumAssetDisplayInfo,
-    locale,
-    SortOrder,
-    type AlbumAssetDisplayInfo,
-    type AlbumAssetSortCriterion,
-    type AlbumAssetViewSettings,
-  } from '$lib/stores/preferences.store';
-  import { getAlbumPresentationSettings, toAlbumPresentation } from '$lib/utils/album-presentation';
+  } from '#lib/services/album.service.ts';
   import {
     AlbumUserRole,
     AssetOrder,
-    getAlbumInfo,
-    getAllSharedLinks,
     type AlbumResponseDto,
-    type SharedLinkResponseDto,
+    type UpdateAlbumDto,
     type UserResponseDto,
   } from '@immich/sdk';
   import {
@@ -42,10 +31,20 @@
     Text,
     type SelectOption,
   } from '@immich/ui';
-  import { onMount } from 'svelte';
+  import { mdiClose } from '@mdi/js';
+  import { createQuery } from '@tanstack/svelte-query';
   import { t } from 'svelte-i18n';
   import { fly } from 'svelte/transition';
-  import { mdiClose } from '@mdi/js';
+  import {
+    AlbumAssetSortBy,
+    SortOrder,
+    defaultAlbumAssetDisplayInfo,
+    locale,
+    type AlbumAssetDisplayInfo,
+    type AlbumAssetSortCriterion,
+    type AlbumAssetViewSettings,
+  } from '$lib/stores/preferences.store';
+  import { getAlbumPresentationSettings, toAlbumPresentation } from '$lib/utils/album-presentation';
 
   type Props = {
     album: AlbumResponseDto;
@@ -65,26 +64,21 @@
     await handleUpdateUserAlbumRole({ albumId: album.id, userId: user.id, role });
   };
 
-  const refreshAlbum = async () => {
-    album = await getAlbumInfo({ id: album.id });
-  };
-
-  const onAlbumUserDelete = async ({ userId }: { userId: string }) => {
-    album.albumUsers = album.albumUsers.filter(({ user: { id } }) => id !== userId);
-    await refreshAlbum();
-  };
-
-  const onSharedLinkCreate = (sharedLink: SharedLinkResponseDto) => {
-    sharedLinks.push(sharedLink);
-  };
-
-  const onSharedLinkDelete = (sharedLink: SharedLinkResponseDto) => {
-    sharedLinks = sharedLinks.filter(({ id }) => sharedLink.id !== id);
-  };
-
   const { AddUsers, CreateSharedLink } = $derived(getAlbumActions($t, album));
 
-  let sharedLinks: SharedLinkResponseDto[] = $state([]);
+  const updateAlbum = (updateAlbumDto: UpdateAlbumDto) =>
+    executeMutation(updateAlbumInfoMutation, [{ id: album.id, updateAlbumDto }]);
+
+  const handleUpdateAlbum = async (_album: AlbumResponseDto, updateAlbumDto: UpdateAlbumDto) => {
+    await updateAlbum(updateAlbumDto);
+    return true;
+  };
+
+  const sharedLinksQuery = createQuery(
+    () => getAllSharedLinksQuery({ albumId: album.id }),
+    () => queryClient,
+  );
+  const sharedLinks = $derived(sharedLinksQuery.data ?? []);
 
   const presentationSettings = $derived(getAlbumPresentationSettings(album.presentation));
   const votingSettings = $derived({
@@ -201,19 +195,7 @@
     album = { ...album, voting: { ...votingSettings, ...update } };
     void handleUpdateAlbum(album, { voting: album.voting });
   };
-
-  onMount(async () => {
-    sharedLinks = await getAllSharedLinks({ albumId: album.id });
-  });
 </script>
-
-<OnEvents
-  {onAlbumUserDelete}
-  onAlbumShare={refreshAlbum}
-  {onSharedLinkCreate}
-  {onSharedLinkDelete}
-  onAlbumUpdate={(newAlbum) => (album = newAlbum)}
-/>
 
 {#snippet optionsContent()}
   <Stack gap={6}>

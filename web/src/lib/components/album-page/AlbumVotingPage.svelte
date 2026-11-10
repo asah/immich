@@ -1,10 +1,9 @@
 <script lang="ts">
-  import { getAssetMediaUrl } from '$lib/utils';
   import {
+    AssetMediaSize,
     getAlbumVotingLeaderboard,
     getAlbumVotingSession,
     voteForAlbum,
-    AssetMediaSize,
     type AlbumResponseDto,
     type AlbumVoteLeaderboardDto,
     type AlbumVoteSessionDto,
@@ -12,6 +11,7 @@
   import { Button, Icon, Modal, ModalBody } from '@immich/ui';
   import { mdiMagnifyPlus } from '@mdi/js';
   import { onMount } from 'svelte';
+  import { getAssetMediaUrl } from '$lib/utils';
 
   type Props = { album: AlbumResponseDto; backHref: string; key?: string; slug?: string };
   let { album, backHref, key, slug }: Props = $props();
@@ -113,7 +113,7 @@
         {/each}
       </div>
       {#if session.leaderboardVisible}
-        {@const remainingRatings = Math.max(0, session.requiredCount - session.submittedCount)}
+        {const remainingRatings = Math.max(0, session.requiredCount - session.submittedCount)}
         <div
           class="fixed inset-x-0 bottom-0 z-30 border-t border-gray-200 bg-white/95 shadow-lg backdrop-blur-sm dark:border-gray-700 dark:bg-immich-dark-bg/95"
         >

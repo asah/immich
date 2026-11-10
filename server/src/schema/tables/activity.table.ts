@@ -3,11 +3,11 @@ import {
   CreateDateColumn,
   ForeignKeyColumn,
   ForeignKeyConstraint,
-  type Generated,
   PrimaryGeneratedColumn,
   Table,
   Timestamp,
   UpdateDateColumn,
+  type Generated,
 } from '@immich/sql-tools';
 import { UpdateIdColumn, UpdatedAtTrigger } from 'src/decorators.js';
 import { AlbumAssetTable } from 'src/schema/tables/album-asset.table.js';

@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { Route } from '$lib/route';
-  import type { StoryResponseDto } from '$lib/services/story.service';
   import { Badge, Card, CardDescription, CardHeader, CardTitle } from '@immich/ui';
   import { t } from 'svelte-i18n';
+  import { Route } from '$lib/route';
+  import type { StoryResponseDto } from '$lib/services/story.service';
 
   let { story }: { story: StoryResponseDto } = $props();
   const status = $derived(

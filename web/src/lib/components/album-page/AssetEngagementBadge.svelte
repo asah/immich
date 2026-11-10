@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { reactionEmoji } from '$lib/utils/reaction-emoji';
-  import { mdiCommentOutline } from '@mdi/js';
   import { Icon } from '@immich/ui';
+  import { mdiCommentOutline } from '@mdi/js';
+  import { reactionEmoji } from '$lib/utils/reaction-emoji';
 
   type Props = {
     reactions: Record<string, number>;

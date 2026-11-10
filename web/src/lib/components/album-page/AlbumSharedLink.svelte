@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { getSharedLinkActions } from '$lib/services/shared-link.service';
-  import { Route } from '$lib/route';
-  import { locale } from '$lib/stores/preferences.store';
   import type { SharedLinkResponseDto } from '@immich/sdk';
   import { ActionButton, Text } from '@immich/ui';
   import { DateTime } from 'luxon';
   import { t } from 'svelte-i18n';
+  import { Route } from '$lib/route';
+  import { getSharedLinkActions } from '$lib/services/shared-link.service';
+  import { locale } from '$lib/stores/preferences.store';
 
   type Props = {
     sharedLink: SharedLinkResponseDto;

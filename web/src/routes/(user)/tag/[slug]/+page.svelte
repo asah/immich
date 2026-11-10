@@ -1,15 +1,15 @@
 <script lang="ts">
+  import { AssetVisibility } from '@immich/sdk';
   import { error } from '@sveltejs/kit';
+  import { t } from 'svelte-i18n';
   import { goto } from '$app/navigation';
   import OnEvents from '$lib/components/OnEvents.svelte';
   import UserPageLayout from '$lib/components/layouts/UserPageLayout.svelte';
   import Timeline from '$lib/components/timeline/Timeline.svelte';
   import { assetMultiSelectManager } from '$lib/managers/asset-multi-select-manager.svelte';
+  import { Route } from '$lib/route';
   import { getTagActions } from '$lib/services/tag.service';
   import { TreeNode } from '$lib/utils/tree-utils';
-  import { Route } from '$lib/route';
-  import { AssetVisibility } from '@immich/sdk';
-  import { t } from 'svelte-i18n';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();

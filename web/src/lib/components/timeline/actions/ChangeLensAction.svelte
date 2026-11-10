@@ -1,10 +1,10 @@
 <script lang="ts">
-  import MenuOption from '$lib/components/shared-components/context-menu/MenuOption.svelte';
-  import { assetMultiSelectManager } from '$lib/managers/asset-multi-select-manager.svelte';
-  import AssetSelectionChangeLensModal from '$lib/modals/AssetSelectionChangeLensModal.svelte';
   import { modalManager } from '@immich/ui';
   import { mdiCameraIris } from '@mdi/js';
   import { t } from 'svelte-i18n';
+  import MenuOption from '$lib/components/shared-components/context-menu/MenuOption.svelte';
+  import { assetMultiSelectManager } from '$lib/managers/asset-multi-select-manager.svelte';
+  import AssetSelectionChangeLensModal from '$lib/modals/AssetSelectionChangeLensModal.svelte';
 
   type Props = {
     menuItem?: boolean;

@@ -153,7 +153,7 @@
           style:background={storyStyleString(element, 'fill', '#000000')}
         ></div>{/if}
     {:else if element.type === 'sticker'}
-      {@const token = storyStyleString(element, 'stickerToken', '')}{@const url = token
+      {const token = storyStyleString(element, 'stickerToken', '')}{const url = token
         ? stickerResolver?.(token)
         : source?.imageUrl}
       {#if url}<img

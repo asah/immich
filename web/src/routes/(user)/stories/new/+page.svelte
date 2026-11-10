@@ -1,15 +1,16 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
-  import UserPageLayout from '$lib/components/layouts/UserPageLayout.svelte';
-  import StoryBrief from '$lib/components/story-page/StoryBrief.svelte';
-  import { Route } from '$lib/route';
-  import { storyService } from '$lib/services/story.service';
-  import AlbumPickerModal from '$lib/modals/AlbumPickerModal.svelte';
-  import StoryAssetPickerModal from '$lib/components/story-page/StoryAssetPickerModal.svelte';
   import { StoryAspectRatio } from '@immich/sdk';
   import { Button, Textarea, modalManager, toastManager } from '@immich/ui';
   import { t } from 'svelte-i18n';
+  import { goto } from '$app/navigation';
+  import UserPageLayout from '$lib/components/layouts/UserPageLayout.svelte';
+  import StoryAssetPickerModal from '$lib/components/story-page/StoryAssetPickerModal.svelte';
+  import StoryBrief from '$lib/components/story-page/StoryBrief.svelte';
+  import AlbumPickerModal from '$lib/modals/AlbumPickerModal.svelte';
+  import { Route } from '$lib/route';
+  import { storyService } from '$lib/services/story.service';
   import type { PageData } from './$types';
+
   let { data }: { data: PageData } = $props();
   let busy = $state(false);
   let value = $state({ title: '', description: '', aspectRatio: StoryAspectRatio.Portrait45 });
