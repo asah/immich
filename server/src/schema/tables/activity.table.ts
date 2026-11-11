@@ -1,4 +1,5 @@
 import {
+  Check,
   Column,
   CreateDateColumn,
   ForeignKeyColumn,
@@ -17,6 +18,7 @@ import { UserTable } from 'src/schema/tables/user.table.js';
 
 @Table('activity')
 @UpdatedAtTrigger('activity_updatedAt')
+@Check({ name: 'activity_scope_check', expression: `"albumId" IS NOT NULL OR "assetId" IS NOT NULL` })
 @ForeignKeyConstraint({
   columns: ['albumId', 'assetId'],
   referenceTable: () => AlbumAssetTable,
@@ -34,8 +36,8 @@ export class ActivityTable {
   @UpdateDateColumn()
   updatedAt!: Generated<Timestamp>;
 
-  @ForeignKeyColumn(() => AlbumTable, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
-  albumId!: string;
+  @ForeignKeyColumn(() => AlbumTable, { onDelete: 'CASCADE', onUpdate: 'CASCADE', nullable: true })
+  albumId!: string | null;
 
   @ForeignKeyColumn(() => UserTable, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
   userId!: string;

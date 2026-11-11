@@ -8,9 +8,9 @@
         "parameters": [
           {
             "name": "albumId",
-            "required": true,
+            "required": false,
             "in": "query",
-            "description": "Album ID",
+            "description": "Album ID (omit for direct photo activity)",
             "schema": {
               "format": "uuid",
               "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
@@ -25,6 +25,14 @@
             "schema": {
               "format": "uuid",
               "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+              "type": "string"
+            }
+          },
+          {
+            "name": "key",
+            "required": false,
+            "in": "query",
+            "schema": {
               "type": "string"
             }
           },
@@ -46,6 +54,14 @@
               "format": "uuid",
               "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
               "nullable": true
+            }
+          },
+          {
+            "name": "slug",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
             }
           },
           {
@@ -116,9 +132,26 @@
         "x-immich-state": "Stable"
       },
       "post": {
-        "description": "Create a like or a comment for an album, or an asset in an album.",
+        "description": "Create a reaction or comment for an album or photo.",
         "operationId": "createActivity",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "key",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "slug",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
@@ -176,14 +209,14 @@
     },
     "/activities/statistics": {
       "get": {
-        "description": "Returns the number of likes and comments for a given album or asset in an album.",
+        "description": "Returns the number of reactions and comments for a given album or photo.",
         "operationId": "getActivityStatistics",
         "parameters": [
           {
             "name": "albumId",
-            "required": true,
+            "required": false,
             "in": "query",
-            "description": "Album ID",
+            "description": "Album ID (omit for direct photo activity)",
             "schema": {
               "format": "uuid",
               "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
@@ -198,6 +231,22 @@
             "schema": {
               "format": "uuid",
               "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+              "type": "string"
+            }
+          },
+          {
+            "name": "key",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "slug",
+            "required": false,
+            "in": "query",
+            "schema": {
               "type": "string"
             }
           }
@@ -249,7 +298,7 @@
     },
     "/activities/{id}": {
       "delete": {
-        "description": "Removes a like or comment from a given album or asset in an album.",
+        "description": "Removes a reaction or comment from an album or photo.",
         "operationId": "deleteActivity",
         "parameters": [
           {
@@ -259,6 +308,22 @@
             "schema": {
               "format": "uuid",
               "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+              "type": "string"
+            }
+          },
+          {
+            "name": "key",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "slug",
+            "required": false,
+            "in": "query",
+            "schema": {
               "type": "string"
             }
           }
@@ -21429,7 +21494,7 @@
         "description": "Activity create",
         "properties": {
           "albumId": {
-            "description": "Album ID",
+            "description": "Album ID (omit for direct photo activity)",
             "format": "uuid",
             "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
             "type": "string"
@@ -21476,7 +21541,6 @@
           }
         },
         "required": [
-          "albumId",
           "type"
         ],
         "type": "object"

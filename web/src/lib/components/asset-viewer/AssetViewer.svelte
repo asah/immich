@@ -24,7 +24,7 @@
   import { navigateToAsset } from '#lib/utils/asset-utils.ts';
   import { handleError } from '#lib/utils/handle-error.ts';
   import { InvocationTracker } from '#lib/utils/invocationTracker.ts';
-  import { navigate } from '#lib/utils/navigation.ts';
+  import { isPhotosRoute, navigate } from '#lib/utils/navigation.ts';
   import { SlideshowHistory } from '#lib/utils/slideshow-history.ts';
   import { toTimelineAsset } from '#lib/utils/timeline-util.ts';
   import {
@@ -42,6 +42,7 @@
   import { t } from 'svelte-i18n';
   import { fly } from 'svelte/transition';
   import { browser } from '$app/env';
+  import { page } from '$app/state';
   import Thumbnail from '../assets/thumbnail/Thumbnail.svelte';
   import ActivityStatus from './ActivityStatus.svelte';
   import ActivityViewer from './ActivityViewer.svelte';
@@ -133,12 +134,8 @@
   };
 
   const handleFavorite = async () => {
-    if (!album) {
-      return;
-    }
-
     try {
-      await activityManager.toggleLike();
+      await activityManager.toggleLike(album ? 'like' : 'heart');
     } catch (error) {
       handleError(error, $t('errors.unable_to_change_favorite'));
     }
@@ -375,11 +372,11 @@
   let isFullScreen = $derived(!!fullscreenElement);
 
   $effect(() => {
-    if (!(album && asset.id)) {
+    if (!asset.id || !(album || authManager.isSharedLink || isPhotosRoute(page.route.id))) {
       return;
     }
 
-    handlePromiseError(activityManager.init(album.id, asset.id));
+    handlePromiseError(activityManager.init(album?.id, asset.id));
     if (new URLSearchParams(location.search).has('comment')) {
       assetViewerManager.isShowActivityPanel = true;
     }
@@ -449,7 +446,11 @@
     return 'PhotoViewer';
   });
 
-  const showActivityStatus = $derived($slideshowState === SlideshowState.None && !!album && !activityManager.isLoading);
+  const showActivityStatus = $derived(
+    $slideshowState === SlideshowState.None &&
+      (album || authManager.isSharedLink || isPhotosRoute(page.route.id)) &&
+      !activityManager.isLoading,
+  );
 
   const showOcrButton = $derived(
     $slideshowState === SlideshowState.None &&
@@ -595,12 +596,13 @@
     {#if showActivityStatus}
       <div class="absolute inset-e-0 bottom-0 me-8 mb-20">
         <ActivityStatus
-          disabled={false}
+          disabled={!authManager.authenticated}
           isLiked={activityManager.isLiked}
           numberOfComments={activityManager.commentCount}
           numberOfLikes={activityManager.likeCount}
           onFavorite={handleFavorite}
-          onReaction={(key) => activityManager.toggleLike(key)}
+          favoriteReactionKey={album ? undefined : 'heart'}
+          onReaction={authManager.authenticated ? (key) => activityManager.toggleLike(key) : undefined}
         />
       </div>
     {/if}
@@ -674,7 +676,7 @@
     </div>
   {/if}
 
-  {#if album && assetViewerManager.isShowActivityPanel && authManager.authenticated}
+  {#if (album || authManager.isSharedLink || isPhotosRoute(page.route.id)) && assetViewerManager.isShowActivityPanel}
     <div
       transition:fly={{ duration: 150 }}
       id="activity-panel"
@@ -684,8 +686,8 @@
       <ActivityViewer
         disabled={false}
         assetType={asset.type}
-        albumUsers={album.albumUsers}
-        albumId={album.id}
+        albumUsers={album?.albumUsers}
+        albumId={album?.id}
         assetId={asset.id}
       />
     </div>

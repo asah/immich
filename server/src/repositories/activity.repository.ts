@@ -10,7 +10,7 @@ import { ActivityTable } from 'src/schema/tables/activity.table.js';
 import { asUuid, dummy } from 'src/utils/database.js';
 
 export interface ActivitySearch {
-  albumId?: string;
+  albumId?: string | null;
   assetId?: string | null;
   userId?: string;
   isLiked?: boolean;
@@ -41,6 +41,7 @@ export class ActivityRepository {
       .$if(assetId === null, (qb) => qb.where('assetId', 'is', null))
       .$if(!!assetId, (qb) => qb.where('activity.assetId', '=', assetId!))
       .$if(!!albumId, (qb) => qb.where('activity.albumId', '=', albumId!))
+      .$if(albumId === null, (qb) => qb.where('activity.albumId', 'is', null))
       .$if(isLiked !== undefined, (qb) => qb.where('activity.isLiked', '=', isLiked!))
       .$if(parentActivityId === null, (qb) => qb.where('activity.parentActivityId', 'is', null))
       .$if(!!parentActivityId, (qb) => qb.where('activity.parentActivityId', '=', parentActivityId!))
@@ -135,7 +136,7 @@ export class ActivityRepository {
     albumId,
     assetId,
   }: {
-    albumId: string;
+    albumId?: string;
     assetId?: string;
   }): Promise<{ comments: number; likes: number }> {
     const result = await this.db
@@ -147,7 +148,8 @@ export class ActivityRepository {
       .innerJoin('user', (join) => join.onRef('user.id', '=', 'activity.userId').on('user.deletedAt', 'is', null))
       .leftJoin('asset', 'asset.id', 'activity.assetId')
       .$if(!!assetId, (qb) => qb.where('activity.assetId', '=', assetId!))
-      .where('activity.albumId', '=', albumId)
+      .$if(!!albumId, (qb) => qb.where('activity.albumId', '=', albumId!))
+      .$if(!albumId, (qb) => qb.where('activity.albumId', 'is', null))
       .where(({ or, and, eb }) =>
         or([
           and([eb('asset.deletedAt', 'is', null), eb('asset.visibility', '!=', sql.lit(AssetVisibility.Locked))]),

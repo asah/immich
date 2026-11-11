@@ -15,6 +15,7 @@
   import * as luxon from 'luxon';
   import { t } from 'svelte-i18n';
   import { fromAction } from 'svelte/attachments';
+  import { page } from '$app/state';
   import UserAvatar from '../shared-components/UserAvatar.svelte';
 
   const units: Intl.RelativeTimeFormatUnit[] = ['year', 'month', 'week', 'day', 'hour', 'minute', 'second'];
@@ -38,9 +39,9 @@
 
   interface Props {
     assetId?: string | undefined;
-    albumId: string;
+    albumId?: string;
     assetType?: AssetTypeEnum | undefined;
-    albumUsers: AlbumUserResponseDto[];
+    albumUsers?: AlbumUserResponseDto[];
     disabled: boolean;
   }
 
@@ -55,7 +56,12 @@
   let isSendingMessage = $state(false);
   let scrollContainer: HTMLElement | undefined = $state();
   let hasScrolledToBottom = false;
-  const isAlbumOwner = $derived(albumUsers[0].user.id === authManager.user.id);
+  const isAlbumOwner = $derived(
+    authManager.authenticated &&
+      !authManager.isSharedLink &&
+      !!albumUsers?.length &&
+      albumUsers[0].user.id === authManager.user.id,
+  );
 
   const timeOptions: Intl.DateTimeFormatOptions = {
     year: 'numeric',
@@ -118,7 +124,7 @@
 </script>
 
 {#snippet reactionMenu(reaction: ActivityResponseDto, title: string)}
-  {#if reaction.user.id === authManager.user.id || isAlbumOwner}
+  {#if authManager.authenticated && (reaction.user.id === authManager.user.id || isAlbumOwner)}
     <ContextMenuButton
       translations={{ open_menu: title }}
       position="top-right"
@@ -166,7 +172,7 @@
               </div>
 
               <div class="w-full self-center overflow-hidden text-sm/4 wrap-break-word">{reaction.comment}</div>
-              {#if assetId === undefined && reaction.assetId}
+              {#if albumId && assetId === undefined && reaction.assetId}
                 <a class="aspect-square size-19" href={Route.viewAlbumAsset({ albumId, assetId: reaction.assetId })}>
                   <img
                     class="size-19 rounded-lg object-cover"
@@ -197,7 +203,7 @@
                 <div class="w-full" title={`${reaction.user.name} (${reaction.user.email})`}>
                   {$t('user_liked', { values: { user: reaction.user.name, type } })}
                 </div>
-                {#if assetId === undefined && reaction.assetId}
+                {#if albumId && assetId === undefined && reaction.assetId}
                   <a class="aspect-square size-19" href={Route.viewAlbumAsset({ albumId, assetId: reaction.assetId })}>
                     <img
                       class="size-19 rounded-lg object-cover"
@@ -223,48 +229,56 @@
     {/if}
   </div>
 
-  <div class="absolute bottom-0 w-full">
-    <div class="flex items-center justify-center p-2" bind:clientHeight={chatHeight}>
-      <div class="flex h-fit w-full gap-4 rounded-3xl bg-gray-200 p-2 text-immich-dark-gray">
-        <div>
-          <UserAvatar user={authManager.user} size="md" noTitle />
-        </div>
-        <form class="flex max-h-56 w-full items-center gap-1" {onsubmit}>
-          <Textarea
-            {disabled}
-            bind:value={message}
-            rows={1}
-            grow
-            placeholder={disabled ? $t('comments_are_disabled') : $t('say_something')}
-            {@attach fromAction(shortcut, () => ({
-              shortcut: { key: 'Enter' },
-              onShortcut: () => handleSendComment(),
-            }))}
-            class="{disabled
-              ? 'cursor-not-allowed'
-              : ''} max-h-56 w-full resize-none items-center overflow-y-auto bg-gray-200 pe-2 leading-4 ring-0! outline-none dark:bg-gray-200"
-          />
-          {#if isSendingMessage}
-            <div class="ms-0 flex place-items-center pb-2">
-              <div class="flex w-full place-items-center">
-                <LoadingSpinner size="large" />
+  {#if authManager.authenticated}
+    <div class="absolute bottom-0 w-full">
+      <div class="flex items-center justify-center p-2" bind:clientHeight={chatHeight}>
+        <div class="flex h-fit w-full gap-4 rounded-3xl bg-gray-200 p-2 text-immich-dark-gray">
+          <div>
+            <UserAvatar user={authManager.user} size="md" noTitle />
+          </div>
+          <form class="flex max-h-56 w-full items-center gap-1" {onsubmit}>
+            <Textarea
+              {disabled}
+              bind:value={message}
+              rows={1}
+              grow
+              placeholder={disabled ? $t('comments_are_disabled') : $t('say_something')}
+              {@attach fromAction(shortcut, () => ({
+                shortcut: { key: 'Enter' },
+                onShortcut: () => handleSendComment(),
+              }))}
+              class="{disabled
+                ? 'cursor-not-allowed'
+                : ''} max-h-56 w-full resize-none items-center overflow-y-auto bg-gray-200 pe-2 leading-4 ring-0! outline-none dark:bg-gray-200"
+            />
+            {#if isSendingMessage}
+              <div class="ms-0 flex place-items-center pb-2">
+                <div class="flex w-full place-items-center">
+                  <LoadingSpinner size="large" />
+                </div>
               </div>
-            </div>
-          {:else if message}
-            <div class="light ms-0 flex w-fit items-center">
-              <IconButton
-                shape="round"
-                aria-label={$t('send_message')}
-                variant="ghost"
-                icon={mdiSend}
-                onclick={() => handleSendComment()}
-              />
-            </div>
-          {/if}
-        </form>
+            {:else if message}
+              <div class="light ms-0 flex w-fit items-center">
+                <IconButton
+                  shape="round"
+                  aria-label={$t('send_message')}
+                  variant="ghost"
+                  icon={mdiSend}
+                  onclick={() => handleSendComment()}
+                />
+              </div>
+            {/if}
+          </form>
+        </div>
       </div>
     </div>
-  </div>
+  {:else}
+    <div class="absolute bottom-0 w-full bg-subtle p-4 text-center text-sm" bind:clientHeight={chatHeight}>
+      <a class="text-primary underline" href={Route.login({ continue: page.url.pathname + page.url.search })}>
+        {$t('sign_in_to_comment_or_react')}
+      </a>
+    </div>
+  {/if}
 </div>
 
 <style>

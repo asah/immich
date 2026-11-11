@@ -21,7 +21,7 @@ export class ActivityController {
   constructor(private service: ActivityService) {}
 
   @Get()
-  @Authenticated({ permission: Permission.ActivityRead })
+  @Authenticated({ permission: Permission.ActivityRead, sharedLink: true })
   @Endpoint({
     summary: 'List all activities',
     description:
@@ -33,10 +33,10 @@ export class ActivityController {
   }
 
   @Post()
-  @Authenticated({ permission: Permission.ActivityCreate })
+  @Authenticated({ permission: Permission.ActivityCreate, sharedLink: true })
   @Endpoint({
     summary: 'Create an activity',
-    description: 'Create a like or a comment for an album, or an asset in an album.',
+    description: 'Create a reaction or comment for an album or photo.',
     history: new HistoryBuilder().added('v1').beta('v1').stable('v2'),
   })
   async createActivity(
@@ -52,10 +52,10 @@ export class ActivityController {
   }
 
   @Get('statistics')
-  @Authenticated({ permission: Permission.ActivityStatistics })
+  @Authenticated({ permission: Permission.ActivityStatistics, sharedLink: true })
   @Endpoint({
     summary: 'Retrieve activity statistics',
-    description: 'Returns the number of likes and comments for a given album or asset in an album.',
+    description: 'Returns the number of reactions and comments for a given album or photo.',
     history: new HistoryBuilder().added('v1').beta('v1').stable('v2'),
   })
   getActivityStatistics(@Auth() auth: AuthDto, @Query() dto: ActivityDto): Promise<ActivityStatisticsResponseDto> {
@@ -63,11 +63,11 @@ export class ActivityController {
   }
 
   @Delete(':id')
-  @Authenticated({ permission: Permission.ActivityDelete })
+  @Authenticated({ permission: Permission.ActivityDelete, sharedLink: true })
   @HttpCode(HttpStatus.NO_CONTENT)
   @Endpoint({
     summary: 'Delete an activity',
-    description: 'Removes a like or comment from a given album or asset in an album.',
+    description: 'Removes a reaction or comment from an album or photo.',
     history: new HistoryBuilder().added('v1').beta('v1').stable('v2'),
   })
   deleteActivity(@Auth() auth: AuthDto, @Param() { id }: UUIDParamDto): Promise<void> {

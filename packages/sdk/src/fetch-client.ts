@@ -48,8 +48,8 @@ export type ActivityResponseDto = {
     user: UserResponseDto;
 };
 export type ActivityCreateDto = {
-    /** Album ID */
-    albumId: string;
+    /** Album ID (omit for direct photo activity) */
+    albumId?: string;
     /** Asset ID (if activity is for an asset) */
     assetId?: string;
     /** Photo attachments referenced by this activity */
@@ -5150,11 +5150,13 @@ export type SyncUserV1 = {
 /**
  * List all activities
  */
-export function getActivities({ albumId, assetId, level, parentActivityId, $type, userId }: {
-    albumId: string;
+export function getActivities({ albumId, assetId, key, level, parentActivityId, slug, $type, userId }: {
+    albumId?: string;
     assetId?: string;
+    key?: string;
     level?: ReactionLevel;
     parentActivityId?: string | null;
+    slug?: string;
     $type?: ReactionType;
     userId?: string;
 }, opts?: Oazapfts.RequestOpts) {
@@ -5164,8 +5166,10 @@ export function getActivities({ albumId, assetId, level, parentActivityId, $type
     }>(`/activities${QS.query(QS.explode({
         albumId,
         assetId,
+        key,
         level,
         parentActivityId,
+        slug,
         "type": $type,
         userId
     }))}`, {
@@ -5175,13 +5179,18 @@ export function getActivities({ albumId, assetId, level, parentActivityId, $type
 /**
  * Create an activity
  */
-export function createActivity({ activityCreateDto }: {
+export function createActivity({ key, slug, activityCreateDto }: {
+    key?: string;
+    slug?: string;
     activityCreateDto: ActivityCreateDto;
 }, opts?: Oazapfts.RequestOpts) {
     return oazapfts.ok(oazapfts.fetchJson<{
         status: 201;
         data: ActivityResponseDto;
-    }>("/activities", oazapfts.json({
+    }>(`/activities${QS.query(QS.explode({
+        key,
+        slug
+    }))}`, oazapfts.json({
         ...opts,
         method: "POST",
         body: activityCreateDto
@@ -5190,16 +5199,20 @@ export function createActivity({ activityCreateDto }: {
 /**
  * Retrieve activity statistics
  */
-export function getActivityStatistics({ albumId, assetId }: {
-    albumId: string;
+export function getActivityStatistics({ albumId, assetId, key, slug }: {
+    albumId?: string;
     assetId?: string;
+    key?: string;
+    slug?: string;
 }, opts?: Oazapfts.RequestOpts) {
     return oazapfts.ok(oazapfts.fetchJson<{
         status: 200;
         data: ActivityStatisticsResponseDto;
     }>(`/activities/statistics${QS.query(QS.explode({
         albumId,
-        assetId
+        assetId,
+        key,
+        slug
     }))}`, {
         ...opts
     }));
@@ -5207,10 +5220,15 @@ export function getActivityStatistics({ albumId, assetId }: {
 /**
  * Delete an activity
  */
-export function deleteActivity({ id }: {
+export function deleteActivity({ id, key, slug }: {
     id: string;
+    key?: string;
+    slug?: string;
 }, opts?: Oazapfts.RequestOpts) {
-    return oazapfts.ok(oazapfts.fetchText(`/activities/${encodeURIComponent(id)}`, {
+    return oazapfts.ok(oazapfts.fetchText(`/activities/${encodeURIComponent(id)}${QS.query(QS.explode({
+        key,
+        slug
+    }))}`, {
         ...opts,
         method: "DELETE"
     }));

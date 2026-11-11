@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { ReactionType } from 'src/dtos/activity.dto.js';
 import { ActivityService } from 'src/services/activity.service.js';
 import { ActivityFactory } from 'test/factories/activity.factory.js';
@@ -19,6 +19,7 @@ describe(ActivityService.name, () => {
     );
     mocks.activity.addAssets.mockResolvedValue();
     mocks.activity.updateReaction.mockResolvedValue(undefined as never);
+    mocks.activity.getById.mockResolvedValue(undefined);
   });
 
   it('should work', () => {
@@ -26,6 +27,16 @@ describe(ActivityService.name, () => {
   });
 
   describe('getAll', () => {
+    it('reads only direct activity for an accessible photo', async () => {
+      const [assetId, userId] = newUuids();
+      mocks.access.asset.checkOwnerAccess.mockResolvedValue(new Set([assetId]));
+      mocks.activity.search.mockResolvedValue([]);
+
+      await expect(sut.getAll(AuthFactory.create({ id: userId }), { assetId })).resolves.toEqual([]);
+
+      expect(mocks.activity.search).toHaveBeenCalledWith({ assetId, albumId: null, isLiked: undefined });
+    });
+
     it('should get all', async () => {
       const [albumId, assetId, userId] = newUuids();
 
@@ -79,6 +90,49 @@ describe(ActivityService.name, () => {
   });
 
   describe('addComment', () => {
+    it('creates direct photo activity for a user who can access the photo', async () => {
+      const [assetId, userId] = newUuids();
+      const activity = ActivityFactory.create({ albumId: null, assetId, userId });
+      mocks.access.asset.checkOwnerAccess.mockResolvedValue(new Set([assetId]));
+      mocks.activity.create.mockResolvedValue(getForActivity(activity));
+
+      await sut.create(AuthFactory.create({ id: userId }), {
+        assetId,
+        type: ReactionType.COMMENT,
+        comment: 'comment',
+      });
+
+      expect(mocks.activity.create).toHaveBeenCalledWith(expect.objectContaining({ albumId: null, assetId, userId }));
+      expect(mocks.event.emit).not.toHaveBeenCalled();
+    });
+
+    it('requires a signed-in visitor to post on a shared photo', async () => {
+      const assetId = newUuid();
+      await expect(
+        sut.create(AuthFactory.from().sharedLink().build(), {
+          assetId,
+          type: ReactionType.COMMENT,
+          comment: 'comment',
+        }),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+    });
+
+    it('allows a signed-in visitor to comment on a shared album photo', async () => {
+      const [albumId, assetId, userId] = newUuids();
+      const activity = ActivityFactory.create({ albumId, assetId, userId });
+      mocks.access.album.checkSharedLinkAccess.mockResolvedValue(new Set([albumId]));
+      mocks.activity.create.mockResolvedValue(getForActivity(activity));
+
+      await sut.create(AuthFactory.from({ id: userId }).sharedLink().session().build(), {
+        albumId,
+        assetId,
+        type: ReactionType.COMMENT,
+        comment: 'comment',
+      });
+
+      expect(mocks.activity.create).toHaveBeenCalledWith(expect.objectContaining({ albumId, assetId, userId }));
+    });
+
     it('should require access to the album', async () => {
       const [albumId, assetId] = newUuids();
 
@@ -186,6 +240,18 @@ describe(ActivityService.name, () => {
   });
 
   describe('delete', () => {
+    it('lets the author delete direct photo activity', async () => {
+      const [assetId, userId] = newUuids();
+      const activity = ActivityFactory.create({ albumId: null, assetId, userId });
+      mocks.activity.getById.mockResolvedValue(activity);
+      mocks.access.asset.checkOwnerAccess.mockResolvedValue(new Set([assetId]));
+      mocks.activity.delete.mockResolvedValue();
+
+      await sut.delete(AuthFactory.create({ id: userId }), activity.id);
+
+      expect(mocks.activity.delete).toHaveBeenCalledWith(activity.id);
+    });
+
     it('should require access', async () => {
       await expect(sut.delete(AuthFactory.create(), newUuid())).rejects.toBeInstanceOf(BadRequestException);
 

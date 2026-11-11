@@ -54,17 +54,20 @@ class ActivityManager {
     return this.#isLiked;
   }
 
-  #getCacheKey(albumId: string, assetId: string = '') {
-    return `${albumId}:${assetId}`;
+  #getCacheKey(albumId?: string, assetId: string = '') {
+    return `${albumId ?? 'photo'}:${assetId}`;
   }
 
-  async init(albumId: string, assetId?: string) {
-    if (assetId && assetId === this.#assetId) {
+  async init(albumId?: string, assetId?: string) {
+    if (albumId === this.#albumId && assetId === this.#assetId) {
       return;
     }
 
     this.#albumId = albumId;
     this.#assetId = assetId;
+    if (!albumId && !assetId) {
+      return;
+    }
     try {
       await activityManager.refreshActivities(albumId, assetId);
     } catch (error) {
@@ -72,24 +75,25 @@ class ActivityManager {
     }
   }
 
-  #invalidateCache(albumId: string, assetId?: string) {
+  #invalidateCache(albumId?: string, assetId?: string) {
     this.#cache.delete(this.#getCacheKey(albumId));
     this.#cache.delete(this.#getCacheKey(albumId, assetId));
   }
 
   async addActivity(dto: ActivityCreateDto) {
-    if (this.#albumId === undefined) {
+    if (!this.#albumId && !this.#assetId) {
       return;
     }
 
-    const activity = await createActivity({ activityCreateDto: dto });
+    const activity = await createActivity({ activityCreateDto: dto, ...authManager.params });
+    const alreadyExists = this.#activities.some(({ id }) => id === activity.id);
     this.#activities = [...this.#activities.filter(({ id }) => id !== activity.id), activity];
 
     if (activity.type === ReactionType.Comment) {
       this.#commentCount++;
     }
 
-    if (activity.type === ReactionType.Like && !activity.parentActivityId) {
+    if (activity.type === ReactionType.Like && !activity.parentActivityId && !alreadyExists) {
       this.#likeCount++;
     }
 
@@ -99,7 +103,7 @@ class ActivityManager {
   }
 
   async deleteActivity(activity: ActivityResponseDto, _?: number) {
-    if (!this.#albumId) {
+    if (!this.#albumId && !this.#assetId) {
       return;
     }
 
@@ -113,13 +117,13 @@ class ActivityManager {
 
     this.#activities = this.#activities.filter(({ id }) => id !== activity.id);
 
-    await deleteActivity({ id: activity.id });
+    await deleteActivity({ id: activity.id, ...authManager.params });
     this.#invalidateCache(this.#albumId, this.#assetId);
     handlePromiseError(this.refreshActivities(this.#albumId, this.#assetId));
   }
 
   async toggleLike(reactionKey = 'like') {
-    if (!this.#albumId) {
+    if (!this.#albumId && !this.#assetId) {
       return;
     }
 
@@ -136,7 +140,7 @@ class ActivityManager {
     }
   }
 
-  async refreshActivities(albumId: string, assetId?: string) {
+  async refreshActivities(albumId?: string, assetId?: string) {
     this.isLoading = true;
     const userId = authManager.authenticated ? authManager.user.id : undefined;
 
@@ -152,12 +156,13 @@ class ActivityManager {
       return;
     }
 
-    this.#activities = await getActivities({ albumId, assetId });
+    this.#activities = await getActivities({ albumId, assetId, ...authManager.params });
 
     const [liked] = userId
       ? await getActivities({
           albumId,
           assetId,
+          ...authManager.params,
           userId,
           $type: ReactionType.Like,
           level: assetId ? undefined : ReactionLevel.Album,
@@ -165,7 +170,7 @@ class ActivityManager {
       : [undefined];
     this.#isLiked = liked ?? null;
 
-    const { comments, likes } = await getActivityStatistics({ albumId, assetId });
+    const { comments, likes } = await getActivityStatistics({ albumId, assetId, ...authManager.params });
     this.#commentCount = comments;
     this.#likeCount = likes;
 
@@ -185,6 +190,7 @@ class ActivityManager {
     this.#activities = [];
     this.#commentCount = 0;
     this.#likeCount = 0;
+    this.#isLiked = null;
   }
 }
 

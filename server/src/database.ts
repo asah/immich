@@ -64,7 +64,7 @@ export type Activity = {
   id: string;
   createdAt: Date;
   updatedAt: Date;
-  albumId: string;
+  albumId: string | null;
   userId: string;
   user: ShallowDehydrateObject<User>;
   assetId: string | null;

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Activity } from 'src/database.js';
 import {
   ActivityCreateDto,
@@ -29,10 +29,10 @@ const sanitizeCommentDocument = (document?: string | null) => {
 @Injectable()
 export class ActivityService extends BaseService {
   async getAll(auth: AuthDto, dto: ActivitySearchDto): Promise<ActivityResponseDto[]> {
-    await this.requireAccess({ auth, permission: Permission.AlbumRead, ids: [dto.albumId] });
+    await this.requireActivityReadAccess(auth, dto);
     const activities = await this.activityRepository.search({
       userId: dto.userId,
-      albumId: dto.albumId,
+      albumId: dto.albumId ?? null,
       assetId: dto.level === ReactionLevel.ALBUM ? null : dto.assetId,
       isLiked: dto.type && dto.type === ReactionType.LIKE,
       parentActivityId: dto.parentActivityId,
@@ -53,17 +53,27 @@ export class ActivityService extends BaseService {
   }
 
   async getStatistics(auth: AuthDto, dto: ActivityDto): Promise<ActivityStatisticsResponseDto> {
-    await this.requireAccess({ auth, permission: Permission.AlbumRead, ids: [dto.albumId] });
+    await this.requireActivityReadAccess(auth, dto);
     return await this.activityRepository.getStatistics({ albumId: dto.albumId, assetId: dto.assetId });
   }
 
   async create(auth: AuthDto, dto: ActivityCreateDto): Promise<MaybeDuplicate<ActivityResponseDto>> {
-    await this.requireAccess({ auth, permission: Permission.ActivityCreate, ids: [dto.albumId] });
+    if (dto.albumId) {
+      if (auth.sharedLink) {
+        this.requireSignedInSharedLinkVisitor(auth);
+        await this.requireAccess({ auth, permission: Permission.AlbumRead, ids: [dto.albumId] });
+      } else {
+        await this.requireAccess({ auth, permission: Permission.ActivityCreate, ids: [dto.albumId] });
+      }
+    } else {
+      this.requireSignedInSharedLinkVisitor(auth);
+      await this.requireAccess({ auth, permission: Permission.AssetRead, ids: [dto.assetId!] });
+    }
 
     let parent: Awaited<ReturnType<typeof this.activityRepository.getById>>;
     if (dto.parentActivityId) {
       parent = await this.activityRepository.getById(dto.parentActivityId);
-      if (!parent || parent.albumId !== dto.albumId || parent.isLiked) {
+      if (!parent || parent.albumId !== (dto.albumId ?? null) || parent.isLiked) {
         throw new BadRequestException('Comment reaction target not found');
       }
       if (dto.assetId && dto.assetId !== parent.assetId) {
@@ -72,7 +82,7 @@ export class ActivityService extends BaseService {
     }
 
     const attachmentIds = dto.assetIds ?? [];
-    const assetsInAlbum = await this.activityRepository.getAssetsInAlbum(dto.albumId, attachmentIds);
+    const assetsInAlbum = dto.albumId ? await this.activityRepository.getAssetsInAlbum(dto.albumId, attachmentIds) : [];
     if (assetsInAlbum.length !== attachmentIds.length) {
       throw new BadRequestException('All attached assets must belong to the album');
     }
@@ -80,7 +90,7 @@ export class ActivityService extends BaseService {
     const common = {
       userId: auth.user.id,
       assetId: parent?.assetId ?? dto.assetId,
-      albumId: dto.albumId,
+      albumId: dto.albumId ?? null,
     };
 
     let activity: Activity | undefined;
@@ -116,7 +126,7 @@ export class ActivityService extends BaseService {
     }
 
     await this.activityRepository.addAssets(activity.id, attachmentIds);
-    if (!isDuplicate) {
+    if (!isDuplicate && dto.albumId) {
       await this.eventRepository.emit('ActivityCreate', {
         activityId: activity.id,
         actorId: auth.user.id,
@@ -130,7 +140,34 @@ export class ActivityService extends BaseService {
   }
 
   async delete(auth: AuthDto, id: string): Promise<void> {
-    await this.requireAccess({ auth, permission: Permission.ActivityDelete, ids: [id] });
+    const activity = await this.activityRepository.getById(id);
+    if (activity && (activity.albumId === null || auth.sharedLink)) {
+      this.requireSignedInSharedLinkVisitor(auth);
+      if (activity.userId !== auth.user.id) {
+        throw new ForbiddenException();
+      }
+      await this.requireAccess({
+        auth,
+        permission: activity.albumId ? Permission.AlbumRead : Permission.AssetRead,
+        ids: [activity.albumId ?? activity.assetId!],
+      });
+    } else {
+      await this.requireAccess({ auth, permission: Permission.ActivityDelete, ids: [id] });
+    }
     await this.activityRepository.delete(id);
+  }
+
+  private async requireActivityReadAccess(auth: AuthDto, dto: ActivityDto) {
+    await this.requireAccess({
+      auth,
+      permission: dto.albumId ? Permission.AlbumRead : Permission.AssetRead,
+      ids: [dto.albumId ?? dto.assetId!],
+    });
+  }
+
+  private requireSignedInSharedLinkVisitor(auth: AuthDto) {
+    if (auth.sharedLink && !auth.session) {
+      throw new UnauthorizedException('Sign in to participate in photo activity');
+    }
   }
 }

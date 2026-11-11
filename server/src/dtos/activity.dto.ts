@@ -41,7 +41,7 @@ const ActivityStatisticsResponseSchema = z
   .meta({ id: 'ActivityStatisticsResponseDto' });
 
 const ActivitySchema = z.object({
-  albumId: z.uuidv4().describe('Album ID'),
+  albumId: z.uuidv4().optional().describe('Album ID (omit for direct photo activity)'),
   assetId: z.uuidv4().optional().describe('Asset ID (if activity is for an asset)'),
 });
 
@@ -50,7 +50,7 @@ const ActivitySearchSchema = ActivitySchema.extend({
   level: ReactionLevelSchema.optional(),
   userId: z.uuidv4().optional().describe('Filter by user ID'),
   parentActivityId: z.uuidv4().nullish().describe('Filter reactions on a comment'),
-});
+}).refine(({ albumId, assetId }) => !!albumId || !!assetId, 'Album ID or asset ID is required');
 
 const ActivityCreateSchema = ActivitySchema.extend({
   type: ReactionTypeSchema,
@@ -61,6 +61,7 @@ const ActivityCreateSchema = ActivitySchema.extend({
   parentActivityId: z.uuidv4().optional().describe('Comment activity receiving a reaction'),
   assetIds: z.array(z.uuidv4()).max(4).optional().describe('Photo attachments referenced by this activity'),
 })
+  .refine(({ albumId, assetId }) => !!albumId || !!assetId, 'Album ID or asset ID is required')
   .refine((data) => data.type !== ReactionType.COMMENT || (data.comment && data.comment.trim() !== ''), {
     error: 'Comment is required when type is COMMENT',
     path: ['comment'],
@@ -92,6 +93,8 @@ export const mapActivity = (activity: Activity): ActivityResponseDto => {
 
 export class ActivityResponseDto extends createZodDto(ActivityResponseSchema) {}
 export class ActivityCreateDto extends createZodDto(ActivityCreateSchema) {}
-export class ActivityDto extends createZodDto(ActivitySchema) {}
+export class ActivityDto extends createZodDto(
+  ActivitySchema.refine(({ albumId, assetId }) => !!albumId || !!assetId, 'Album ID or asset ID is required'),
+) {}
 export class ActivitySearchDto extends createZodDto(ActivitySearchSchema) {}
 export class ActivityStatisticsResponseDto extends createZodDto(ActivityStatisticsResponseSchema) {}

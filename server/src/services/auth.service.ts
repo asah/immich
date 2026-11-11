@@ -70,6 +70,13 @@ export type ValidateRequest = {
   };
 };
 
+const sharedActivityPermissions = new Set<Permission | false>([
+  Permission.ActivityRead,
+  Permission.ActivityCreate,
+  Permission.ActivityStatistics,
+  Permission.ActivityDelete,
+]);
+
 @Injectable()
 export class AuthService extends BaseService {
   async login(dto: LoginCredentialDto, details: LoginDetails) {
@@ -288,6 +295,19 @@ export class AuthService extends BaseService {
     const authDto = await this.validate({ headers, queryParams });
     const { adminRoute, sharedLinkRoute, uri } = metadata;
     const requestedPermission = metadata.permission ?? Permission.All;
+
+    if (authDto.sharedLink && sharedActivityPermissions.has(requestedPermission)) {
+      const session = this.getBearerToken(headers) || this.getCookieToken(headers);
+      if (session) {
+        try {
+          const sessionAuth = await this.validateSession(session, headers);
+          authDto.user = sessionAuth.user;
+          authDto.session = sessionAuth.session;
+        } catch {
+          // An expired session must not prevent reading a public shared photo.
+        }
+      }
+    }
 
     if (!authDto.user.isAdmin && adminRoute) {
       this.logger.warn(`Denied access to admin only route: ${uri}`);

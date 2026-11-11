@@ -436,6 +436,38 @@ describe(AuthService.name, () => {
   });
 
   describe('validate - shared key', () => {
+    it('uses the signed-in visitor as the author for shared photo activity', async () => {
+      const owner = UserFactory.create();
+      const visitor = UserFactory.create();
+      const sharedLink = { ...sharedLinkStub.valid, user: owner } as any;
+      const session = SessionFactory.create();
+      mocks.sharedLink.getByKey.mockResolvedValue(sharedLink);
+      mocks.session.getByToken.mockResolvedValue({
+        id: session.id,
+        updatedAt: session.updatedAt,
+        user: visitor,
+        pinExpiresAt: null,
+        appVersion: null,
+      });
+
+      await expect(
+        sut.authenticate({
+          headers: { 'x-immich-share-key': sharedLink.key.toString('base64url'), authorization: 'Bearer visitor' },
+          queryParams: {},
+          metadata: {
+            adminRoute: false,
+            sharedLinkRoute: true,
+            uri: 'test',
+            permission: Permission.ActivityCreate,
+          },
+        }),
+      ).resolves.toMatchObject({
+        user: visitor,
+        sharedLink,
+        session: { id: session.id },
+      });
+    });
+
     it('should not accept a non-existent key', async () => {
       mocks.sharedLink.getByKey.mockResolvedValue(void 0);
 

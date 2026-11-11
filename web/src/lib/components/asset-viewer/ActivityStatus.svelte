@@ -2,6 +2,7 @@
   import type { ActivityResponseDto } from '@immich/sdk';
   import { Button } from '@immich/ui';
   import { mdiCommentOutline } from '@mdi/js';
+  import { t } from 'svelte-i18n';
   import { activityManager } from '$lib/managers/activity-manager.svelte';
   import { assetViewerManager } from '$lib/managers/asset-viewer-manager.svelte';
   import { locale } from '$lib/stores/preferences.store';
@@ -21,6 +22,7 @@
     activeComments?: boolean;
     /** Ignore the current user's reaction when this bar is being used as a filter. */
     filterMode?: boolean;
+    favoriteReactionKey?: string;
   }
 
   let {
@@ -35,6 +37,7 @@
     activeReactionKey,
     activeComments = false,
     filterMode = false,
+    favoriteReactionKey,
   }: Props = $props();
   const reactionCounts = $derived.by(() => {
     const counts: Record<string, number> = {};
@@ -51,7 +54,24 @@
 </script>
 
 <div class="flex items-center justify-center gap-1 rounded-full border bg-subtle/70 p-1">
-  {#each Object.entries(reactionCounts) as [key, count] (key)}
+  {#if favoriteReactionKey}
+    <button
+      type="button"
+      class="flex items-center gap-1 rounded-full border border-transparent px-2 py-1 text-sm transition hover:border-primary hover:bg-primary/10"
+      class:border-primary={isLiked?.reactionKey === favoriteReactionKey}
+      class:bg-primary={isLiked?.reactionKey === favoriteReactionKey}
+      aria-label={isLiked?.reactionKey === favoriteReactionKey ? $t('unfavorite') : $t('favorite')}
+      title={isLiked?.reactionKey === favoriteReactionKey ? $t('unfavorite') : $t('favorite')}
+      onclick={onFavorite}
+      {disabled}
+    >
+      <span class="text-lg">❤️</span>
+      {#if reactionCounts[favoriteReactionKey]}
+        <span>{reactionCounts[favoriteReactionKey]}</span>
+      {/if}
+    </button>
+  {/if}
+  {#each Object.entries(reactionCounts).filter(([key]) => key !== favoriteReactionKey) as [key, count] (key)}
     <button
       type="button"
       class="flex items-center gap-1 rounded-full border border-transparent px-2 py-1 text-sm transition hover:border-primary hover:bg-primary/10"
@@ -59,6 +79,7 @@
       class:bg-primary={activeReactionKey ? activeReactionKey === key : !filterMode && isLiked?.reactionKey === key}
       aria-label={`${reactionEmoji[key] ?? '😀'} ${count} reaction${count === 1 ? '' : 's'}`}
       title={`${count} ${key} reaction${count === 1 ? '' : 's'}`}
+      disabled={!onReaction}
       onclick={() => onReaction?.(key)}
     >
       <span class="text-lg">{reactionEmoji[key] ?? '😀'}</span>
@@ -69,7 +90,7 @@
     <div class:opacity-50={disabled} class:pointer-events-none={disabled}>
       <ReactionPicker count={0} selectedEmoji="＋" onSelect={({ key }) => onReaction?.(key)} />
     </div>
-  {:else if !filterMode}
+  {:else if !filterMode && !disabled}
     <Button
       {disabled}
       onclick={onFavorite}
